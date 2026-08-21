@@ -2,7 +2,7 @@
 //
 // Strategy: serve from cache first (fast, works offline), fetch a fresh copy in
 // the background. The next open shows the new version.
-const CACHE = "baobaoxiang-v247603";
+const CACHE = "baobaoxiang-va1d79d19";
 const FILES = ["./", "./index.html", "./manifest.json",
                "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png"];
 
@@ -106,7 +106,7 @@ self.addEventListener("notificationclick", function(e){
 //  does that the next time it opens (pushSync() in webpage.h), which is why
 //  it matters that the address is already valid by then.
 // ============================================================
-const VAPID_PUBLIC = "BKEPmbEUeMwtTwSjXyl09tfOYITxMA4ZICLLFaELgZvY0SPGN7OqOAPNeAU-g7afHqCx03APl_kYpLP0oJ8C9hc";
+const VAPID_PUBLIC = "BN5ne9XHo_flJnoAdDBHWebJDL-UMOGvbAsUQXLI9ap4cqfVVBa1KV_rwUZlPYiiuN6vsWCpqLdHOZb5UEGOBgU";
 
 function b64ToBytes(b64){
   var pad = "=".repeat((4 - b64.length % 4) % 4);

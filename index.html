@@ -298,7 +298,12 @@
 .ttk.lecture{background:var(--ac)}
 .ttk.tutorial{background:var(--ok)}
 .ttk.practical{background:var(--warn)}
-.ttrow.off{opacity:.5}
+/* The switch on a timetable row: the same one the alarm list uses, a size down so it fits */
+.ttsw{align-self:center;width:40px;height:24px;margin-left:2px}
+.ttsw::after{width:18px;height:18px}
+.ttsw.on::after{left:19px}
+/* A cancelled row fades, but its switch must not -- that is the thing you are about to press */
+.ttrow.off>*:not(.ttsw){opacity:.5}
 .ttrow.off .ttt b,.ttrow.off .ttinfo>b{text-decoration:line-through}
 .ttrow.off .ttbar{background:var(--tx3)}
 .offrow .opt{font-size:11px;font-weight:700;color:var(--warn);
@@ -3104,7 +3109,14 @@ function tableViewHTML(now){
              '<div class="ttbar"></div>' +
              '<div class="ttinfo"><b>' + evEm(a) + esc(a.label || t("alarm")) + '</b>' +
                (sub.length ? '<small>' + sub.join(" &middot; ") + '</small>' : '') +
-             '</div>' + kindTag(a) + '</div>';
+             '</div>' + kindTag(a) +
+             // Not in timetable-only mode: a row of switches is the thing that
+             // makes this read as an alarm list rather than a timetable, which
+             // is the whole point of that mode.
+             (S.quiet ? "" :
+               '<div class="sw ttsw' + (off ? "" : " on") + '" data-otog="' + a.id +
+                 '" data-oday="' + i + '"></div>') +
+             '</div>';
          }).join("") +
          '</div>';
   }
@@ -3290,6 +3302,15 @@ $("body").onclick = function(e){
       .then(pullAlarms).catch(function(){ toast(t("tSaveFail")); });
     return;
   }
+  // The timetable switch flips "is there class this day, this period" straight away,
+  // with no sheet. The "cancel this one" button in the sheet runs the same code (toggleSkip).
+  var ot = e.target.closest("[data-otog]");
+  if(ot){
+    var oa = S.alarms.filter(function(x){ return x.id == ot.dataset.otog; })[0];
+    if(oa) toggleSkip(oa, parseInt(ot.dataset.oday, 10));
+    return;
+  }
+
   var it = e.target.closest(".item, .ttrow");
   if(!it) return;
   var al = S.alarms.filter(function(x){ return x.id == it.dataset.id; })[0];
@@ -3579,6 +3600,38 @@ function runsOn(a, dayIdxVal){
 
 // Should the screen show it as "no class"?
 function isSkipped(a, dayIdxVal){ return !runsOn(a, dayIdxVal); }
+
+// Flip "does this class run on this day".
+// The switch on the timetable row and the "cancel this one" button in the sheet
+// both come through here -- the same action in two places has to do the same thing.
+function toggleSkip(a, dayIdxVal){
+  var iso = isoOf(dayIdxVal);
+
+  // What gets flipped is "is it listed as an exception", not "does it run".
+  // For a class that normally runs, listing it = cancelled; for one that
+  // normally does not (Tutorial / Practical), listing it = on just this week.
+  // Flipping on "does it run" instead makes the second kind read as being put
+  // back to its default, so pressing it does nothing at all.
+  var listed = !hasException(a, dayIdxVal);
+
+  // Update the local screen first, which feels quicker; roll back if it fails
+  if(listed) S.skips[skipKey(a.id, iso)] = 1;
+  else       delete S.skips[skipKey(a.id, iso)];
+  var willRun = runsOn(a, dayIdxVal);        // does it run once the flip is applied
+  paintBody();
+
+  api("/api/skips", {
+    method: "POST",
+    body: JSON.stringify({ id: a.id, date: iso, skip: listed })
+  }).then(function(){
+    toast(willRun ? t("tRestored") : t("tCancelled"));
+  }).catch(function(){
+    if(listed) delete S.skips[skipKey(a.id, iso)];
+    else       S.skips[skipKey(a.id, iso)] = 1;
+    paintBody();
+    toast(t("tSaveFail"));
+  });
+}
 
 // How many classes this week are marked "no class" (the normally-off kind do not count)
 function countOffInWeek(w){
@@ -4025,7 +4078,7 @@ function enterCloud(data){
 //    1. ask the browser for a "push address"
 //    2. store that address and the time zone in the cloud, so the server knows where to push and what the local time is
 // ============================================================
-var VAPID_PUBLIC = "BKEPmbEUeMwtTwSjXyl09tfOYITxMA4ZICLLFaELgZvY0SPGN7OqOAPNeAU-g7afHqCx03APl_kYpLP0oJ8C9hc";
+var VAPID_PUBLIC = "BN5ne9XHo_flJnoAdDBHWebJDL-UMOGvbAsUQXLI9ap4cqfVVBa1KV_rwUZlPYiiuN6vsWCpqLdHOZb5UEGOBgU";
 
 // base64url -> Uint8Array (the format the browser wants)
 function b64ToBytes(b64){
@@ -5168,26 +5221,9 @@ $("occClose").onclick = closeSheets;
 $("occEdit").onclick  = function(){ closeSheets(); openEdit(S.occ.a); };
 
 $("occSkip").onclick = function(){
-  var a = S.occ.a, iso = isoOf(S.occ.day);
-  var turnOff = !isSkipped(a, S.occ.day);
-
-  // Update the local screen first, which feels quicker; roll back if it fails
-  if(turnOff) S.skips[skipKey(a.id, iso)] = 1;
-  else        delete S.skips[skipKey(a.id, iso)];
+  var a = S.occ.a, day = S.occ.day;
   closeSheets();
-  paintBody();
-
-  api("/api/skips", {
-    method: "POST",
-    body: JSON.stringify({ id: a.id, date: iso, skip: turnOff })
-  }).then(function(){
-    toast(turnOff ? t("tCancelled") : t("tRestored"));
-  }).catch(function(){
-    if(turnOff) delete S.skips[skipKey(a.id, iso)];
-    else        S.skips[skipKey(a.id, iso)] = 1;
-    paintBody();
-    toast(t("tSaveFail"));
-  });
+  toggleSkip(a, day);
 };
 
 // ============================================================
