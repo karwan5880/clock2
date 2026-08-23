@@ -6,11 +6,11 @@
 <meta name="theme-color" content="#00a0e9">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Pocket · UTAR">
+<meta name="apple-mobile-web-app-title" content="Pocket">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png" id="touchIcon">
-<title>Pocket · UTAR</title>
+<title>Pocket</title>
 <style>
 :root{
   /* Doraemon: body blue #00a0e9, white belly, nose/collar red #e60012, bell yellow #ffd93b */
@@ -774,130 +774,6 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac)}
   border-radius:99px;font-size:14px;z-index:99;opacity:0;pointer-events:none;
   transition:.25s;box-shadow:0 12px 30px -10px var(--shadow)}
 .toast.on{opacity:1;transform:translate(-50%,0)}
-
-/* Campus home — iPhone / iPad springboard, not cards */
-.homebtn{position:absolute;top:16px;left:0;z-index:60;padding:7px 12px;border-radius:99px;
-  border:1px solid var(--line);background:var(--card);color:var(--tx2);
-  font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;line-height:1}
-.homebtn:active{border-color:var(--ac);color:var(--ac)}
-.themebtn{left:46px}
-.helpbtn{left:92px}
-.cloudbtn{left:138px}
-
-#pocketHome{
-  display:none;min-height:100dvh;padding:calc(16px + env(safe-area-inset-top)) 18px 36px;
-  box-sizing:border-box;
-  background:
-    radial-gradient(120% 70% at 50% -10%, color-mix(in srgb, var(--ac) 28%, #fff), transparent 62%),
-    linear-gradient(180deg, color-mix(in srgb, var(--ac) 14%, var(--bg)) 0%, var(--bg) 48%);
-}
-body.at-home #pocketHome{display:block}
-body.at-home .wrap,
-body.at-home .actionbar{display:none !important}
-
-.homeTop{display:flex;justify-content:flex-end}
-.homeLang{padding:6px 12px;border-radius:99px;border:0;
-  background:color-mix(in srgb, #fff 55%, transparent);color:var(--tx);
-  font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.homeLang:active{opacity:.7}
-
-.homeLid{text-align:center;margin:8px 0 26px}
-.homeMark{
-  display:inline-flex;align-items:center;gap:8px;margin:0 0 12px;padding:5px 12px 5px 5px;
-  border-radius:999px;border:1px solid color-mix(in srgb, #d4a017 55%, transparent);
-  background:linear-gradient(180deg,#163a86,#0b255f);color:#f3d06a;
-  box-shadow:0 10px 22px -14px #0b255f;vertical-align:top}
-.homeMark svg{width:22px;height:22px;display:block;flex:none}
-.homeMark b{font-size:12px;font-weight:800;letter-spacing:.16em}
-.homeEye{margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--tx)}
-.homeCampus{
-  appearance:none;margin:8px 0 0;padding:4px 10px;border:0;border-radius:99px;
-  background:color-mix(in srgb, #0b255f 10%, transparent);color:var(--tx2);
-  font:inherit;font-size:12px;font-weight:700;cursor:pointer}
-.homeCampus:active{opacity:.7}
-
-.homeGrid{
-  display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));
-  gap:22px 6px;max-width:360px;margin:0 auto;justify-items:center;
-}
-.homeTile{
-  appearance:none;width:100%;max-width:84px;padding:0;
-  border:0;background:transparent;color:var(--tx);
-  font-family:inherit;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;gap:7px;
-}
-.homeTile .icon{
-  width:60px;height:60px;border-radius:13.4px;display:grid;place-items:center;
-  color:#fff;flex:none;
-  box-shadow:0 10px 18px -12px rgba(20,70,110,.55);
-  transition:transform .12s ease;
-}
-.homeTile .icon svg{width:30px;height:30px;display:block}
-.homeTile:active .icon{transform:scale(.88)}
-.homeTile .name{
-  margin:0;width:76px;font-size:11px;font-weight:600;line-height:1.2;
-  letter-spacing:-.01em;text-align:center;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-}
-.homeTile[data-id="today"] .icon{background:linear-gradient(180deg,#7aa0ff,#3d6dff)}
-.homeTile[data-id="tt"] .icon{background:linear-gradient(180deg,#5bb4ee,var(--ac))}
-.homeTile[data-id="att"] .icon{background:linear-gradient(180deg,#46d39a,#1fa971)}
-.homeTile[data-id="due"] .icon{background:linear-gradient(180deg,#ff8b6a,#e24b2c)}
-.homeTile[data-id="ev"] .icon{background:linear-gradient(180deg,#ffd56a,#e8a317)}
-.homeTile[data-id="gpa"] .icon{background:linear-gradient(180deg,#c084fc,#7c3aed)}
-.homeTile[data-id="id"] .icon{background:linear-gradient(180deg,#94a3b8,#475569)}
-.homeTile[data-id="cash"] .icon{background:linear-gradient(180deg,#4ade80,#16a34a)}
-.homeTile[data-id="bus"] .icon{background:linear-gradient(180deg,#67e8f9,#0891b2)}
-.homeTile[data-id="map"] .icon{background:linear-gradient(180deg,#86efac,#15803d)}
-.homeTile[data-id="dorm"] .icon{background:linear-gradient(180deg,#fdb4ff,#c026d3)}
-.homeTile[data-id="sos"] .icon{background:linear-gradient(180deg,#ff7b7b,#dc2626)}
-.homeTile[data-id="food"] .icon{background:linear-gradient(180deg,#ff9a62,#e25a28)}
-.homeTile[data-id="ride"] .icon{background:linear-gradient(180deg,#7fd4ea,#2a9fc4)}
-.homeTile[data-id="wall"] .icon{background:linear-gradient(180deg,#f08cc4,#d45a9a)}
-
-#homeStub{display:none;max-width:400px;margin:0 auto;text-align:left}
-#homeStub.on{display:block}
-#pocketHome.in-app .homeLid,#pocketHome.in-app .homeGrid{display:none}
-.stubBar{display:flex;align-items:center;gap:10px;margin:0 0 12px}
-#stubBack{flex:none;padding:8px 14px;border:0;border-radius:99px;background:var(--card);
-  color:var(--tx);font:inherit;font-weight:800;cursor:pointer;box-shadow:0 1px 0 var(--line)}
-#stubTitle{margin:0;font-size:20px;font-weight:800;letter-spacing:-.03em}
-.previewBar{margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:.04em;
-  text-transform:uppercase;color:var(--tx3)}
-.shellRow,.idCard{background:var(--card);border-radius:16px;padding:12px 14px;margin:0 0 8px;
-  box-shadow:0 8px 24px -18px var(--shadow)}
-.shellK{font-size:11px;font-weight:700;color:var(--tx3);margin:0 0 2px}
-.shellT{font-size:16px;font-weight:800;margin:0}
-.shellS{font-size:13px;color:var(--tx2);margin:4px 0 0}
-.shellRow{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.shellMain{min-width:0;flex:1}
-.shellBtns{display:flex;flex-wrap:wrap;gap:6px;flex:none}
-#stubStage > .shellBtns{margin:0 0 10px}
-.shellBtns button,.shellFab{
-  appearance:none;border:0;border-radius:99px;padding:7px 11px;font:inherit;
-  font-size:12px;font-weight:800;cursor:pointer;background:var(--bg);color:var(--tx)}
-.shellBtns button.on{background:var(--ac);color:var(--onac)}
-.shellFab{width:100%;margin:10px 0 0;padding:12px;background:var(--ac);color:var(--onac)}
-a.shellCall{
-  flex:none;display:inline-block;padding:7px 14px;border-radius:99px;
-  background:#dc2626;color:#fff;font-size:12px;font-weight:800;text-decoration:none}
-a.shellCall:active{opacity:.8}
-.idCard{text-align:center;padding:22px 16px;background:linear-gradient(165deg,#1e3a5f,#0f2744);color:#fff}
-.idCard .idNo{font-size:22px;font-weight:800;letter-spacing:.12em;margin:8px 0 4px}
-.idCard .idName{font-size:15px;opacity:.9}
-@media (min-width:768px){
-  .homeGrid{grid-template-columns:repeat(5, minmax(0, 1fr));gap:28px 12px;max-width:560px}
-  .homeTile .icon{width:72px;height:72px;border-radius:16.1px}
-  .homeTile .icon svg{width:36px;height:36px}
-  .homeTile .name{width:88px;font-size:12px}
-}
-@media (min-width:1024px){
-  .homeGrid{grid-template-columns:repeat(6, minmax(0, 1fr));max-width:720px}
-}
-@media (prefers-reduced-motion:reduce){
-  .homeTile .icon,.homeTile:active .icon{transition:none;transform:none}
-}
 </style>
 <script>window.__FORCE_DEMO__ = true;</script>
 <script>
@@ -907,40 +783,15 @@ if ("serviceWorker" in navigator)
   });
 </script>
 </head>
-<body class="at-home">
-
-<div id="pocketHome">
-  <div class="homeTop"><button type="button" class="homeLang" id="homeLang">EN</button></div>
-  <header class="homeLid">
-    <div class="homeMark" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2.4l7.2 2.4v6.1c0 4.7-3.1 8.1-7.2 10.1C7.9 19 4.8 15.6 4.8 10.9V4.8z"/>
-        <path d="M9.2 10.2c0-1.7 1.2-2.8 2.8-2.8s2.8 1.1 2.8 2.8v4.4"/>
-      </svg>
-      <b>UTAR</b>
-    </div>
-    <p class="homeEye" id="homeEye"></p>
-    <button type="button" class="homeCampus" id="homeCampus"></button>
-  </header>
-  <div class="homeGrid" id="homeGrid"></div>
-  <div id="homeStub">
-    <div class="stubBar">
-      <button type="button" id="stubBack"></button>
-      <h2 id="stubTitle"></h2>
-    </div>
-    <p class="previewBar" id="stubHint"></p>
-    <div id="stubStage"></div>
-  </div>
-</div>
+<body>
 
 <div class="wrap">
 
   <div class="clock">
-    <button type="button" class="homebtn" id="homeBtn" aria-label="Home">⌂</button>
     <button class="langbtn" id="langBtn">EN</button>
     <button class="themebtn" id="themeBtn">&#127912;</button>
     <button class="helpbtn" id="helpBtn">?</button>
-    <button class="cloudbtn" id="cloudBtn" hidden>&#9729;</button>
+    <button class="cloudbtn" id="cloudBtn">&#9729;</button>
     <div class="dora" id="doraBox" aria-hidden="true"></div>
     <div class="t"><span id="hm">--:--</span><span class="sec" id="ss">--</span></div>
     <div class="wd" id="wd">&mdash;</div>
@@ -1629,54 +1480,6 @@ zh: {
   roleCancel   :"取消",
   tRoleSaved   :"身份改好了",
 
-  homeEye    :"我的百宝箱",
-  homeCampusKpr:"拉曼大学 · 金宝",
-  homeCampusSl :"拉曼大学 · 双溪龙",
-  homeTitle  :"今天要用哪一个？",
-  homeSub    :"课表已经能用。其它格子先占位子——空着比假装做好了更诚实。",
-  homeBack   :"百宝箱",
-  tileTt     :"课表",
-  tileTtSub  :"闹钟 · 学期 · 假期",
-  tileAtt    :"出勤",
-  tileAttSub :"有没有点到名",
-  tileEv     :"活动",
-  tileEvSub  :"讲座、社团、考试",
-  tileWall   :"告白墙",
-  tileWallSub:"校园匿名板",
-  tileFood   :"吃饭",
-  tileFoodSub:"食堂、拼单、宵夜",
-  tileRide   :"拼车",
-  tileRideSub:"同校、同路、周五",
-  tileToday  :"今天",
-  tileDue    :"作业",
-  tileGpa    :"绩点",
-  tileId     :"学生证",
-  tileBus    :"校巴",
-  tileMap    :"地图",
-  tileDorm   :"宿舍",
-  tileCash   :"记账",
-  tileSos    :"热线",
-  tileSoon   :"还没做",
-  stubLead   :"这一格还是空的。做好了会从这里进去，不会再开一个 app。",
-  stubBack   :"‹ 首页",
-  shellPreview:"预览 · 按钮能点，不会真的存",
-  shellToast :"预览而已，还没接上",
-  sosHint    :"官方号码 · 点了会真的打出去",
-  sos999     :"全国急救",
-  sosDss     :"安全处 DSS",
-  sosDsa     :"学生事务 DSA",
-  sosHospUtar:"UTAR 医院急诊",
-  sosHospMc  :"UTAR 医院总机",
-  sosHospTown:"金宝医院",
-  sosHospKj  :"加影医院",
-  sosFire    :"消防",
-  sosPolice  :"警局",
-  sosHours   :"办公时间",
-  sos24      :"24 小时",
-  sosNote    :"号码来自 UTAR 安全处 / 医院公开页。若改号，以官方为准。救命先打 999。",
-  sosKpr     :"金宝",
-  sosSl      :"双溪龙",
-
   ringNow :"时间到了",
   snooze  : function(n){ return "贪睡 "+n+" 分钟"; },
   dismiss :"关掉",
@@ -2141,54 +1944,6 @@ en: {
   roleCancel   :"Cancel",
   tRoleSaved   :"Role updated",
 
-  homeEye    :"Pocket",
-  homeCampusKpr:"UTAR · Kampar",
-  homeCampusSl :"UTAR · Sungai Long",
-  homeTitle  :"What do you need?",
-  homeSub    :"Timetable works. The other slots are saved for later — empty is better than fake.",
-  homeBack   :"Pocket",
-  tileTt     :"Timetable",
-  tileTtSub  :"Alarms · term · holidays",
-  tileAtt    :"Attendance",
-  tileAttSub :"Did I swipe in",
-  tileEv     :"Events",
-  tileEvSub  :"Talks, clubs, exams",
-  tileWall   :"Wall",
-  tileWallSub:"Anonymous campus board",
-  tileFood   :"Food",
-  tileFoodSub:"Canteen, group order",
-  tileRide   :"Ride",
-  tileRideSub:"Same campus, same Friday",
-  tileToday  :"Today",
-  tileDue    :"Deadlines",
-  tileGpa    :"GPA",
-  tileId     :"ID",
-  tileBus    :"Shuttle",
-  tileMap    :"Map",
-  tileDorm   :"Hostel",
-  tileCash   :"Wallet",
-  tileSos    :"Hotline",
-  tileSoon   :"Not yet",
-  stubLead   :"This slot is empty on purpose. When it exists, it opens from here — not a second app.",
-  stubBack   :"‹ Home",
-  shellPreview:"Preview · taps work, nothing is saved",
-  shellToast :"Preview only — not wired up yet",
-  sosHint    :"Official numbers · tap to call for real",
-  sos999     :"National emergency",
-  sosDss     :"Safety & Security (DSS)",
-  sosDsa     :"Student Affairs (DSA)",
-  sosHospUtar:"Hospital UTAR A&E",
-  sosHospMc  :"Hospital UTAR switchboard",
-  sosHospTown:"Hospital Kampar",
-  sosHospKj  :"Hospital Kajang",
-  sosFire    :"Fire",
-  sosPolice  :"Police",
-  sosHours   :"Office hours",
-  sos24      :"24 hours",
-  sosNote    :"From UTAR DSS / Hospital UTAR public pages. If a line changes, the official site wins. For a life emergency, call 999 first.",
-  sosKpr     :"Kampar",
-  sosSl      :"Sungai Long",
-
   ringNow :"Time's up",
   snooze  : function(n){ return "Snooze "+n+" min"; },
   dismiss :"Dismiss",
@@ -2415,237 +2170,8 @@ var S = {
   //   off    = classes on a holiday are cancelled automatically
   //   remind = how many days ahead to warn (-1 = never)
   holi:{ list:[], off:true, remind:1, hour:20, minute:0 },
-  selWeek:null,      // which week the calendar is showing (null = follow today)
-  micro:"home"       // home | tt | stub id
+  selWeek:null       // which week the calendar is showing (null = follow today)
 };
-
-var sosCampus = "kpr";
-try {
-  var sc = localStorage.getItem("clockSosCampus");
-  if(sc === "sl" || sc === "kpr") sosCampus = sc;
-} catch(e){}
-
-var MICROS = [
-  { id:"sos",   live:true,  t:"tileSos" },
-  { id:"today", live:false, t:"tileToday" },
-  { id:"tt",    live:true,  t:"tileTt" },
-  { id:"att",   live:false, t:"tileAtt" },
-  { id:"due",   live:false, t:"tileDue" },
-  { id:"ev",    live:false, t:"tileEv" },
-  { id:"gpa",   live:false, t:"tileGpa" },
-  { id:"id",    live:false, t:"tileId" },
-  { id:"cash",  live:false, t:"tileCash" },
-  { id:"bus",   live:false, t:"tileBus" },
-  { id:"map",   live:false, t:"tileMap" },
-  { id:"dorm",  live:false, t:"tileDorm" },
-  { id:"food",  live:false, t:"tileFood" },
-  { id:"ride",  live:false, t:"tileRide" },
-  { id:"wall",  live:false, t:"tileWall" }
-];
-
-function tileGlyph(id){
-  var s = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
-  var d = {
-    sos:'<path d="M7 3.8c.6-.6 1.6-.6 2.2 0l1.2 1.2c.6.6.6 1.6 0 2.2L9.2 8.4c.9 1.7 2.2 3 3.9 3.9l1.2-1.2c.6-.6 1.6-.6 2.2 0l1.2 1.2c.6.6.6 1.6 0 2.2l-.7.7c-.7.7-1.8 1-2.8.6C10.6 14.1 5.9 9.4 4.2 5.8c-.4-1-.1-2.1.6-2.8z"/>',
-    today:'<circle cx="12" cy="12" r="8.5"/><path d="M12 8v5l3 2"/>',
-    tt:'<rect x="3.5" y="5" width="17" height="15" rx="2.4"/><path d="M8 3.5v4M16 3.5v4M3.5 10h17"/><path d="M8 14h2.2M12 14h2.2M16 14h.2M8 17.2h2.2M12 17.2h2.2"/>',
-    att:'<circle cx="10" cy="8" r="3.1"/><path d="M4.4 19.2c.5-3.3 2.8-5 5.6-5s5.1 1.7 5.6 5"/><path d="M15 11.2l2 2 4.2-4.2"/>',
-    due:'<rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
-    ev:'<path d="M12 3.2l1.7 4.8h5l-4 3 1.6 4.8L12 13.7 7.7 15.8 9.3 11l-4-3h5z"/>',
-    gpa:'<path d="M4 18V8M10 18V5M16 18v-7M4 18h16"/>',
-    id:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="9" cy="12" r="2.2"/><path d="M13.5 10.5h5M13.5 13.5h3.5"/>',
-    cash:'<circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M9.5 10.2c.6-1 1.6-1.5 2.5-1.5 1.6 0 2.6.8 2.6 2s-1 1.8-2.6 2.2c-1.5.4-2.6 1-2.6 2.2s1.1 2 2.7 2c1 0 2-.5 2.6-1.5"/>',
-    bus:'<rect x="4" y="5" width="16" height="11" rx="2"/><path d="M4 12h16M8 16v2M16 16v2M7 8.5h3M14 8.5h3"/>',
-    map:'<path d="M12 20s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10z"/><circle cx="12" cy="10" r="2"/>',
-    dorm:'<path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/>',
-    food:'<path d="M5 11h14v2.1c0 3.6-2.8 6.4-7 6.4s-7-2.8-7-6.4z"/><path d="M8 11V6.4M12 11V5M16 11V6.4"/>',
-    ride:'<path d="M4 13.8h16v3.3a1.5 1.5 0 0 1-1.5 1.5"/><path d="M4 13.8 6.2 8.6A2 2 0 0 1 8 7.4h8a2 2 0 0 1 1.8 1.2L20 13.8"/><circle cx="7.2" cy="17.5" r="1.55"/><circle cx="16.8" cy="17.5" r="1.55"/>',
-    wall:'<path d="M4.2 15.2 3.7 19l3.6-.7c.4.2.9.3 1.5.3 2.8 0 5-1.8 5-4.1S11.6 10.4 8.8 10.4c-2.6 0-4.7 1.6-4.7 3.7 0 .4.2.8.4 1.1z"/><path d="M10.6 9.2c.5-2.2 2.7-3.9 5.4-3.9 3 0 5.4 1.9 5.4 4.3 0 2.3-2.1 4.2-5 4.4L14 16.3l.4-2.2c-.3-.3-.5-.7-.5-1.1"/>'
-  };
-  return '<svg '+s+' aria-hidden="true">'+(d[id] || "")+"</svg>";
-}
-
-function shellRow(k, title, sub, extra){
-  return '<div class="shellRow"><div class="shellMain"><p class="shellK">'+k+'</p><p class="shellT">'+
-    title+"</p>"+(sub ? '<p class="shellS">'+sub+"</p>" : "")+"</div>"+(extra || "")+"</div>";
-}
-function shellBtns(act, labels, on){
-  var html = '<div class="shellBtns">';
-  for(var i=0;i<labels.length;i++){
-    html += '<button type="button" data-act="'+act+'"'+(i===on ? ' class="on"' : "")+">"+labels[i]+"</button>";
-  }
-  return html + "</div>";
-}
-
-function telHref(display){
-  var n = String(display).replace(/[^\d]/g, "");
-  if(n === "999" || n === "112") return "tel:" + n;
-  if(n.charAt(0) === "0") n = "60" + n.slice(1);
-  return "tel:+" + n;
-}
-function callBtn(display){
-  return '<a class="shellCall" href="'+telHref(display)+'">'+(lang === "zh" ? "拨打" : "Call")+"</a>";
-}
-
-function shellHtml(id){
-  var zh = lang === "zh";
-  if(id === "sos"){
-    var kpr = sosCampus === "kpr";
-    var rows = kpr ? [
-      [t("sos999"), "999", t("sos24")],
-      [t("sosDss"), "016-2100 863", t("sos24")],
-      [t("sosDsa"), "016-2100 864", t("sosHours")],
-      [t("sosHospUtar"), "05-618 1300", t("sos24")],
-      [t("sosHospMc"), "05-618 1333", ""],
-      [t("sosHospTown"), "05-465 3333", t("sos24")],
-      [t("sosFire"), "05-466 4444", ""]
-    ] : [
-      [t("sos999"), "999", t("sos24")],
-      [t("sosDss"), "016-2100 861", t("sos24")],
-      [t("sosDsa"), "016-2100 862", t("sosHours")],
-      [t("sosHospKj"), "03-8736 3333", t("sos24")],
-      [t("sosFire"), "03-8736 4444", ""],
-      [t("sosPolice"), "03-8911 4239", ""]
-    ];
-    var html = '<div class="shellBtns">'+
-      '<button type="button" data-act="campus" data-campus="kpr"'+(kpr?' class="on"':'')+">"+t("sosKpr")+"</button>"+
-      '<button type="button" data-act="campus" data-campus="sl"'+(kpr?'':' class="on"')+">"+t("sosSl")+"</button>"+
-      "</div>";
-    for(var i=0;i<rows.length;i++){
-      var r = rows[i];
-      html += shellRow(r[0], r[1], r[2], callBtn(r[1]));
-    }
-    html += '<p class="shellS">'+t("sosNote")+"</p>";
-    return html;
-  }
-  if(id === "today") return (
-    shellRow(zh?"下一堂":"Next", zh?"微积分 · KB208":"Calculus · KB208", "10:00 – 11:50",
-      shellBtns("demo", [zh?"导航":"Map", zh?"点名":"Attend"], -1)) +
-    shellRow(zh?"作业":"Due", zh?"实验报告 · 明天 23:59":"Lab report · tomorrow 23:59") +
-    shellRow(zh?"出勤":"Attendance", zh?"今天 2 堂未点":"2 classes unmarked today")
-  );
-  if(id === "att") return (
-    shellRow("08:00", zh?"微积分":"Calculus", "KB208",
-      shellBtns("tog", [zh?"到":"In", zh?"缺":"Out", zh?"迟":"Late"], 0)) +
-    shellRow("10:00", zh?"英语":"English", "PA201",
-      shellBtns("tog", [zh?"到":"In", zh?"缺":"Out", zh?"迟":"Late"], -1)) +
-    shellRow("14:00", zh?"物理实验":"Physics lab", "Block D",
-      shellBtns("tog", [zh?"到":"In", zh?"缺":"Out", zh?"迟":"Late"], -1)) +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"本周 4/6":"This week 4/6")+"</button>"
-  );
-  if(id === "due") return (
-    shellRow(zh?"明天":"Tomorrow", zh?"实验报告":"Lab report", "23:59", shellBtns("check", ["✓"], -1)) +
-    shellRow(zh?"周五":"Fri", zh?"小组演示":"Group demo", "16:00", shellBtns("check", ["✓"], -1)) +
-    shellRow("9/3", zh?"学费":"Fees", "RM 1,200", shellBtns("check", ["✓"], -1)) +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"＋ 新截止":"+ Add due")+"</button>"
-  );
-  if(id === "ev") return (
-    shellRow("Wed 19:00", zh?"AI 讲座 · 大礼堂":"AI talk · Hall", "", shellBtns("demo", [zh?"加入":"Add"], -1)) +
-    shellRow("Fri 16:00", zh?"篮球友谊赛":"Friendly basketball", "", shellBtns("demo", [zh?"加入":"Add"], -1)) +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"＋ 自己加一场":"+ My event")+"</button>"
-  );
-  if(id === "gpa") return (
-    shellRow("3 cr", zh?"微积分":"Calculus", "A-", shellBtns("tog", ["A","A-","B+"], 1)) +
-    shellRow("2 cr", zh?"英语":"English", "B+", shellBtns("tog", ["A","A-","B+"], 2)) +
-    shellRow("1 cr", zh?"体育":"PE", "A", shellBtns("tog", ["A","A-","B+"], 0)) +
-    '<button type="button" class="shellFab" data-act="demo">CGPA 3.47 · '+(zh?"假如":"what-if")+"</button>"
-  );
-  if(id === "id") return (
-    '<div class="idCard"><p class="shellK">Universiti Tunku Abdul Rahman</p><p class="idNo">240XXXX</p><p class="idName">'+
-    (zh?"预览姓名":"Preview name")+'</p><p class="shellS">'+
-    (zh?"只存在这台手机":"Stays on this phone")+"</p></div>" +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"换照片 / 改资料":"Photo / edit")+"</button>"
-  );
-  if(id === "cash") return (
-    shellRow(zh?"今天":"Today", "RM 8.50", zh?"食堂":"Canteen") +
-    shellRow(zh?"昨天":"Yesterday", "RM 2.00", zh?"校巴":"Shuttle") +
-    shellRow(zh?"本周":"This week", "RM 46.80", "") +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"＋ 记一笔":"+ Add spend")+"</button>"
-  );
-  if(id === "bus") return (
-    shellRow(zh?"下一班":"Next", zh?"校园 → 宿舍  6 分钟":"Campus → hostel  6 min") +
-    shellRow("08:40", zh?"校园 → 镇":"Campus → town") +
-    shellRow("09:10", zh?"宿舍 → 校园":"Hostel → campus") +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"看完整时刻表":"Full timetable")+"</button>"
-  );
-  if(id === "map") return (
-    shellRow("KB", zh?"讲堂 · 你下一堂":"Lecture hall · next class", "", shellBtns("demo", [zh?"钉":"Pin"], -1)) +
-    shellRow("PA", zh?"食堂":"Canteen", "", shellBtns("demo", [zh?"钉":"Pin"], -1)) +
-    shellRow("Lib", zh?"图书馆":"Library", "", shellBtns("demo", [zh?"钉":"Pin"], -1))
-  );
-  if(id === "dorm") return (
-    shellRow(zh?"洗衣":"Laundry", zh?"40 分钟":"40 min", "", shellBtns("demo", [zh?"开始":"Start"], -1)) +
-    shellRow(zh?"电费":"Electric", "12/9", "", shellBtns("check", ["✓"], -1)) +
-    shellRow(zh?"租金":"Rent", "1/9", "", shellBtns("check", ["✓"], -1))
-  );
-  if(id === "food") return (
-    shellRow(zh?"A 档":"Stall A", zh?"鸡饭 · 3 人说去":"Chicken rice · 3 going", "",
-      shellBtns("demo", [zh?"我去":"I'm in"], -1)) +
-    shellRow(zh?"夜宵":"Late", zh?"麻辣烫 · 还没人":"Mala · nobody yet", "",
-      shellBtns("demo", [zh?"开团":"Start"], -1)) +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"预览：不会真的通知别人":"Preview: nobody is notified")+"</button>"
-  );
-  if(id === "ride") return (
-    shellRow("Fri 17:30", zh?"校园 → KL · 2/4":"Campus → KL · 2/4", "",
-      shellBtns("demo", [zh?"想上车":"Join"], -1)) +
-    shellRow("Sun 20:00", zh?"KL → 校园 · 1/3":"KL → campus · 1/3", "",
-      shellBtns("demo", [zh?"想上车":"Join"], -1)) +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"＋ 发一趟（预览）":"+ Offer ride (preview)")+"</button>"
-  );
-  if(id === "wall") return (
-    shellRow(zh?"匿名":"Anon", zh?"有人捡到一张校园卡在图书馆":"Campus card at the library") +
-    shellRow(zh?"匿名":"Anon", zh?"周五谁去夜市":"Night market Friday?") +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"发一条（不会发出去）":"Post (won't send)")+"</button>"
-  );
-  return '<p class="shellS">'+t("stubLead")+"</p>";
-}
-
-function goHome(){
-  S.micro = "home";
-  document.body.classList.add("at-home");
-  $("homeStub").classList.remove("on");
-  $("pocketHome").classList.remove("in-app");
-  closeSheets(true);
-  paintHome();
-}
-
-function openTt(){
-  S.micro = "tt";
-  document.body.classList.remove("at-home");
-  if(!S.roleSet && !S.roleLocal) openRole();
-}
-
-function paintHome(){
-  var eye = $("homeEye");
-  if(!eye) return;
-  eye.textContent = t("homeEye");
-  var camp = $("homeCampus");
-  camp.textContent = t(sosCampus === "sl" ? "homeCampusSl" : "homeCampusKpr");
-  camp.setAttribute("aria-label", camp.textContent);
-  $("homeLang").textContent = (lang === "zh" ? "EN" : "中");
-  $("stubBack").textContent = t("stubBack");
-  var g = $("homeGrid");
-  g.innerHTML = "";
-  MICROS.forEach(function(m){
-    var b = document.createElement("button");
-    b.type = "button";
-    b.className = "homeTile";
-    b.dataset.id = m.id;
-    b.setAttribute("aria-label", t(m.t) + (m.live ? "" : " — " + t("shellPreview")));
-    b.innerHTML = '<span class="icon">' + tileGlyph(m.id) + "</span>" +
-      '<span class="name">' + t(m.t) + "</span>";
-    g.appendChild(b);
-  });
-  var stub = $("homeStub");
-  var stubOn = stub.classList.contains("on");
-  $("pocketHome").classList.toggle("in-app", stubOn);
-  if(stubOn){
-    var cur = MICROS.filter(function(x){ return x.id === S.micro; })[0];
-    if(cur) $("stubTitle").textContent = t(cur.t);
-    $("stubHint").textContent = (S.micro === "sos") ? t("sosHint") : t("shellPreview");
-    $("stubStage").innerHTML = shellHtml(S.micro);
-  }
-}
 
 // ============================================================
 //  Date maths
@@ -3169,7 +2695,7 @@ function pull(){
                              body: JSON.stringify({ mode:S.mode, roles:S.roles }) })
             .catch(function(){});
         } else if(!S.roleAsked){
-          if(S.micro === "tt"){ S.roleAsked = true; openRole(); }
+          S.roleAsked = true; openRole();      // only ask when nothing was remembered
         }
       } else if(!S.roleSet || r !== S.roles){
         S.roles = r; S.roleSet = true; fixMode(); paintModes();
@@ -4050,9 +3576,9 @@ function openSheet(id){
   $(id).classList.add("on");
   document.body.style.overflow = "hidden";
 }
-function closeSheets(force){
+function closeSheets(){
   // No roles chosen yet -> refuse to close, one has to be picked first
-  if(!force && $("sheetRole").classList.contains("on") && !S.roleSet) return;
+  if($("sheetRole").classList.contains("on") && !S.roleSet) return;
   $("mask").classList.remove("on");
   // Close by class rather than keeping a hand-written list. That list had
   // grown to twelve entries, and adding sheetHoli to it was duly forgotten --
@@ -4319,7 +3845,7 @@ function defOnOf(a){ return a.defOn !== false; }
 //  alarm must not be switched off by one. One-off events (an exam, a
 //  deadline) name their own date, so they are left alone too.
 //
-//  The same rule lives in lib/alarm-logic.mjs and alarm-rules.h
+//  The same rule lives in alarm-logic.mjs (server) and alarm-rules.h
 //  (firmware); tools/test-push.mjs and tools/test-firmware-parity.mjs fail
 //  if the three stop agreeing.
 // ============================================================
@@ -4430,9 +3956,8 @@ function shownOnDay(dayI, w){
 //  The URL and key are pasted by the user (and kept on this phone), not hard-coded:
 //  switching to another Supabase project needs no reflash.
 // ============================================================
-// karwan5880: no hosted backend. Cloud UI stays in the file but stays off.
-var CLOUD_OFF = true;
-var DEFAULT_CLOUD_URL = "";
+// Change this line for a different Supabase project (or press "Change project" in the app, no reflash needed)
+var DEFAULT_CLOUD_URL = "https://ccruylbqoucbglnnuxwj.supabase.co";
 
 // A Supabase account has to be an email address. But the user does not want to type an email,
 // so internally the username gets a fixed domain appended -- the screen only ever shows the username.
@@ -4515,12 +4040,6 @@ function saveRoleLocal(r){
 }
 
 function cloudLoadCfg(){
-  if(CLOUD_OFF){
-    CLOUD.url = CLOUD.key = CLOUD.token = CLOUD.refresh = "";
-    CLOUD.uid = CLOUD.email = CLOUD.name = "";
-    CLOUD.on = false;
-    return;
-  }
   try{
     CLOUD.url     = localStorage.getItem("cloudUrl")   || "";
     CLOUD.key     = localStorage.getItem("cloudKey")   || "";
@@ -4530,6 +4049,7 @@ function cloudLoadCfg(){
     CLOUD.email   = localStorage.getItem("cloudEmail") || "";
   }catch(e){}
   CLOUD.name = emailToUser(CLOUD.email);
+  // Never configured -> offer the default project URL, so all they paste is the key
   if(!CLOUD.url) CLOUD.url = DEFAULT_CLOUD_URL;
   CLOUD.on = !!(CLOUD.url && CLOUD.key && CLOUD.token && CLOUD.uid);
 }
@@ -4927,7 +4447,6 @@ function pushForget(endpoint){
 
 // Turn push on. Must be triggered by a user tap (browser rule).
 function pushEnable(){
-  if(CLOUD_OFF) return Promise.reject(new Error("nologin"));
   if(!pushSupported())  return Promise.reject(new Error("unsupported"));
   if(!CLOUD.on)         return Promise.reject(new Error("nologin"));
 
@@ -5023,8 +4542,6 @@ function pushDisable(){
 function paintCloudBtn(){
   var b = $("cloudBtn");
   if(!b) return;
-  if(CLOUD_OFF){ b.hidden = true; return; }
-  b.hidden = false;
   b.classList.toggle("on", CLOUD.on);
   b.title = CLOUD.on ? CLOUD.email : t("cTitle");
 }
@@ -5281,7 +4798,6 @@ function paintPush(){
 }
 
 function openCloud(){
-  if(CLOUD_OFF) return;
   $("cloudTitle").textContent = t("cTitle");
   $("cloudClose").textContent = t("offClose");
   cloudMsg = null;
@@ -7032,7 +6548,7 @@ $("imSave").onclick = function(){
 // ============================================================
 function applyStatic(){
   document.documentElement.lang = (lang === "zh" ? "zh" : "en");
-  document.title = lang === "zh" ? "百宝箱 · 拉曼大学" : "Pocket · UTAR";
+  document.title = lang === "zh" ? "我的百宝箱" : "Pocket";
   $("langBtn").textContent = lang === "zh" ? "EN" : "中";
 
   // The three mode buttons
@@ -7064,7 +6580,6 @@ function applyStatic(){
   $("roleHint").innerHTML     = t("roleHint");
   paintRole();
   paintRoleBtn();
-  paintHome();
 
   $("btnAddTx").textContent    = t("btnManual");
   $("btnAdd").hidden           = S.quiet;
@@ -7160,49 +6675,6 @@ $("langBtn").onclick = function(){
   if(pushState === "on") pushSync();
   if($("sheetEdit").classList.contains("on") && S.editing !== undefined) syncLead();
   if($("sheetImport").classList.contains("on")){ onImLead(); paintPrev(); }
-};
-
-$("homeLang").onclick = function(){ $("langBtn").click(); };
-$("homeCampus").onclick = function(){
-  sosCampus = sosCampus === "sl" ? "kpr" : "sl";
-  try { localStorage.setItem("clockSosCampus", sosCampus); } catch(e){}
-  paintHome();
-};
-$("homeBtn").onclick = goHome;
-$("homeGrid").onclick = function(e){
-  var b = e.target.closest(".homeTile");
-  if(!b) return;
-  if(b.dataset.id === "tt"){ openTt(); return; }
-  S.micro = b.dataset.id;
-  $("homeStub").classList.add("on");
-  paintHome();
-};
-$("stubBack").onclick = function(){
-  S.micro = "home";
-  $("homeStub").classList.remove("on");
-  paintHome();
-};
-$("stubStage").onclick = function(e){
-  var btn = e.target.closest("[data-act]");
-  if(!btn) return;
-  var act = btn.dataset.act;
-  if(act === "tog"){
-    var g = btn.parentNode.querySelectorAll("[data-act='tog']");
-    for(var i=0;i<g.length;i++) g[i].classList.remove("on");
-    btn.classList.add("on");
-    return;
-  }
-  if(act === "check"){
-    btn.classList.toggle("on");
-    return;
-  }
-  if(act === "campus"){
-    sosCampus = btn.dataset.campus === "sl" ? "sl" : "kpr";
-    try { localStorage.setItem("clockSosCampus", sosCampus); } catch(e){}
-    paintHome();
-    return;
-  }
-  toast(t("shellToast"));
 };
 
 // ---------- Startup ----------
