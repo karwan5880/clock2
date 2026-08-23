@@ -839,6 +839,7 @@ body.at-home .actionbar{display:none !important}
 .homeTile[data-id="bus"] .icon{background:linear-gradient(180deg,#67e8f9,#0891b2)}
 .homeTile[data-id="map"] .icon{background:linear-gradient(180deg,#86efac,#15803d)}
 .homeTile[data-id="dorm"] .icon{background:linear-gradient(180deg,#fdb4ff,#c026d3)}
+.homeTile[data-id="sos"] .icon{background:linear-gradient(180deg,#ff7b7b,#dc2626)}
 .homeTile[data-id="food"] .icon{background:linear-gradient(180deg,#ff9a62,#e25a28)}
 .homeTile[data-id="ride"] .icon{background:linear-gradient(180deg,#7fd4ea,#2a9fc4)}
 .homeTile[data-id="wall"] .icon{background:linear-gradient(180deg,#f08cc4,#d45a9a)}
@@ -860,11 +861,16 @@ body.at-home .actionbar{display:none !important}
 .shellRow{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .shellMain{min-width:0;flex:1}
 .shellBtns{display:flex;flex-wrap:wrap;gap:6px;flex:none}
+#stubStage > .shellBtns{margin:0 0 10px}
 .shellBtns button,.shellFab{
   appearance:none;border:0;border-radius:99px;padding:7px 11px;font:inherit;
   font-size:12px;font-weight:800;cursor:pointer;background:var(--bg);color:var(--tx)}
 .shellBtns button.on{background:var(--ac);color:var(--onac)}
 .shellFab{width:100%;margin:10px 0 0;padding:12px;background:var(--ac);color:var(--onac)}
+a.shellCall{
+  flex:none;display:inline-block;padding:7px 14px;border-radius:99px;
+  background:#dc2626;color:#fff;font-size:12px;font-weight:800;text-decoration:none}
+a.shellCall:active{opacity:.8}
 .idCard{text-align:center;padding:22px 16px;background:linear-gradient(165deg,#1e3a5f,#0f2744);color:#fff}
 .idCard .idNo{font-size:22px;font-weight:800;letter-spacing:.12em;margin:8px 0 4px}
 .idCard .idName{font-size:15px;opacity:.9}
@@ -1627,11 +1633,27 @@ zh: {
   tileMap    :"地图",
   tileDorm   :"宿舍",
   tileCash   :"记账",
+  tileSos    :"热线",
   tileSoon   :"还没做",
   stubLead   :"这一格还是空的。做好了会从这里进去，不会再开一个 app。",
   stubBack   :"‹ 首页",
   shellPreview:"预览 · 按钮能点，不会真的存",
   shellToast :"预览而已，还没接上",
+  sosHint    :"官方号码 · 点了会真的打出去",
+  sos999     :"全国急救",
+  sosDss     :"安全处 DSS",
+  sosDsa     :"学生事务 DSA",
+  sosHospUtar:"UTAR 医院急诊",
+  sosHospMc  :"UTAR 医院总机",
+  sosHospTown:"金宝医院",
+  sosHospKj  :"加影医院",
+  sosFire    :"消防",
+  sosPolice  :"警局",
+  sosHours   :"办公时间",
+  sos24      :"24 小时",
+  sosNote    :"号码来自 UTAR 安全处 / 医院公开页。若改号，以官方为准。救命先打 999。",
+  sosKpr     :"金宝",
+  sosSl      :"双溪龙",
 
   ringNow :"时间到了",
   snooze  : function(n){ return "贪睡 "+n+" 分钟"; },
@@ -2121,11 +2143,27 @@ en: {
   tileMap    :"Map",
   tileDorm   :"Hostel",
   tileCash   :"Wallet",
+  tileSos    :"Hotline",
   tileSoon   :"Not yet",
   stubLead   :"This slot is empty on purpose. When it exists, it opens from here — not a second app.",
   stubBack   :"‹ Home",
   shellPreview:"Preview · taps work, nothing is saved",
   shellToast :"Preview only — not wired up yet",
+  sosHint    :"Official numbers · tap to call for real",
+  sos999     :"National emergency",
+  sosDss     :"Safety & Security (DSS)",
+  sosDsa     :"Student Affairs (DSA)",
+  sosHospUtar:"Hospital UTAR A&E",
+  sosHospMc  :"Hospital UTAR switchboard",
+  sosHospTown:"Hospital Kampar",
+  sosHospKj  :"Hospital Kajang",
+  sosFire    :"Fire",
+  sosPolice  :"Police",
+  sosHours   :"Office hours",
+  sos24      :"24 hours",
+  sosNote    :"From UTAR DSS / Hospital UTAR public pages. If a line changes, the official site wins. For a life emergency, call 999 first.",
+  sosKpr     :"Kampar",
+  sosSl      :"Sungai Long",
 
   ringNow :"Time's up",
   snooze  : function(n){ return "Snooze "+n+" min"; },
@@ -2357,7 +2395,14 @@ var S = {
   micro:"home"       // home | tt | stub id
 };
 
+var sosCampus = "kpr";
+try {
+  var sc = localStorage.getItem("clockSosCampus");
+  if(sc === "sl" || sc === "kpr") sosCampus = sc;
+} catch(e){}
+
 var MICROS = [
+  { id:"sos",   live:true,  t:"tileSos" },
   { id:"today", live:false, t:"tileToday" },
   { id:"tt",    live:true,  t:"tileTt" },
   { id:"att",   live:false, t:"tileAtt" },
@@ -2377,6 +2422,7 @@ var MICROS = [
 function tileGlyph(id){
   var s = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
   var d = {
+    sos:'<path d="M7 3.8c.6-.6 1.6-.6 2.2 0l1.2 1.2c.6.6.6 1.6 0 2.2L9.2 8.4c.9 1.7 2.2 3 3.9 3.9l1.2-1.2c.6-.6 1.6-.6 2.2 0l1.2 1.2c.6.6.6 1.6 0 2.2l-.7.7c-.7.7-1.8 1-2.8.6C10.6 14.1 5.9 9.4 4.2 5.8c-.4-1-.1-2.1.6-2.8z"/>',
     today:'<circle cx="12" cy="12" r="8.5"/><path d="M12 8v5l3 2"/>',
     tt:'<rect x="3.5" y="5" width="17" height="15" rx="2.4"/><path d="M8 3.5v4M16 3.5v4M3.5 10h17"/><path d="M8 14h2.2M12 14h2.2M16 14h.2M8 17.2h2.2M12 17.2h2.2"/>',
     att:'<circle cx="10" cy="8" r="3.1"/><path d="M4.4 19.2c.5-3.3 2.8-5 5.6-5s5.1 1.7 5.6 5"/><path d="M15 11.2l2 2 4.2-4.2"/>',
@@ -2407,8 +2453,47 @@ function shellBtns(act, labels, on){
   return html + "</div>";
 }
 
+function telHref(display){
+  var n = String(display).replace(/[^\d]/g, "");
+  if(n === "999" || n === "112") return "tel:" + n;
+  if(n.charAt(0) === "0") n = "60" + n.slice(1);
+  return "tel:+" + n;
+}
+function callBtn(display){
+  return '<a class="shellCall" href="'+telHref(display)+'">'+(lang === "zh" ? "拨打" : "Call")+"</a>";
+}
+
 function shellHtml(id){
   var zh = lang === "zh";
+  if(id === "sos"){
+    var kpr = sosCampus === "kpr";
+    var rows = kpr ? [
+      [t("sos999"), "999", t("sos24")],
+      [t("sosDss"), "016-2100 863", t("sos24")],
+      [t("sosDsa"), "016-2100 864", t("sosHours")],
+      [t("sosHospUtar"), "05-618 1300", t("sos24")],
+      [t("sosHospMc"), "05-618 1333", ""],
+      [t("sosHospTown"), "05-465 3333", t("sos24")],
+      [t("sosFire"), "05-466 4444", ""]
+    ] : [
+      [t("sos999"), "999", t("sos24")],
+      [t("sosDss"), "016-2100 861", t("sos24")],
+      [t("sosDsa"), "016-2100 862", t("sosHours")],
+      [t("sosHospKj"), "03-8736 3333", t("sos24")],
+      [t("sosFire"), "03-8736 4444", ""],
+      [t("sosPolice"), "03-8911 4239", ""]
+    ];
+    var html = '<div class="shellBtns">'+
+      '<button type="button" data-act="campus" data-campus="kpr"'+(kpr?' class="on"':'')+">"+t("sosKpr")+"</button>"+
+      '<button type="button" data-act="campus" data-campus="sl"'+(kpr?'':' class="on"')+">"+t("sosSl")+"</button>"+
+      "</div>";
+    for(var i=0;i<rows.length;i++){
+      var r = rows[i];
+      html += shellRow(r[0], r[1], r[2], callBtn(r[1]));
+    }
+    html += '<p class="shellS">'+t("sosNote")+"</p>";
+    return html;
+  }
   if(id === "today") return (
     shellRow(zh?"下一堂":"Next", zh?"微积分 · KB208":"Calculus · KB208", "10:00 – 11:50",
       shellBtns("demo", [zh?"导航":"Map", zh?"点名":"Attend"], -1)) +
@@ -2530,7 +2615,7 @@ function paintHome(){
   if(stubOn){
     var cur = MICROS.filter(function(x){ return x.id === S.micro; })[0];
     if(cur) $("stubTitle").textContent = t(cur.t);
-    $("stubHint").textContent = t("shellPreview");
+    $("stubHint").textContent = (S.micro === "sos") ? t("sosHint") : t("shellPreview");
     $("stubStage").innerHTML = shellHtml(S.micro);
   }
 }
@@ -7077,6 +7162,12 @@ $("stubStage").onclick = function(e){
   }
   if(act === "check"){
     btn.classList.toggle("on");
+    return;
+  }
+  if(act === "campus"){
+    sosCampus = btn.dataset.campus === "sl" ? "sl" : "kpr";
+    try { localStorage.setItem("clockSosCampus", sosCampus); } catch(e){}
+    paintHome();
     return;
   }
   toast(t("shellToast"));

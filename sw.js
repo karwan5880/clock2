@@ -2,7 +2,7 @@
 //
 // Strategy: serve from cache first (fast, works offline), fetch a fresh copy in
 // the background. The next open shows the new version.
-const CACHE = "baobaoxiang-vc73013a7";
+const CACHE = "baobaoxiang-v1f2f6a88";
 const FILES = ["./", "./index.html", "./manifest.json",
                "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png"];
 
