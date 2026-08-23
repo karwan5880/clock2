@@ -816,6 +816,16 @@ body.at-home .actionbar{display:none !important}
   background:color-mix(in srgb, #0b255f 10%, transparent);color:var(--tx2);
   font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .homeCampus:active{opacity:.7}
+.homeNow{
+  display:none;width:100%;max-width:400px;margin:0 auto 18px;padding:12px 14px;
+  border:0;border-radius:16px;background:var(--card);color:var(--tx);
+  text-align:left;font:inherit;cursor:pointer;
+  box-shadow:0 8px 24px -18px var(--shadow)}
+.homeNow.on{display:block}
+.homeNow .k{font-size:11px;font-weight:700;color:var(--tx3);margin:0 0 2px}
+.homeNow .t{font-size:16px;font-weight:800;margin:0}
+.homeNow .s{font-size:13px;color:var(--tx2);margin:4px 0 0}
+.homeNow:active{opacity:.7}
 
 .homeGrid{
   display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));
@@ -858,7 +868,7 @@ body.at-home .actionbar{display:none !important}
 
 #homeStub{display:none;max-width:400px;margin:0 auto;text-align:left}
 #homeStub.on{display:block}
-#pocketHome.in-app .homeLid,#pocketHome.in-app .homeGrid{display:none}
+#pocketHome.in-app .homeLid,#pocketHome.in-app .homeGrid,#pocketHome.in-app .homeNow{display:none}
 .stubBar{display:flex;align-items:center;gap:10px;margin:0 0 12px}
 #stubBack{flex:none;padding:8px 14px;border:0;border-radius:99px;background:var(--card);
   color:var(--tx);font:inherit;font-weight:800;cursor:pointer;box-shadow:0 1px 0 var(--line)}
@@ -922,6 +932,7 @@ if ("serviceWorker" in navigator)
     <p class="homeEye" id="homeEye"></p>
     <button type="button" class="homeCampus" id="homeCampus"></button>
   </header>
+  <button type="button" class="homeNow" id="homeNow"></button>
   <div class="homeGrid" id="homeGrid"></div>
   <div id="homeStub">
     <div class="stubBar">
@@ -1662,6 +1673,14 @@ zh: {
   shellPreview:"预览 · 按钮能点，不会真的存",
   shellToast :"预览而已，还没接上",
   sosHint    :"官方号码 · 点了会真的打出去",
+  todayHint  :"来自你的课表 · 这里不再另存一份",
+  todayNext  :"下一堂",
+  todayNow   :"正在上",
+  todayLater :"待会",
+  todayDone  :"上完了",
+  todayFree  :"今天没有课",
+  todayEmpty :"先导入课表",
+  todayOpenTt:"打开课表",
   sos999     :"全国急救",
   sosDss     :"安全处 DSS",
   sosDsa     :"学生事务 DSA",
@@ -2174,6 +2193,14 @@ en: {
   shellPreview:"Preview · taps work, nothing is saved",
   shellToast :"Preview only — not wired up yet",
   sosHint    :"Official numbers · tap to call for real",
+  todayHint  :"From your timetable · nothing extra is saved",
+  todayNext  :"Next",
+  todayNow   :"Now",
+  todayLater :"Later",
+  todayDone  :"Done",
+  todayFree  :"No class today",
+  todayEmpty :"Import a timetable first",
+  todayOpenTt:"Open timetable",
   sos999     :"National emergency",
   sosDss     :"Safety & Security (DSS)",
   sosDsa     :"Student Affairs (DSA)",
@@ -2427,7 +2454,7 @@ try {
 
 var MICROS = [
   { id:"sos",   live:true,  t:"tileSos" },
-  { id:"today", live:false, t:"tileToday" },
+  { id:"today", live:true,  t:"tileToday" },
   { id:"tt",    live:true,  t:"tileTt" },
   { id:"att",   live:false, t:"tileAtt" },
   { id:"due",   live:false, t:"tileDue" },
@@ -2487,6 +2514,74 @@ function callBtn(display){
   return '<a class="shellCall" href="'+telHref(display)+'">'+(lang === "zh" ? "拨打" : "Call")+"</a>";
 }
 
+function todayDayI(){ return idxOf(nowDev()); }
+function classEndM(a){
+  var s = a.hour * 60 + a.minute;
+  return a.dur ? s + a.dur : s + 50;
+}
+function classSpan(a){
+  var start = pad(a.hour) + ":" + pad(a.minute);
+  var end = endText(a);
+  return end ? start + " – " + end : start;
+}
+function todayClasses(){
+  var dayI = todayDayI();
+  return shownOnDay(dayI, weekOf(dayI)).filter(function(a){
+    return !isSkipped(a, dayI);
+  });
+}
+function todayHtml(){
+  var dayI = todayDayI();
+  var open = '<button type="button" class="shellFab" data-act="tt">'+t("todayOpenTt")+"</button>";
+  if(!mine().length)
+    return shellRow("", t("todayEmpty"), "") + open;
+  var list = todayClasses();
+  if(!list.length)
+    return shellRow("", t("todayFree"), "") + open;
+  var nowM = nowDev().getHours() * 60 + nowDev().getMinutes();
+  var html = "", seenNext = false, i, a, s, e, kind, room, sub;
+  for(i = 0; i < list.length; i++){
+    a = list[i];
+    s = a.hour * 60 + a.minute;
+    e = classEndM(a);
+    if(nowM >= e) kind = "todayDone";
+    else if(nowM >= s) kind = "todayNow";
+    else if(!seenNext){ kind = "todayNext"; seenNext = true; }
+    else kind = "todayLater";
+    room = roomOf(a, dayI);
+    sub = classSpan(a) + (room ? " · " + room : "");
+    html += shellRow(t(kind), esc(a.label || ""), esc(sub));
+  }
+  return html + open;
+}
+function paintHomeNow(){
+  var el = $("homeNow");
+  if(!el) return;
+  var dayI = todayDayI();
+  var list = todayClasses();
+  var nowM = nowDev().getHours() * 60 + nowDev().getMinutes();
+  var current = null, next = null, i, a, s, e;
+  for(i = 0; i < list.length; i++){
+    a = list[i];
+    s = a.hour * 60 + a.minute;
+    e = classEndM(a);
+    if(nowM >= s && nowM < e){ current = a; break; }
+    if(nowM < s && !next) next = a;
+  }
+  var pick = current || next;
+  if(!pick){
+    el.classList.remove("on");
+    if(el.innerHTML) el.innerHTML = "";
+    return;
+  }
+  var room = roomOf(pick, dayI);
+  var sub = classSpan(pick) + (room ? " · " + room : "");
+  var html = '<p class="k">'+esc(t(current ? "todayNow" : "todayNext"))+
+    '</p><p class="t">'+esc(pick.label || "")+'</p><p class="s">'+esc(sub)+"</p>";
+  el.classList.add("on");
+  if(el.innerHTML !== html) el.innerHTML = html;
+}
+
 function shellHtml(id){
   var zh = lang === "zh";
   if(id === "sos"){
@@ -2518,12 +2613,7 @@ function shellHtml(id){
     html += '<p class="shellS">'+t("sosNote")+"</p>";
     return html;
   }
-  if(id === "today") return (
-    shellRow(zh?"下一堂":"Next", zh?"微积分 · KB208":"Calculus · KB208", "10:00 – 11:50",
-      shellBtns("demo", [zh?"导航":"Map", zh?"点名":"Attend"], -1)) +
-    shellRow(zh?"作业":"Due", zh?"实验报告 · 明天 23:59":"Lab report · tomorrow 23:59") +
-    shellRow(zh?"出勤":"Attendance", zh?"今天 2 堂未点":"2 classes unmarked today")
-  );
+  if(id === "today") return todayHtml();
   if(id === "att") return (
     shellRow("08:00", zh?"微积分":"Calculus", "KB208",
       shellBtns("tog", [zh?"到":"In", zh?"缺":"Out", zh?"迟":"Late"], 0)) +
@@ -2642,9 +2732,11 @@ function paintHome(){
   if(stubOn){
     var cur = MICROS.filter(function(x){ return x.id === S.micro; })[0];
     if(cur) $("stubTitle").textContent = t(cur.t);
-    $("stubHint").textContent = (S.micro === "sos") ? t("sosHint") : t("shellPreview");
+    $("stubHint").textContent = S.micro === "sos" ? t("sosHint")
+      : S.micro === "today" ? t("todayHint") : t("shellPreview");
     $("stubStage").innerHTML = shellHtml(S.micro);
   }
+  paintHomeNow();
 }
 
 // ============================================================
@@ -3126,6 +3218,7 @@ function tick(){
     nb.classList.toggle("warn2", !!st.ap || !st.ok);
   } else nb.hidden = true;
   $("dot").className = "dot " + (S.online ? "on" : "off");
+  paintHomeNow();
 }
 
 // ---------- Fetching data ----------
@@ -7168,6 +7261,11 @@ $("homeCampus").onclick = function(){
   try { localStorage.setItem("clockSosCampus", sosCampus); } catch(e){}
   paintHome();
 };
+$("homeNow").onclick = function(){
+  S.micro = "today";
+  $("homeStub").classList.add("on");
+  paintHome();
+};
 $("homeBtn").onclick = goHome;
 $("homeGrid").onclick = function(e){
   var b = e.target.closest(".homeTile");
@@ -7202,6 +7300,7 @@ $("stubStage").onclick = function(e){
     paintHome();
     return;
   }
+  if(act === "tt"){ openTt(); return; }
   toast(t("shellToast"));
 };
 
