@@ -6,11 +6,11 @@
 <meta name="theme-color" content="#00a0e9">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Pocket">
+<meta name="apple-mobile-web-app-title" content="Pocket · UTAR">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png" id="touchIcon">
-<title>Pocket · 百宝箱</title>
+<title>Pocket · UTAR</title>
 <style>
 :root{
   /* Doraemon: body blue #00a0e9, white belly, nose/collar red #e60012, bell yellow #ffd93b */
@@ -802,8 +802,20 @@ body.at-home .actionbar{display:none !important}
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .homeLang:active{opacity:.7}
 
-.homeLid{text-align:center;margin:10px 0 28px}
+.homeLid{text-align:center;margin:8px 0 26px}
+.homeMark{
+  display:inline-flex;align-items:center;gap:8px;margin:0 0 12px;padding:5px 12px 5px 5px;
+  border-radius:999px;border:1px solid color-mix(in srgb, #d4a017 55%, transparent);
+  background:linear-gradient(180deg,#163a86,#0b255f);color:#f3d06a;
+  box-shadow:0 10px 22px -14px #0b255f;vertical-align:top}
+.homeMark svg{width:22px;height:22px;display:block;flex:none}
+.homeMark b{font-size:12px;font-weight:800;letter-spacing:.16em}
 .homeEye{margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--tx)}
+.homeCampus{
+  appearance:none;margin:8px 0 0;padding:4px 10px;border:0;border-radius:99px;
+  background:color-mix(in srgb, #0b255f 10%, transparent);color:var(--tx2);
+  font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.homeCampus:active{opacity:.7}
 
 .homeGrid{
   display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));
@@ -900,7 +912,15 @@ if ("serviceWorker" in navigator)
 <div id="pocketHome">
   <div class="homeTop"><button type="button" class="homeLang" id="homeLang">EN</button></div>
   <header class="homeLid">
+    <div class="homeMark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2.4l7.2 2.4v6.1c0 4.7-3.1 8.1-7.2 10.1C7.9 19 4.8 15.6 4.8 10.9V4.8z"/>
+        <path d="M9.2 10.2c0-1.7 1.2-2.8 2.8-2.8s2.8 1.1 2.8 2.8v4.4"/>
+      </svg>
+      <b>UTAR</b>
+    </div>
     <p class="homeEye" id="homeEye"></p>
+    <button type="button" class="homeCampus" id="homeCampus"></button>
   </header>
   <div class="homeGrid" id="homeGrid"></div>
   <div id="homeStub">
@@ -1610,6 +1630,8 @@ zh: {
   tRoleSaved   :"身份改好了",
 
   homeEye    :"我的百宝箱",
+  homeCampusKpr:"拉曼大学 · 金宝",
+  homeCampusSl :"拉曼大学 · 双溪龙",
   homeTitle  :"今天要用哪一个？",
   homeSub    :"课表已经能用。其它格子先占位子——空着比假装做好了更诚实。",
   homeBack   :"百宝箱",
@@ -2120,6 +2142,8 @@ en: {
   tRoleSaved   :"Role updated",
 
   homeEye    :"Pocket",
+  homeCampusKpr:"UTAR · Kampar",
+  homeCampusSl :"UTAR · Sungai Long",
   homeTitle  :"What do you need?",
   homeSub    :"Timetable works. The other slots are saved for later — empty is better than fake.",
   homeBack   :"Pocket",
@@ -2527,7 +2551,7 @@ function shellHtml(id){
     '<button type="button" class="shellFab" data-act="demo">CGPA 3.47 · '+(zh?"假如":"what-if")+"</button>"
   );
   if(id === "id") return (
-    '<div class="idCard"><p class="shellK">UTAR</p><p class="idNo">240XXXX</p><p class="idName">'+
+    '<div class="idCard"><p class="shellK">Universiti Tunku Abdul Rahman</p><p class="idNo">240XXXX</p><p class="idName">'+
     (zh?"预览姓名":"Preview name")+'</p><p class="shellS">'+
     (zh?"只存在这台手机":"Stays on this phone")+"</p></div>" +
     '<button type="button" class="shellFab" data-act="demo">'+(zh?"换照片 / 改资料":"Photo / edit")+"</button>"
@@ -2595,6 +2619,9 @@ function paintHome(){
   var eye = $("homeEye");
   if(!eye) return;
   eye.textContent = t("homeEye");
+  var camp = $("homeCampus");
+  camp.textContent = t(sosCampus === "sl" ? "homeCampusSl" : "homeCampusKpr");
+  camp.setAttribute("aria-label", camp.textContent);
   $("homeLang").textContent = (lang === "zh" ? "EN" : "中");
   $("stubBack").textContent = t("stubBack");
   var g = $("homeGrid");
@@ -7005,7 +7032,7 @@ $("imSave").onclick = function(){
 // ============================================================
 function applyStatic(){
   document.documentElement.lang = (lang === "zh" ? "zh" : "en");
-  document.title = lang === "zh" ? "我的百宝箱" : "Pocket";
+  document.title = lang === "zh" ? "百宝箱 · 拉曼大学" : "Pocket · UTAR";
   $("langBtn").textContent = lang === "zh" ? "EN" : "中";
 
   // The three mode buttons
@@ -7136,6 +7163,11 @@ $("langBtn").onclick = function(){
 };
 
 $("homeLang").onclick = function(){ $("langBtn").click(); };
+$("homeCampus").onclick = function(){
+  sosCampus = sosCampus === "sl" ? "kpr" : "sl";
+  try { localStorage.setItem("clockSosCampus", sosCampus); } catch(e){}
+  paintHome();
+};
 $("homeBtn").onclick = goHome;
 $("homeGrid").onclick = function(e){
   var b = e.target.closest(".homeTile");
