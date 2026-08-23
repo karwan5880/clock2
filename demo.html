@@ -753,6 +753,22 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac)}
 .prev .pn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prev .err{color:var(--bad)}
 
+.holihead{display:flex;align-items:center;gap:10px;margin:4px 0 8px;
+  font-size:12.5px;color:var(--tx2)}
+.holihead .lnk{margin-left:auto;background:none;border:0;padding:0;cursor:pointer;
+  font-family:inherit;font-size:12.5px;color:var(--bad);text-decoration:underline}
+.btn-s.wide{width:100%;margin-bottom:14px}
+.prev .pdel{background:none;border:0;padding:0 2px;cursor:pointer;font-family:inherit;
+  font-size:15px;line-height:1;color:var(--tx2)}
+.prev .pdel:active{color:var(--bad)}
+.prev .empty{padding:14px;text-align:center;color:var(--tx2);font-size:12.5px}
+/* The "Holiday" marker on a calendar cell */
+.holitag{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:99px;
+  background:var(--ac2);color:var(--onac);font-size:10.5px;font-weight:700;
+  vertical-align:middle}
+.daycard.holi>.dh,.ttday.holi>.ttdh{opacity:.85}
+.mcell.holi .dn{color:var(--ac2);font-weight:800}
+
 .toast{position:fixed;left:50%;bottom:110px;transform:translate(-50%,20px);
   background:var(--toastbg);border:1px solid var(--toastbg);color:var(--toasttx);padding:12px 22px;
   border-radius:99px;font-size:14px;z-index:99;opacity:0;pointer-events:none;
@@ -784,6 +800,7 @@ if ("serviceWorker" in navigator)
     <button class="wkbadge" id="wkBadge" hidden></button>
     <button class="rolebtn" id="roleBtn"></button>
     <button class="rolebtn" id="quietBtn"></button>
+    <button class="rolebtn" id="holiBtn"></button>
   </div>
 
   <div class="modes" id="modes">
@@ -1101,6 +1118,53 @@ if ("serviceWorker" in navigator)
   </div>
 </div>
 
+<!-- Public holidays -->
+<div class="sheet" id="sheetHoli">
+  <div class="grip"></div>
+  <h3 id="holiTitle"></h3>
+
+  <div class="hint" id="holiHelp"></div>
+
+  <label class="f"><span id="lbHoliOff"></span>
+    <select id="holiOff">
+      <option value="1"></option>
+      <option value="0"></option>
+    </select>
+  </label>
+
+  <div class="row">
+    <label class="f"><span id="lbHoliRem"></span>
+      <select id="holiRem">
+        <option value="-1"></option>
+        <option value="0"></option>
+        <option value="1"></option>
+        <option value="2"></option>
+        <option value="3"></option>
+      </select>
+    </label>
+    <label class="f"><span id="lbHoliTime"></span>
+      <input type="time" id="holiTime" value="20:00">
+    </label>
+  </div>
+
+  <div class="holihead"><span id="holiCount"></span>
+    <button class="lnk" id="holiClear"></button>
+  </div>
+  <div class="prev" id="holiList"></div>
+
+  <button class="btn-s wide" id="holiUtar"></button>
+
+  <label class="f"><span id="lbHoliPaste"></span>
+    <textarea id="holiPaste" rows="4"></textarea>
+  </label>
+  <div class="leadhint" id="holiPrev"></div>
+
+  <div class="act">
+    <button class="btn-s" id="holiCancel"></button>
+    <button class="btn-p" id="holiSave"></button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1204,7 +1268,41 @@ zh: {
   cSaveFail :"存不上去，等一下会再试",
   cOffline  :"连不到云端，先用这支手机上的资料",
   cUsingCache:"连不上云端，先显示上次拿到的资料",
-  vDay :"日", vWeek :"週", vMonth :"月", vTable :"课表",
+  vList:"清单", vDay :"日", vWeek :"週", vMonth :"月", vTable :"课表",
+
+  // ---- Public holidays ----
+  holiBtn     :"假期",
+  holiTitle   :"公共假期",
+  holiHelp    :"放了假期名单之后，那几天的<b>课自动停课</b>（普通闹钟照响），" +
+               "还可以叫它提前提醒你。<br>照片跟 PDF 读不了，" +
+               "但 UTAR 2026 那份已经内建了 —— 按一下就有。",
+  holiName    :"假期",
+  holiToday   :"今天放假",
+  holiTomorrow:"明天放假",
+  holiInDays  : function(n){ return n + " 天后放假"; },
+  holiTag     :"放假",
+  lbHoliOff   :"假期那天的课",
+  holiOffOn   :"自动停课",
+  holiOffNo   :"照常上课",
+  lbHoliRem   :"提前多久提醒",
+  hrNone      :"不提醒",
+  hrD0        :"当天",
+  hrD1        :"前一天",
+  hrD2        :"前两天",
+  hrD3        :"前三天",
+  lbHoliTime  :"几点提醒",
+  holiUtar    :"汇入 UTAR 2026",
+  holiPastePh :"01/01/2026 New Year\n17/02/2026 Chinese New Year",
+  lbHoliPaste :"或者自己贴上（一行一个）",
+  holiClear   :"清空名单",
+  holiNone    :"名单还是空的",
+  holiCount   : function(n){ return "名单里有 " + n + " 个假期"; },
+  holiGot     : function(n){ return "加了 " + n + " 个假期"; },
+  holiBad     : function(n){ return n + " 行看不懂，已经跳过"; },
+  holiNothing :"一个都读不出来 —— 每一行要有日期，例如 01/01/2026 New Year",
+  holiCleared :"名单清空了",
+  holiSaved   :"假期设定存好了",
+  holiOnDay   : function(n){ return "这天放假 · " + n + "，改不了"; },
   ttNone :"这一週没有课",
   ttSpan : function(a, b){ return a + " ~ " + b; },
   monthName : function(y, m){ return y + " 年 " + m + " 月"; },
@@ -1630,7 +1728,42 @@ en: {
   cSaveFail :"Couldn't save; will retry",
   cOffline  :"Can't reach the cloud — using this phone's copy",
   cUsingCache:"Can't reach the cloud - showing the last synced copy",
-  vDay :"Day", vWeek :"Week", vMonth :"Month", vTable :"Timetable",
+  vList:"List", vDay :"Day", vWeek :"Week", vMonth :"Month", vTable :"Timetable",
+
+  // ---- Public holidays ----
+  holiBtn     :"Holidays",
+  holiTitle   :"Public holidays",
+  holiHelp    :"With a holiday list loaded, classes on those days are " +
+               "<b>cancelled automatically</b> (plain alarms still ring), and " +
+               "it can warn you beforehand.<br>Photos and PDFs cannot be read, " +
+               "but UTAR 2026 is built in — one tap.",
+  holiName    :"Holiday",
+  holiToday   :"Holiday today",
+  holiTomorrow:"Holiday tomorrow",
+  holiInDays  : function(n){ return "Holiday in " + n + " days"; },
+  holiTag     :"Holiday",
+  lbHoliOff   :"Classes on a holiday",
+  holiOffOn   :"Cancel them",
+  holiOffNo   :"Keep them",
+  lbHoliRem   :"Warn me",
+  hrNone      :"Never",
+  hrD0        :"Same day",
+  hrD1        :"1 day before",
+  hrD2        :"2 days before",
+  hrD3        :"3 days before",
+  lbHoliTime  :"At what time",
+  holiUtar    :"Import UTAR 2026",
+  holiPastePh :"01/01/2026 New Year\n17/02/2026 Chinese New Year",
+  lbHoliPaste :"Or paste your own (one per line)",
+  holiClear   :"Clear list",
+  holiNone    :"List is still empty",
+  holiCount   : function(n){ return n + " holidays in the list"; },
+  holiGot     : function(n){ return "Added " + n + " holidays"; },
+  holiBad     : function(n){ return n + " lines not understood, skipped"; },
+  holiNothing :"Could not read any — each line needs a date, e.g. 01/01/2026 New Year",
+  holiCleared :"List cleared",
+  holiSaved   :"Holiday settings saved",
+  holiOnDay   : function(n){ return "Holiday · " + n + " — this one cannot be changed"; },
   ttNone :"No classes this week",
   ttSpan : function(a, b){ return a + " ~ " + b; },
   monthName : function(y, m){
@@ -2021,7 +2154,9 @@ var S = {
   quiet:false,       // timetable only: the timetable still shows, but nothing rings
   viewBefore:null,   // which view was open before "timetable only"; restored when it is switched off
   multi:{ ed:false, im:false },   // minutes early: allow several? (off by default)
-  view:"week",       // how the calendar looks: day / week / month
+  // How the calendar looks. The two mode families remember separately:
+  // p = normal, c = student / teacher
+  view:{ p:"list", c:"week" },
   cursor:null,       // which day is being viewed (used by day/month; null = today)
   offset:0,          // device time - phone time
   editing:null, days:0, chan:3, online:false,
@@ -2031,6 +2166,10 @@ var S = {
   rooms:[], roomHow:"w2",    // temporary venue changes / which option the venue sheet has selected
   leads:[0], imLeads:[10],   // minutes early (there can be several)
   sem:{ enabled:false, start:"2026-01-01", weeks:14, weekStart:0, offOutside:true },
+  // Public holidays. list = [{date:"2026-02-17", name:"Chinese New Year"}]
+  //   off    = classes on a holiday are cancelled automatically
+  //   remind = how many days ahead to warn (-1 = never)
+  holi:{ list:[], off:true, remind:1, hour:20, minute:0 },
   selWeek:null       // which week the calendar is showing (null = follow today)
 };
 
@@ -2107,10 +2246,17 @@ var everOnline = false;
 //   had been scrambled. The more realistic fake data looks, the more it gets taken for real.
 //   To see a sample, the upload sheet has a "📄 See a sample" button.
 // The empty starting state. A fresh cloud account uses this too.
+// Holidays start empty, but the switches are already set, so importing a
+// list takes effect straight away.
+function demoHoliDefault(){
+  return { list: [], off: true, remind: 1, hour: 20, minute: 0 };
+}
+
 function demoSeedEmpty(){
   return { seedVer: DEMO_SEED_VER, nextId: 1, mode:"normal", roles: 0, quiet: false,
            rooms: [],
            sem: { enabled:false, start:"2026-01-01", weeks:14, weekStart:0, offOutside:true },
+           holi: demoHoliDefault(), holiFired: "",
            ringing:false, ringLabel:"", ringCh:0, firedAt:-1,
            skips: [], alarms: [] };
 }
@@ -2142,6 +2288,7 @@ function enterDemo(){
   demoLoad();
   if(!DB.skips) DB.skips = [];
   if(!DB.rooms) DB.rooms = [];
+  if(!DB.holi)  DB.holi  = demoHoliDefault();   // older saves lack this
   // Give demo "once only" events today's date, or they do not appear on the calendar
   DB.alarms.forEach(function(a){ if(a.days === 0 && !a.date) a.date = todayISO(); });
   $("demoBar").hidden = false;
@@ -2156,7 +2303,7 @@ function enterDemo(){
     DB.alarms.forEach(function(a){ if(a.days === 0 && !a.date) a.date = todayISO(); });
     demoSave();
     S.selWeek = null;
-    pull().then(pullSem).then(pullSkips).then(pullAlarms).then(pullRooms);
+    pull().then(pullSem).then(pullSkips).then(pullAlarms).then(pullRooms).then(pullHoli);
     toast(t("demoResetOk"));
   };
   $("demoRetry").onclick = function(){ location.reload(); };
@@ -2185,7 +2332,8 @@ function demoTick(){
   // Catch up on missed minutes first (oldest first), then handle the current minute
   for(var k = back; k >= 1; k--)
     if(demoFireAt(new Date(now.getTime() - k * 60000))) return;
-  demoFireAt(now);
+  if(demoFireAt(now)) return;
+  demoHoliFire(now);
 }
 
 // Is anything due this minute? If so ring it and return true.
@@ -2220,6 +2368,10 @@ function demoFireAt(now){
       // runsOn() does it: a class that normally runs is cancelled, and one that
       // normally does not (a make-up class) is held that day and only that day.
       if((a.defOn !== false) ? listed : !listed) continue;
+      // Public holiday -> no classes that day. Classes only (owner is
+      // student / teacher); a plain alarm still rings, because waking up
+      // still matters on a holiday.
+      if(demoHoliOn(iso) && (a.owner || 0) !== 0) continue;
       var wk = weekOf(ci);
       if(DB.sem.enabled){
         if(DB.sem.offOutside && (wk < 1 || wk > DB.sem.weeks)) continue;
@@ -2239,6 +2391,51 @@ function demoFireAt(now){
     return true;
   }
   return false;
+}
+
+// Is this day in the holiday list (and is auto-cancelling switched on)?
+function demoHoliOn(iso){
+  var H = DB.holi;
+  if(!H || !H.off) return false;
+  for(var i = 0; i < (H.list || []).length; i++) if(H.list[i].date === iso) return true;
+  return false;
+}
+
+// The holiday warning -- the "tomorrow is a holiday" one.
+//
+// It goes down the same road as an alarm (DB.ringing) because that road
+// already has the notification, the sound and the background push wired to
+// it; a second mechanism would only produce a second kind of "reminder" that
+// behaves differently. The one difference is ringCh, pinned to 2 (phone
+// only) -- a holiday notice has no business waking the ESP32's buzzer.
+function demoHoliFire(now){
+  var H = DB.holi;
+  if(!H || !H.list || !H.list.length) return false;
+  if((H.remind | 0) < 0) return false;                       // switched off
+  if(now.getHours() * 60 + now.getMinutes() !== (H.hour | 0) * 60 + (H.minute | 0))
+    return false;
+
+  var target = isoOf(idxOf(now) + (H.remind | 0)), hit = null;
+  for(var i = 0; i < H.list.length; i++)
+    if(H.list[i].date === target){ hit = H.list[i]; break; }
+  if(!hit) return false;
+
+  if(DB.holiFired === target) return false;                  // one warning per holiday
+  DB.holiFired = target;
+
+  DB.ringing   = true;
+  DB.ringCh    = 2;
+  DB.ringLabel = holiRingText(hit, H.remind | 0);
+  demoSave();
+  return true;
+}
+
+// "Holiday tomorrow - Chinese New Year"
+function holiRingText(h, days){
+  var when = days === 0 ? t("holiToday")
+           : days === 1 ? t("holiTomorrow")
+           : t("holiInDays", days);
+  return when + " \u00b7 " + (h.name || t("holiName"));
 }
 
 function demoClamp(v, lo, hi){
@@ -2364,6 +2561,22 @@ function demoApi(path, opt){
       demoSave();
     }
     out = DB.skips;
+  }
+  else if(path === "/api/holidays"){
+    if(!DB.holi) DB.holi = demoHoliDefault();
+    if(opt.method === "POST"){
+      DB.holi = {
+        list: (body.list || []).slice(0, 120).map(function(x){
+          return { date: String(x.date || ""), name: String(x.name || "").slice(0, 32) };
+        }).filter(function(x){ return /^\d{4}-\d{2}-\d{2}$/.test(x.date); }),
+        off:    body.off !== false,
+        remind: demoClamp(body.remind, -1, 7),
+        hour:   demoClamp(body.hour,   0, 23),
+        minute: demoClamp(body.minute, 0, 59)
+      };
+      demoSave();
+    }
+    out = DB.holi;
   }
   else if(path === "/api/semester"){
     if(opt.method === "POST"){
@@ -2843,19 +3056,28 @@ $("roleOpts").onclick = function(e){
 
 $("roleBtn").onclick    = openRole;
 
-$("quietBtn").onclick = function(){
+// Timetable-only: flip it, and jump to whichever page is the read-only one.
+// A named function rather than the body of an onclick because the tests drive
+// this exact code -- a copy of it in the test file is a copy that can go stale
+// without anything turning red.
+function toggleQuiet(){
   S.quiet = !S.quiet;
-  paintQuietBtn();
 
-  // Turning alarms off = they only want the timetable right now -> jump straight to that view.
+  // Turning alarms off = they only want to look at it right now -> jump straight
+  // to that page (timetable for class modes, list for normal).
   // remember=false, so it does not overwrite the view they normally pick; switching back restores it.
   if(S.quiet){
-    if(S.view !== "table"){ S.viewBefore = S.view; setView("table", false); }
+    var qv = modeCfg(S.mode).wk ? "table" : "list";
+    if(curView() !== qv){ S.viewBefore = curView(); setView(qv, false); }
   } else if(S.viewBefore){
     setView(S.viewBefore, false);
     S.viewBefore = null;
   }
+}
 
+$("quietBtn").onclick = function(){
+  toggleQuiet();
+  paintQuietBtn();
   if(S.quiet) stopRinging();          // if it is ringing right now, silence it at once
   toast(t(S.quiet ? "quietToOn" : "quietToOff"));
   api("/api/mode", { method:"POST", body: JSON.stringify({ quiet: S.quiet }) })
@@ -3024,10 +3246,13 @@ function weekViewHTML(nextId, now){
     // This day's classes (the repeating ones) + this day's one-off events
     var list = shownOnDay(i, w);
 
-    h += '<div class="daycard' + (isTdy ? " today" : "") + '">' +
+    var hol = holidayName(i);
+
+    h += '<div class="daycard' + (isTdy ? " today" : "") + (hol ? " holi" : "") + '">' +
          '<div class="dh' + (list.length ? "" : " nil") + '">' +
            '<span class="dw">' + WD(p.wd) + '</span>' +
            '<span class="dd">' + p.d + '/' + p.m + '</span>' +
+           holiTagHTML(i) +
            (isTdy ? '<span class="tag">' + t("today") + '</span>' : '') +
            '<button class="dayadd" data-add="' + i + '" title="' + t("btnManual") + '">+</button>' +
          '</div>' +
@@ -3067,6 +3292,19 @@ function endText(a){
   return a.dur ? hhmm((a.hour * 60 + a.minute + a.dur) % 1440) : "";
 }
 
+// Normal mode's home page: one list of alarms, ordered by time.
+// The phone-clock page -- no days, no paging, no weekdays to think about,
+// a switch on the right of every row.
+function listViewHTML(nextId){
+  var list = mine().slice().sort(byTime);
+  if(!list.length)
+    return '<div class="card"><div class="empty"><p>' + esc(t("ttNone")) + '</p></div></div>';
+
+  return '<div class="card">' + list.map(function(a){
+    return itemHTML(a, nextId);
+  }).join("") + '</div>';
+}
+
 function tableViewHTML(now){
   var w      = shownWeek();
   var first  = S.sem.enabled ? weekFirstDay(w) : anchorOf(curDay());
@@ -3086,9 +3324,11 @@ function tableViewHTML(now){
     if(!list.length) continue;          // an empty day takes no space
     any += list.length;
 
-    h += '<div class="ttday' + (i === todayI ? " today" : "") + '">' +
+    h += '<div class="ttday' + (i === todayI ? " today" : "") +
+         (holidayName(i) ? " holi" : "") + '">' +
          '<div class="ttdh">' + esc(WD(p.wd)) +
            '<span class="dd">' + p.d + '/' + p.m + '</span>' +
+           holiTagHTML(i) +
            (i === todayI ? '<span class="tag">' + esc(t("today")) + '</span>' : '') +
          '</div>' +
          list.map(function(a){
@@ -3153,6 +3393,7 @@ function paintBody(){
   var LIST = mine();
 
   paintWeekBadge();
+  paintHoliBtn();
 
   // Spell out what this page is for. Without this line a whole page of
   // timetable looks completely ordinary, and people assume the alarms are still on.
@@ -3189,11 +3430,14 @@ function paintBody(){
   {
     html += viewTabsHTML();
 
-    if(S.view === "day"){
+    var V = curView();
+    if(V === "list"){
+      html += listViewHTML(nextId);
+    } else if(V === "day"){
       html += dayViewHTML(nextId);
-    } else if(S.view === "month"){
+    } else if(V === "month"){
       html += monthViewHTML(nextId);
-    } else if(S.view === "table"){
+    } else if(V === "table"){
       if(cfg.wk && S.sem.enabled) html += weekStripHTML();
       html += tableViewHTML(now);
     } else {
@@ -3202,7 +3446,7 @@ function paintBody(){
     }
 
     // A one-off event with no date cannot be placed on the calendar, so it goes last
-    var floating = LIST.filter(function(a){
+    var floating = V === "list" ? [] : LIST.filter(function(a){
       return a.days === 0 && !a.date;
     }).sort(byTime);
     if(floating.length){
@@ -3307,7 +3551,12 @@ $("body").onclick = function(e){
   var ot = e.target.closest("[data-otog]");
   if(ot){
     var oa = S.alarms.filter(function(x){ return x.id == ot.dataset.otog; })[0];
-    if(oa) toggleSkip(oa, parseInt(ot.dataset.oday, 10));
+    var od = parseInt(ot.dataset.oday, 10);
+    // On a holiday the switch will not move -- the holiday wins over the
+    // per-session setting. Doing nothing at all is the worst answer, because
+    // people just keep tapping. Say which holiday is in the way.
+    if(oa && holidayOff(oa, od)){ toast(t("holiOnDay", holidayName(od))); return; }
+    if(oa) toggleSkip(oa, od);
     return;
   }
 
@@ -3331,17 +3580,11 @@ function closeSheets(){
   // No roles chosen yet -> refuse to close, one has to be picked first
   if($("sheetRole").classList.contains("on") && !S.roleSet) return;
   $("mask").classList.remove("on");
-  $("sheetRole").classList.remove("on");
-  $("sheetTheme").classList.remove("on");
-  $("sheetHelp").classList.remove("on");
-  $("sheetOff").classList.remove("on");
-  $("sheetCloud").classList.remove("on");
-  $("sheetAsk").classList.remove("on");
-  $("sheetEdit").classList.remove("on");
-  $("sheetImport").classList.remove("on");
-  $("sheetSem").classList.remove("on");
-  $("sheetOcc").classList.remove("on");
-  $("sheetRoom").classList.remove("on");
+  // Close by class rather than keeping a hand-written list. That list had
+  // grown to twelve entries, and adding sheetHoli to it was duly forgotten --
+  // the symptom being one sheet that tapping the backdrop would not close.
+  var sh = document.querySelectorAll(".sheet");
+  for(var i = 0; i < sh.length; i++) sh[i].classList.remove("on");
   document.body.style.overflow = "";
 }
 $("mask").onclick     = closeSheets;
@@ -3589,11 +3832,50 @@ function hasException(a, dayIdxVal){
 // Does this class normally happen? Anything unset counts as "yes" (for older data)
 function defOnOf(a){ return a.defOn !== false; }
 
+// ============================================================
+//  Public holidays
+//
+//  Why this is not just a pile of cancelled sessions: a public holiday wipes
+//  out every class that day. Eight taps a day, twenty-four days a year, and
+//  the whole lot again next year. A holiday belongs to the DATE, not to any
+//  one class, so it is stored as a list of dates and applied on top.
+//
+//  It only cancels CLASSES -- alarms owned by student / teacher mode. Waking
+//  up and taking medication still matter on a public holiday, so a plain
+//  alarm must not be switched off by one. One-off events (an exam, a
+//  deadline) name their own date, so they are left alone too.
+//
+//  The same rule lives in alarm-logic.mjs (server) and alarm-rules.h
+//  (firmware); tools/test-push.mjs and tools/test-firmware-parity.mjs fail
+//  if the three stop agreeing.
+// ============================================================
+function holidayName(dayIdxVal){
+  var iso = isoOf(dayIdxVal), L = (S.holi && S.holi.list) || [];
+  for(var i = 0; i < L.length; i++)
+    if(L[i].date === iso) return L[i].name || t("holiName");
+  return "";
+}
+
+// Is this session off because of a holiday?
+function holidayOff(a, dayIdxVal){
+  if(!S.holi || !S.holi.off) return false;
+  if((a.owner || 0) === 0) return false;      // plain alarms are unaffected
+  if(a.days === 0)         return false;      // one-off events are unaffected
+  return !!holidayName(dayIdxVal);
+}
+
+// The "Holiday - name" badge for a calendar cell; empty when it is a normal day.
+function holiTagHTML(dayIdxVal){
+  var n = holidayName(dayIdxVal);
+  return n ? '<span class="holitag">' + esc(t("holiTag")) + " \u00b7 " + esc(n) + '</span>' : "";
+}
+
 // Does it actually happen on this day?
 //   normally on  -> in the exception list = cancelled
 //   normally off -> in the exception list = this is the week it happens
 // One-off events (days === 0) have no "normally", so they always count as "normally on".
 function runsOn(a, dayIdxVal){
+  if(holidayOff(a, dayIdxVal)) return false;     // public holiday -> no classes that day
   var listed = hasException(a, dayIdxVal);
   return (a.days === 0 || defOnOf(a)) ? !listed : listed;
 }
@@ -4060,6 +4342,7 @@ function enterCloud(data){
   if(!DB.skips)  DB.skips  = [];
   if(!DB.alarms) DB.alarms = [];
   if(!DB.rooms)  DB.rooms  = [];
+  if(!DB.holi)   DB.holi   = demoHoliDefault();   // older accounts lack this
   if(DB.nextId === undefined) DB.nextId = DB.alarms.length + 1;
 
   $("demoBar").hidden = true;
@@ -4430,7 +4713,7 @@ function paintCloud(){
           // The cloud copy is authoritative, so pull again. But do not re-ask for roles --
           // if this phone remembers them, pull() reuses them.
           S.roleSet = false; S.roleAsked = false;
-          return pull().then(pullSem).then(pullSkips).then(pullAlarms).then(pullRooms);
+          return pull().then(pullSem).then(pullSkips).then(pullAlarms).then(pullRooms).then(pullHoli);
         };
 
         if(cloudEmpty && mine2.length){
@@ -4530,23 +4813,53 @@ $("cloudClose").onclick = function(){ closeSheets(); };
 //  cursor = the day being viewed (counted from 1970).
 //  All three views share one cursor, so tapping a day in the month view lands on that same day.
 // ============================================================
-var VIEWS = ["day", "week", "month", "table"];
+//  The two mode families do not see the same views.
+//
+//    Normal mode has no notion of "this session" -- cancelling one, moving a
+//    room, odd/even weeks: none of it applies. So the timetable page is, for
+//    normal mode, a strangely shaped empty grid. It gets a plain list instead
+//    (the phone-clock kind), and lands on it by default.
+//
+//    For student / teacher the timetable page is already a list grouped by
+//    day, so a second plain list would only turn four tabs into five.
+var VIEWS_PLAIN = ["list", "day", "week", "month"];
+var VIEWS_CLASS = ["day", "week", "month", "table"];
+var VIEWS = ["list", "day", "week", "month", "table"];   // for validating what localStorage holds
+
+function views(){ return modeCfg(S.mode).wk ? VIEWS_CLASS : VIEWS_PLAIN; }
+
+// Each family remembers its own view: picking "list" in normal mode must not
+// wipe out the "table" that student mode was sitting on.
+function viewFam(){ return modeCfg(S.mode).wk ? "c" : "p"; }
+
+// Which page this mode is actually on. If the remembered one does not belong
+// to this mode, fall back to the first -- switching back from student mode
+// must not strand you on a page that is not there.
+function curView(){
+  var vs = views();
+  var v  = S.view[viewFam()];
+  return vs.indexOf(v) >= 0 ? v : vs[0];
+}
 
 function curDay(){ return S.cursor === null ? idxOf(nowDev()) : S.cursor; }
 
 // remember = false -> only a temporary switch (pressing "timetable only", say),
 // so it must not overwrite the view the user picked
 function setView(v, remember){
-  S.view = v;
-  if(remember !== false){ try { localStorage.setItem("clockView", v); } catch(e){} }
+  var f = viewFam();
+  S.view[f] = v;
+  if(remember !== false){
+    try { localStorage.setItem("clockView" + f, v); } catch(e){}
+  }
   paintBody();
 }
 
 // Step back / forward (day = 1 day, week = 7 days, month = one month)
 function moveView(dir){
-  var c = curDay();
-  if(S.view === "day")       S.cursor = c + dir;
-  else if(S.view === "week" || S.view === "table") S.cursor = c + dir * 7;
+  var c = curDay(), V = curView();
+  if(V === "list")           return;                // a list has no prev / next
+  if(V === "day")            S.cursor = c + dir;
+  else if(V === "week" || V === "table") S.cursor = c + dir * 7;
   else {
     var p = idxParts(c);
     var mo = p.m - 1 + dir, y = p.y + Math.floor(mo / 12);
@@ -4554,7 +4867,7 @@ function moveView(dir){
     var dim = daysInMonth(y, mo + 1);
     S.cursor = dayIdx(y, mo + 1, Math.min(p.d, dim));
   }
-  if(S.view === "week" || S.view === "table") S.selWeek = weekOf(S.cursor);
+  if(V === "week" || V === "table") S.selWeek = weekOf(S.cursor);
   paintBody();
 }
 
@@ -4564,8 +4877,9 @@ function daysInMonth(y, m){
 }
 
 function viewTabsHTML(){
-  return '<div class="vtabs" id="vTabs">' + VIEWS.map(function(v){
-    return '<button data-v="' + v + '"' + (S.view === v ? ' class="on"' : '') + '>' +
+  var cur = curView();
+  return '<div class="vtabs" id="vTabs">' + views().map(function(v){
+    return '<button data-v="' + v + '"' + (cur === v ? ' class="on"' : '') + '>' +
            t("v" + v.charAt(0).toUpperCase() + v.slice(1)) + '</button>';
   }).join("") + '</div>';
 }
@@ -4591,7 +4905,7 @@ function dayViewHTML(nextId){
 
   h += '<div class="dayhead">' +
          '<span class="big">' + p.d + '</span>' +
-         '<span class="wd">' + WD(p.wd) + '</span>' +
+         '<span class="wd">' + WD(p.wd) + '</span>' + holiTagHTML(i) +
          (S.sem.enabled && w >= 1 && w <= S.sem.weeks
             ? '<span class="wk">' + t("wkShort", w) + '</span>' : '') +
        '</div>';
@@ -4638,6 +4952,7 @@ function monthViewHTML(nextId){
       var w    = weekOf(i);
       var list = shownOnDay(i, w);
       var cls  = "mcell" +
+                 (holidayName(i) ? " holi" : "") +
                  (dp.m !== p.m ? " dim" : "") +
                  (i === todayI ? " today" : "") +
                  (i === cur ? " sel" : "") +
@@ -4994,6 +5309,242 @@ function roomOverride(a, dayI){
   }
   return null;
 }
+
+
+// ============================================================
+//  The holiday list: reading one in, and the built-in one
+//
+//  Same stance as importing a timetable: text yes, pictures no. The cost of
+//  OCR is written up in docs/REQUIREMENTS.md (T8) and has not changed.
+//
+//  But a timetable is personal and a public holiday list is not -- one
+//  university shares one. So UTAR's 2026 list is typed in below and is one
+//  tap away. The user wanted the RESULT (holidays in the app), not the
+//  MEANS (uploading a picture), and this time the result is cheap to give.
+// ============================================================
+
+// UTAR public holidays 2026, copied from the official table.
+// Changing year does not need a code change -- use the paste box.
+var UTAR_2026 = [
+  ["2026-01-01", "New Year"],
+  ["2026-02-01", "Thaipusam"],
+  ["2026-02-02", "Replacement holiday"],
+  ["2026-02-17", "Chinese New Year"],
+  ["2026-02-18", "Chinese New Year"],
+  ["2026-03-07", "Nuzul Al-Quran"],
+  ["2026-03-20", "Hari Raya (additional)"],
+  ["2026-03-21", "Hari Raya Aidilfitri"],
+  ["2026-03-22", "Hari Raya Aidilfitri"],
+  ["2026-03-23", "Hari Raya (replacement)"],
+  ["2026-05-01", "Labour Day"],
+  ["2026-05-27", "Hari Raya Qurban"],
+  ["2026-05-31", "Wesak Day"],
+  ["2026-06-01", "Agong's Birthday"],
+  ["2026-06-02", "Replacement holiday"],
+  ["2026-06-17", "Awal Muharram"],
+  ["2026-08-25", "Prophet's Birthday"],
+  ["2026-08-31", "National Day"],
+  ["2026-09-16", "Malaysia Day"],
+  ["2026-11-06", "Sultan Perak Birthday"],
+  ["2026-11-08", "Deepavali"],
+  ["2026-11-09", "Replacement holiday"],
+  ["2026-12-11", "Sultan Selangor Birthday"],
+  ["2026-12-25", "Christmas"]
+];
+
+function utarList(){
+  return UTAR_2026.map(function(r){ return { date:r[0], name:r[1] }; });
+}
+
+// Table noise, not part of a holiday's name: the row number, the weekday
+// column, the state column. Left in, a name comes out as "Thursday New Year All".
+var HOLI_NOISE = /^(\d+|all|semenanjung|w\.?p\.?|mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday|johor|kedah|kelantan|melaka|malacca|negeri sembilan|pahang|penang|pulau pinang|perak|perlis|sabah|sarawak|selangor|terengganu|kuala lumpur|labuan|putrajaya|星期[一二三四五六日天]|週[一二三四五六日]|周[一二三四五六日]|礼拜[一二三四五六日])$/i;
+
+// One line -> { date, name }, or null when there is no date in it.
+//
+// Handles the shapes a PDF table actually pastes as:
+//   1  01/01/2026  Thursday  New Year  All
+//   01/01/2026 New Year
+//   2026-01-01,New Year
+//   17/2/2026	Chinese New Year
+function parseHoliLine(line){
+  var raw = String(line).replace(/　/g, " ").trim();
+  if(!raw || raw.charAt(0) === "#") return null;
+
+  var iso = "", m;
+
+  // YYYY-MM-DD first, DD/MM/YYYY second. The other way round, the "01-01"
+  // inside 2026-01-01 gets eaten by the second pattern and the year is wrong.
+  if((m = raw.match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/))){
+    iso = m[1] + "-" + pad(+m[2]) + "-" + pad(+m[3]);
+  } else if((m = raw.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/))){
+    iso = m[3] + "-" + pad(+m[2]) + "-" + pad(+m[1]);   // Malaysian order: day/month/year
+  } else {
+    return null;
+  }
+  if(!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(iso)) return null;
+
+  // The name is the longest thing left once the date is out of the way
+  var rest = raw.replace(m[0], " ");
+  var parts = rest.split(/\t|,|;|\s{2,}/).map(function(x){
+    return x.replace(/^["\s]+|["\s]+$/g, "");
+  }).filter(function(x){ return x && !HOLI_NOISE.test(x); });
+
+  // A line separated by single spaces ("01/01/2026 New Year") does not split
+  // above, so peel the row number and the weekday off word by word instead.
+  if(parts.length <= 1){
+    var one = (parts[0] || rest).trim().split(/\s+/);
+    while(one.length > 1 && HOLI_NOISE.test(one[0]))              one.shift();
+    while(one.length > 1 && HOLI_NOISE.test(one[one.length - 1])) one.pop();
+    parts = [one.join(" ")];
+  }
+
+  var name = parts.sort(function(a, b){ return b.length - a.length; })[0] || "";
+  return { date: iso, name: name.slice(0, 32) };
+}
+
+// A whole block of text -> { list, bad }. bad holds the lines that made no
+// sense, so the sheet can say so instead of dropping them silently.
+function parseHolidays(text){
+  var list = [], bad = [], seen = {};
+  String(text || "").split(/\r?\n/).forEach(function(line, i){
+    if(!line.trim() || line.trim().charAt(0) === "#") return;
+    var h = parseHoliLine(line);
+    if(!h){ bad.push({ n:i + 1, tx:line.trim() }); return; }
+    if(seen[h.date]) return;                 // the same day written twice keeps the first
+    seen[h.date] = 1;
+    list.push(h);
+  });
+  list.sort(function(a, b){ return a.date < b.date ? -1 : 1; });
+  return { list: list, bad: bad };
+}
+
+function pullHoli(){
+  return api("/api/holidays").then(function(h){
+    S.holi = h; paintBody();
+  }).catch(function(){});
+}
+
+function saveHoli(next){
+  var was = S.holi;
+  S.holi = next;                               // paint first, roll back if it fails
+  paintBody();
+  return api("/api/holidays", { method:"POST", body: JSON.stringify(next) })
+    .then(function(h){ S.holi = h; paintBody(); })
+    .catch(function(err){ S.holi = was; paintBody(); throw err; });
+}
+
+// ============================================================
+//  The holiday sheet
+//
+//  The list is a draft (holiDraft) until Save is pressed. Importing 24
+//  holidays and then realising it was the wrong button should cost one
+//  Cancel, not 24 deletions.
+// ============================================================
+var holiDraft = null;
+
+function paintHoliBtn(){
+  var b = $("holiBtn");
+  if(!b) return;
+  var n = ((S.holi && S.holi.list) || []).length;
+  b.innerHTML = "&#127958; " + esc(t("holiBtn")) + (n ? " " + n : "");
+}
+
+function openHoli(){
+  holiDraft = ((S.holi && S.holi.list) || []).map(function(h){
+    return { date:h.date, name:h.name };
+  });
+  $("holiOff").value   = S.holi.off === false ? "0" : "1";
+  $("holiRem").value   = String(S.holi.remind === undefined ? 1 : S.holi.remind);
+  $("holiTime").value  = pad(S.holi.hour || 0) + ":" + pad(S.holi.minute || 0);
+  $("holiPaste").value = "";
+  paintHoliList();
+  paintHoliPrev();
+  openSheet("sheetHoli");
+}
+
+function paintHoliList(){
+  $("holiCount").textContent = holiDraft.length
+    ? t("holiCount", holiDraft.length) : t("holiNone");
+
+  if(!holiDraft.length){
+    $("holiList").innerHTML = '<div class="empty">' + esc(t("holiNone")) + '</div>';
+    return;
+  }
+
+  $("holiList").innerHTML = holiDraft.map(function(h, i){
+    var p = h.date.split("-");
+    return '<div><span class="pd">' + p[2] + "/" + p[1] + "/" + p[0] + '</span>' +
+           '<span class="pn">' + esc(h.name || t("holiName")) + '</span>' +
+           '<button class="pdel" data-hdel="' + i + '">&times;</button></div>';
+  }).join("");
+}
+
+// Live read-out under the paste box
+function paintHoliPrev(){
+  var tx = $("holiPaste").value;
+  if(!tx.trim()){ $("holiPrev").textContent = ""; return; }
+  var r = parseHolidays(tx);
+  $("holiPrev").innerHTML =
+    esc(r.list.length ? t("holiCount", r.list.length) : t("holiNothing")) +
+    (r.bad.length ? ' <span class="err">' + esc(t("holiBad", r.bad.length)) + '</span>' : "");
+}
+
+// Merge into the draft: one entry per date (later wins), sorted
+function holiMerge(add){
+  var by = {};
+  holiDraft.forEach(function(h){ by[h.date] = h; });
+  add.forEach(function(h){ by[h.date] = h; });
+  holiDraft = Object.keys(by).sort().map(function(d){ return by[d]; }).slice(0, 120);
+}
+
+$("holiBtn").onclick    = openHoli;
+$("holiCancel").onclick = closeSheets;
+$("holiPaste").oninput  = paintHoliPrev;
+
+$("holiUtar").onclick = function(){
+  holiMerge(utarList());
+  paintHoliList();
+  toast(t("holiGot", UTAR_2026.length));
+};
+
+$("holiClear").onclick = function(){
+  holiDraft = [];
+  paintHoliList();
+  toast(t("holiCleared"));
+};
+
+$("holiList").onclick = function(e){
+  var b = e.target.closest("[data-hdel]");
+  if(!b) return;
+  holiDraft.splice(parseInt(b.dataset.hdel, 10), 1);
+  paintHoliList();
+};
+
+$("holiSave").onclick = function(){
+  // Anything still sitting in the paste box counts as "add this too".
+  // Typing a list and forgetting to press a second button is the easy
+  // mistake to make, and losing it silently is the bad way to handle it.
+  var tx = $("holiPaste").value;
+  if(tx.trim()){
+    var r = parseHolidays(tx);
+    if(!r.list.length){ toast(t("holiNothing")); return; }
+    holiMerge(r.list);
+    if(r.bad.length) toast(t("holiBad", r.bad.length));
+  }
+
+  var hm = ($("holiTime").value || "20:00").split(":");
+  saveHoli({
+    list  : holiDraft,
+    off   : $("holiOff").value === "1",
+    remind: parseInt($("holiRem").value, 10),
+    hour  : parseInt(hm[0], 10) || 0,
+    minute: parseInt(hm[1], 10) || 0
+  }).then(function(){
+    closeSheets();
+    toast(t("holiSaved"));
+  }).catch(function(){ toast(t("tSaveFail")); });
+};
 
 function pullRooms(){
   return api("/api/rooms").then(function(list){
@@ -6062,6 +6613,26 @@ function applyStatic(){
   $("lbSemOut").textContent   = t("semOut");
   $("semOut").options[0].textContent = t("semOutOff");
   $("semOut").options[1].textContent = t("semOutOn");
+  // Holiday sheet
+  $("holiTitle").textContent   = t("holiTitle");
+  $("holiHelp").innerHTML      = t("holiHelp");
+  $("lbHoliOff").textContent   = t("lbHoliOff");
+  $("holiOff").options[0].textContent = t("holiOffOn");
+  $("holiOff").options[1].textContent = t("holiOffNo");
+  $("lbHoliRem").textContent   = t("lbHoliRem");
+  ["hrNone","hrD0","hrD1","hrD2","hrD3"].forEach(function(k, i){
+    $("holiRem").options[i].textContent = t(k);
+  });
+  $("lbHoliTime").textContent  = t("lbHoliTime");
+  $("holiUtar").textContent    = t("holiUtar");
+  $("lbHoliPaste").textContent = t("lbHoliPaste");
+  $("holiPaste").placeholder   = t("holiPastePh");
+  $("holiClear").textContent   = t("holiClear");
+  $("holiCancel").textContent  = t("cancel");
+  $("holiSave").textContent    = t("save");
+  paintHoliBtn();
+  if($("sheetHoli").classList.contains("on")) paintHoliList();
+
   $("occEdit").textContent    = t("occEdit");
   $("occClose").textContent   = t("close");
   $("semCancel").textContent  = t("cancel");
@@ -6109,8 +6680,10 @@ $("langBtn").onclick = function(){
 // ---------- Startup ----------
 applyTheme();
 try {
-  var v0 = localStorage.getItem("clockView");
-  if(VIEWS.indexOf(v0) >= 0) S.view = v0;
+  ["p", "c"].forEach(function(f){
+    var v0 = localStorage.getItem("clockView" + f);
+    if(VIEWS.indexOf(v0) >= 0) S.view[f] = v0;
+  });
   var f0 = localStorage.getItem("clockFromToday");
   if(f0 !== null) S.fromToday = (f0 === "1");
 } catch(e){}
@@ -6134,7 +6707,7 @@ if(CLOUD.on){
     .then(function(data){
       if(data) enterCloud(data);
       applyStatic();
-      return pull().then(pullSem).then(pullSkips).then(pullAlarms).then(pullRooms);
+      return pull().then(pullSem).then(pullSkips).then(pullAlarms).then(pullRooms).then(pullHoli);
     })
     .catch(function(err){
       if(isAuthError(err)){
@@ -6143,7 +6716,7 @@ if(CLOUD.on){
         // Merely unreachable, and we have last time's data -> carry on, do not alarm the user
         enterCloud(cached);      // DB may have been touched meanwhile, so put it back
         applyStatic();
-        pull().then(pullSem).then(pullSkips).then(pullAlarms).then(pullRooms);
+        pull().then(pullSem).then(pullSkips).then(pullAlarms).then(pullRooms).then(pullHoli);
         toast(t("cUsingCache"));
       } else {
         CLOUD.on = false;
@@ -6168,7 +6741,7 @@ setInterval(demoTick, 1000);
 if(window.__FORCE_DEMO__ && !CLOUD.on) enterDemo();
 setInterval(pull, 3000);
 applyStatic();
-pull().then(pullSem).then(pullSkips).then(pullAlarms).then(pullRooms);
+pull().then(pullSem).then(pullSkips).then(pullAlarms).then(pullRooms).then(pullHoli);
 </script>
 </body>
 </html>

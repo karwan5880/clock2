@@ -2,7 +2,7 @@
 //
 // Strategy: serve from cache first (fast, works offline), fetch a fresh copy in
 // the background. The next open shows the new version.
-const CACHE = "baobaoxiang-va1d79d19";
+const CACHE = "baobaoxiang-vf494475d";
 const FILES = ["./", "./index.html", "./manifest.json",
                "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png"];
 
@@ -74,20 +74,26 @@ self.addEventListener("push", function(e){
 
 // Tapping the notification brings the app to the front and tells it to start ringing.
 // Merely opening the app would show a silent screen -- that is a notification, not an alarm.
+//
+// The holiday warning is the exception. Its id is negative, and tapping it
+// only opens the app: "tomorrow is a holiday" going off like an alarm in
+// someone's hand is the wrong end of the same feature.
 self.addEventListener("notificationclick", function(e){
   e.notification.close();
   var id = (e.notification.data && e.notification.data.id) || 0;
+  var ring = id > 0 ? id : 0;
   e.waitUntil(
     self.clients.matchAll({ type:"window", includeUncontrolled:true })
       .then(function(list){
         for(var i = 0; i < list.length; i++){
           if("focus" in list[i]){
-            try{ list[i].postMessage({ ring: id }); }catch(err){}
+            if(ring) try{ list[i].postMessage({ ring: ring }); }catch(err){}
             return list[i].focus();
           }
         }
         // Fully closed -> open it, passing "which alarm" through the URL
-        if(self.clients.openWindow) return self.clients.openWindow("./?ring=" + id);
+        if(self.clients.openWindow)
+          return self.clients.openWindow(ring ? "./?ring=" + ring : "./");
       })
   );
 });
