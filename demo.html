@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png" id="touchIcon">
-<title>Pocket</title>
+<title>Pocket · 百宝箱</title>
 <style>
 :root{
   /* Doraemon: body blue #00a0e9, white belly, nose/collar red #e60012, bell yellow #ffd93b */
@@ -774,6 +774,97 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac)}
   border-radius:99px;font-size:14px;z-index:99;opacity:0;pointer-events:none;
   transition:.25s;box-shadow:0 12px 30px -10px var(--shadow)}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* Campus home — iPhone / iPad springboard, not cards */
+.homebtn{position:absolute;top:16px;left:0;z-index:60;padding:7px 12px;border-radius:99px;
+  border:1px solid var(--line);background:var(--card);color:var(--tx2);
+  font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;line-height:1}
+.homebtn:active{border-color:var(--ac);color:var(--ac)}
+.themebtn{left:46px}
+.helpbtn{left:92px}
+.cloudbtn{left:138px}
+
+#pocketHome{
+  display:none;min-height:100dvh;padding:calc(16px + env(safe-area-inset-top)) 18px 36px;
+  box-sizing:border-box;
+  background:
+    radial-gradient(120% 70% at 50% -10%, color-mix(in srgb, var(--ac) 28%, #fff), transparent 62%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ac) 14%, var(--bg)) 0%, var(--bg) 48%);
+}
+body.at-home #pocketHome{display:block}
+body.at-home .wrap,
+body.at-home .actionbar{display:none !important}
+
+.homeTop{display:flex;justify-content:flex-end}
+.homeLang{padding:6px 12px;border-radius:99px;border:0;
+  background:color-mix(in srgb, #fff 55%, transparent);color:var(--tx);
+  font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.homeLang:active{opacity:.7}
+
+.homeLid{text-align:center;margin:10px 0 28px}
+.homeEye{margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--tx)}
+
+.homeGrid{
+  display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:22px 6px;max-width:360px;margin:0 auto;justify-items:center;
+}
+.homeTile{
+  appearance:none;width:100%;max-width:84px;padding:0;
+  border:0;background:transparent;color:var(--tx);
+  font-family:inherit;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+}
+.homeTile .icon{
+  width:60px;height:60px;border-radius:13.4px;display:grid;place-items:center;
+  color:#fff;flex:none;
+  box-shadow:0 10px 18px -12px rgba(20,70,110,.55);
+  transition:transform .12s ease;
+}
+.homeTile .icon svg{width:30px;height:30px;display:block}
+.homeTile:active .icon{transform:scale(.88)}
+.homeTile .name{
+  margin:0;width:76px;font-size:11px;font-weight:600;line-height:1.2;
+  letter-spacing:-.01em;text-align:center;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.homeTile[data-id="tt"] .icon,
+#homeStub[data-id="tt"] .stubIcon{background:linear-gradient(180deg, #5bb4ee, var(--ac))}
+.homeTile[data-id="att"] .icon,
+#homeStub[data-id="att"] .stubIcon{background:linear-gradient(180deg, #46d39a, #1fa971)}
+.homeTile[data-id="ev"] .icon,
+#homeStub[data-id="ev"] .stubIcon{background:linear-gradient(180deg, #ffd56a, #e8a317)}
+.homeTile[data-id="wall"] .icon,
+#homeStub[data-id="wall"] .stubIcon{background:linear-gradient(180deg, #f08cc4, #d45a9a)}
+.homeTile[data-id="food"] .icon,
+#homeStub[data-id="food"] .stubIcon{background:linear-gradient(180deg, #ff9a62, #e25a28)}
+.homeTile[data-id="ride"] .icon,
+#homeStub[data-id="ride"] .stubIcon{background:linear-gradient(180deg, #7fd4ea, #2a9fc4)}
+
+#homeStub{display:none;max-width:360px;margin:8px auto 0;text-align:center}
+#homeStub.on{display:block}
+#homeStub .stubIcon{
+  width:72px;height:72px;border-radius:16px;margin:12px auto 14px;
+  display:grid;place-items:center;color:#fff;
+  box-shadow:0 12px 22px -12px rgba(20,70,110,.5);
+}
+#homeStub .stubIcon svg{width:36px;height:36px}
+#homeStub h2{margin:0 0 8px;font-size:22px;font-weight:800}
+#homeStub p{margin:0 auto 22px;max-width:22em;font-size:15px;line-height:1.5;color:var(--tx2)}
+#stubBack{min-width:160px;padding:11px 22px;border:0;border-radius:99px;background:var(--ac);
+  color:var(--onac);font:inherit;font-weight:800;cursor:pointer}
+@media (min-width:768px){
+  .homeGrid{grid-template-columns:repeat(5, minmax(0, 1fr));gap:28px 12px;max-width:560px}
+  .homeTile .icon{width:72px;height:72px;border-radius:16.1px}
+  .homeTile .icon svg{width:36px;height:36px}
+  .homeTile .name{width:88px;font-size:12px}
+}
+@media (min-width:1024px){
+  .homeGrid{grid-template-columns:repeat(6, minmax(0, 1fr));max-width:720px}
+}
+@media (prefers-reduced-motion:reduce){
+  .homeTile .icon,.homeTile:active .icon{transition:none;transform:none}
+}
 </style>
 <script>window.__FORCE_DEMO__ = true;</script>
 <script>
@@ -783,15 +874,30 @@ if ("serviceWorker" in navigator)
   });
 </script>
 </head>
-<body>
+<body class="at-home">
+
+<div id="pocketHome">
+  <div class="homeTop"><button type="button" class="homeLang" id="homeLang">EN</button></div>
+  <header class="homeLid">
+    <p class="homeEye" id="homeEye"></p>
+  </header>
+  <div class="homeGrid" id="homeGrid"></div>
+  <div id="homeStub">
+    <div class="stubIcon" id="stubIcon" aria-hidden="true"></div>
+    <h2 id="stubTitle"></h2>
+    <p id="stubBody"></p>
+    <button type="button" id="stubBack"></button>
+  </div>
+</div>
 
 <div class="wrap">
 
   <div class="clock">
+    <button type="button" class="homebtn" id="homeBtn" aria-label="Home">⌂</button>
     <button class="langbtn" id="langBtn">EN</button>
     <button class="themebtn" id="themeBtn">&#127912;</button>
     <button class="helpbtn" id="helpBtn">?</button>
-    <button class="cloudbtn" id="cloudBtn">&#9729;</button>
+    <button class="cloudbtn" id="cloudBtn" hidden>&#9729;</button>
     <div class="dora" id="doraBox" aria-hidden="true"></div>
     <div class="t"><span id="hm">--:--</span><span class="sec" id="ss">--</span></div>
     <div class="wd" id="wd">&mdash;</div>
@@ -1480,6 +1586,26 @@ zh: {
   roleCancel   :"取消",
   tRoleSaved   :"身份改好了",
 
+  homeEye    :"我的百宝箱",
+  homeTitle  :"今天要用哪一个？",
+  homeSub    :"课表已经能用。其它格子先占位子——空着比假装做好了更诚实。",
+  homeBack   :"百宝箱",
+  tileTt     :"课表",
+  tileTtSub  :"闹钟 · 学期 · 假期",
+  tileAtt    :"出勤",
+  tileAttSub :"有没有点到名",
+  tileEv     :"活动",
+  tileEvSub  :"讲座、社团、考试",
+  tileWall   :"告白墙",
+  tileWallSub:"校园匿名板",
+  tileFood   :"吃饭",
+  tileFoodSub:"食堂、拼单、宵夜",
+  tileRide   :"拼车",
+  tileRideSub:"同校、同路、周五",
+  tileSoon   :"还没做",
+  stubLead   :"这一格还是空的。做好了会从这里进去，不会再开一个 app。",
+  stubBack   :"回到百宝箱",
+
   ringNow :"时间到了",
   snooze  : function(n){ return "贪睡 "+n+" 分钟"; },
   dismiss :"关掉",
@@ -1944,6 +2070,26 @@ en: {
   roleCancel   :"Cancel",
   tRoleSaved   :"Role updated",
 
+  homeEye    :"Pocket",
+  homeTitle  :"What do you need?",
+  homeSub    :"Timetable works. The other slots are saved for later — empty is better than fake.",
+  homeBack   :"Pocket",
+  tileTt     :"Timetable",
+  tileTtSub  :"Alarms · term · holidays",
+  tileAtt    :"Attendance",
+  tileAttSub :"Did I swipe in",
+  tileEv     :"Events",
+  tileEvSub  :"Talks, clubs, exams",
+  tileWall   :"Wall",
+  tileWallSub:"Anonymous campus board",
+  tileFood   :"Food",
+  tileFoodSub:"Canteen, group order",
+  tileRide   :"Ride",
+  tileRideSub:"Same campus, same Friday",
+  tileSoon   :"Not yet",
+  stubLead   :"This slot is empty on purpose. When it exists, it opens from here — not a second app.",
+  stubBack   :"Back to Pocket",
+
   ringNow :"Time's up",
   snooze  : function(n){ return "Snooze "+n+" min"; },
   dismiss :"Dismiss",
@@ -2170,8 +2316,76 @@ var S = {
   //   off    = classes on a holiday are cancelled automatically
   //   remind = how many days ahead to warn (-1 = never)
   holi:{ list:[], off:true, remind:1, hour:20, minute:0 },
-  selWeek:null       // which week the calendar is showing (null = follow today)
+  selWeek:null,      // which week the calendar is showing (null = follow today)
+  micro:"home"       // home | tt | stub id
 };
+
+var MICROS = [
+  { id:"tt",   live:true,  t:"tileTt" },
+  { id:"att",  live:false, t:"tileAtt" },
+  { id:"ev",   live:false, t:"tileEv" },
+  { id:"wall", live:false, t:"tileWall" },
+  { id:"food", live:false, t:"tileFood" },
+  { id:"ride", live:false, t:"tileRide" }
+];
+
+function tileGlyph(id){
+  var s = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  var d = {
+    tt:'<rect x="3.5" y="5" width="17" height="15" rx="2.4"/><path d="M8 3.5v4M16 3.5v4M3.5 10h17"/><path d="M8 14h2.2M12 14h2.2M16 14h.2M8 17.2h2.2M12 17.2h2.2"/>',
+    att:'<circle cx="10" cy="8" r="3.1"/><path d="M4.4 19.2c.5-3.3 2.8-5 5.6-5s5.1 1.7 5.6 5"/><path d="M15 11.2l2 2 4.2-4.2"/>',
+    ev:'<path d="M12 3.2l1.7 4.8h5l-4 3 1.6 4.8L12 13.7 7.7 15.8 9.3 11l-4-3h5z"/>',
+    wall:'<path d="M4.2 15.2 3.7 19l3.6-.7c.4.2.9.3 1.5.3 2.8 0 5-1.8 5-4.1S11.6 10.4 8.8 10.4c-2.6 0-4.7 1.6-4.7 3.7 0 .4.2.8.4 1.1z"/><path d="M10.6 9.2c.5-2.2 2.7-3.9 5.4-3.9 3 0 5.4 1.9 5.4 4.3 0 2.3-2.1 4.2-5 4.4L14 16.3l.4-2.2c-.3-.3-.5-.7-.5-1.1"/>',
+    food:'<path d="M5 11h14v2.1c0 3.6-2.8 6.4-7 6.4s-7-2.8-7-6.4z"/><path d="M8 11V6.4M12 11V5M16 11V6.4"/>',
+    ride:'<path d="M4 13.8h16v3.3a1.5 1.5 0 0 1-1.5 1.5"/><path d="M4 13.8 6.2 8.6A2 2 0 0 1 8 7.4h8a2 2 0 0 1 1.8 1.2L20 13.8"/><circle cx="7.2" cy="17.5" r="1.55"/><circle cx="16.8" cy="17.5" r="1.55"/>'
+  };
+  return '<svg '+s+' aria-hidden="true">'+(d[id] || "")+"</svg>";
+}
+
+function goHome(){
+  S.micro = "home";
+  document.body.classList.add("at-home");
+  closeSheets(true);
+  paintHome();
+}
+
+function openTt(){
+  S.micro = "tt";
+  document.body.classList.remove("at-home");
+  if(!S.roleSet && !S.roleLocal) openRole();
+}
+
+function paintHome(){
+  var eye = $("homeEye");
+  if(!eye) return;
+  eye.textContent = t("homeEye");
+  $("homeLang").textContent = (lang === "zh" ? "EN" : "中");
+  $("stubBack").textContent = t("stubBack");
+  var g = $("homeGrid");
+  g.innerHTML = "";
+  MICROS.forEach(function(m){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "homeTile";
+    b.dataset.id = m.id;
+    b.setAttribute("aria-label", t(m.t) + (m.live ? "" : " — " + t("tileSoon")));
+    b.innerHTML = '<span class="icon">' + tileGlyph(m.id) + "</span>" +
+      '<span class="name">' + t(m.t) + "</span>";
+    g.appendChild(b);
+  });
+  var stub = $("homeStub");
+  var stubOn = stub.classList.contains("on");
+  g.style.display = stubOn ? "none" : "";
+  if(stubOn){
+    var cur = MICROS.filter(function(x){ return x.id === S.micro; })[0];
+    stub.dataset.id = cur ? cur.id : "";
+    if(cur){
+      $("stubTitle").textContent = t(cur.t);
+      $("stubIcon").innerHTML = tileGlyph(cur.id);
+    }
+    $("stubBody").textContent = t("stubLead");
+  }
+}
 
 // ============================================================
 //  Date maths
@@ -2695,7 +2909,7 @@ function pull(){
                              body: JSON.stringify({ mode:S.mode, roles:S.roles }) })
             .catch(function(){});
         } else if(!S.roleAsked){
-          S.roleAsked = true; openRole();      // only ask when nothing was remembered
+          if(S.micro === "tt"){ S.roleAsked = true; openRole(); }
         }
       } else if(!S.roleSet || r !== S.roles){
         S.roles = r; S.roleSet = true; fixMode(); paintModes();
@@ -3576,9 +3790,9 @@ function openSheet(id){
   $(id).classList.add("on");
   document.body.style.overflow = "hidden";
 }
-function closeSheets(){
+function closeSheets(force){
   // No roles chosen yet -> refuse to close, one has to be picked first
-  if($("sheetRole").classList.contains("on") && !S.roleSet) return;
+  if(!force && $("sheetRole").classList.contains("on") && !S.roleSet) return;
   $("mask").classList.remove("on");
   // Close by class rather than keeping a hand-written list. That list had
   // grown to twelve entries, and adding sheetHoli to it was duly forgotten --
@@ -3845,7 +4059,7 @@ function defOnOf(a){ return a.defOn !== false; }
 //  alarm must not be switched off by one. One-off events (an exam, a
 //  deadline) name their own date, so they are left alone too.
 //
-//  The same rule lives in alarm-logic.mjs (server) and alarm-rules.h
+//  The same rule lives in lib/alarm-logic.mjs and alarm-rules.h
 //  (firmware); tools/test-push.mjs and tools/test-firmware-parity.mjs fail
 //  if the three stop agreeing.
 // ============================================================
@@ -3956,8 +4170,9 @@ function shownOnDay(dayI, w){
 //  The URL and key are pasted by the user (and kept on this phone), not hard-coded:
 //  switching to another Supabase project needs no reflash.
 // ============================================================
-// Change this line for a different Supabase project (or press "Change project" in the app, no reflash needed)
-var DEFAULT_CLOUD_URL = "https://ccruylbqoucbglnnuxwj.supabase.co";
+// karwan5880: no hosted backend. Cloud UI stays in the file but stays off.
+var CLOUD_OFF = true;
+var DEFAULT_CLOUD_URL = "";
 
 // A Supabase account has to be an email address. But the user does not want to type an email,
 // so internally the username gets a fixed domain appended -- the screen only ever shows the username.
@@ -4040,6 +4255,12 @@ function saveRoleLocal(r){
 }
 
 function cloudLoadCfg(){
+  if(CLOUD_OFF){
+    CLOUD.url = CLOUD.key = CLOUD.token = CLOUD.refresh = "";
+    CLOUD.uid = CLOUD.email = CLOUD.name = "";
+    CLOUD.on = false;
+    return;
+  }
   try{
     CLOUD.url     = localStorage.getItem("cloudUrl")   || "";
     CLOUD.key     = localStorage.getItem("cloudKey")   || "";
@@ -4049,7 +4270,6 @@ function cloudLoadCfg(){
     CLOUD.email   = localStorage.getItem("cloudEmail") || "";
   }catch(e){}
   CLOUD.name = emailToUser(CLOUD.email);
-  // Never configured -> offer the default project URL, so all they paste is the key
   if(!CLOUD.url) CLOUD.url = DEFAULT_CLOUD_URL;
   CLOUD.on = !!(CLOUD.url && CLOUD.key && CLOUD.token && CLOUD.uid);
 }
@@ -4447,6 +4667,7 @@ function pushForget(endpoint){
 
 // Turn push on. Must be triggered by a user tap (browser rule).
 function pushEnable(){
+  if(CLOUD_OFF) return Promise.reject(new Error("nologin"));
   if(!pushSupported())  return Promise.reject(new Error("unsupported"));
   if(!CLOUD.on)         return Promise.reject(new Error("nologin"));
 
@@ -4542,6 +4763,8 @@ function pushDisable(){
 function paintCloudBtn(){
   var b = $("cloudBtn");
   if(!b) return;
+  if(CLOUD_OFF){ b.hidden = true; return; }
+  b.hidden = false;
   b.classList.toggle("on", CLOUD.on);
   b.title = CLOUD.on ? CLOUD.email : t("cTitle");
 }
@@ -4798,6 +5021,7 @@ function paintPush(){
 }
 
 function openCloud(){
+  if(CLOUD_OFF) return;
   $("cloudTitle").textContent = t("cTitle");
   $("cloudClose").textContent = t("offClose");
   cloudMsg = null;
@@ -6580,6 +6804,7 @@ function applyStatic(){
   $("roleHint").innerHTML     = t("roleHint");
   paintRole();
   paintRoleBtn();
+  paintHome();
 
   $("btnAddTx").textContent    = t("btnManual");
   $("btnAdd").hidden           = S.quiet;
@@ -6675,6 +6900,22 @@ $("langBtn").onclick = function(){
   if(pushState === "on") pushSync();
   if($("sheetEdit").classList.contains("on") && S.editing !== undefined) syncLead();
   if($("sheetImport").classList.contains("on")){ onImLead(); paintPrev(); }
+};
+
+$("homeLang").onclick = function(){ $("langBtn").click(); };
+$("homeBtn").onclick = goHome;
+$("homeGrid").onclick = function(e){
+  var b = e.target.closest(".homeTile");
+  if(!b) return;
+  if(b.dataset.id === "tt"){ openTt(); return; }
+  S.micro = b.dataset.id;
+  $("homeStub").classList.add("on");
+  paintHome();
+};
+$("stubBack").onclick = function(){
+  S.micro = "home";
+  $("homeStub").classList.remove("on");
+  paintHome();
 };
 
 // ---------- Startup ----------
