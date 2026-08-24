@@ -870,7 +870,7 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac)}
   flex-direction:column;
   overflow-x:hidden;overflow-y:auto;overscroll-behavior:none;
   -webkit-overflow-scrolling:touch;touch-action:pan-y;
-  padding:calc(var(--sp-4) + env(safe-area-inset-top)) var(--sp-5)
+  padding:calc(var(--sp-4) + env(safe-area-inset-top)) 0
           calc(var(--sp-10) + env(safe-area-inset-bottom));
   box-sizing:border-box;
   background:
@@ -1144,38 +1144,40 @@ body.editing .homePager{touch-action:none}
 
 .homeGrid{
   display:grid;grid-template-columns:repeat(var(--home-cols), minmax(0, 1fr));
-  gap:var(--sp-4) var(--sp-2);max-width:var(--shell-w);margin:0 auto;
-  justify-items:center;width:100%;
+  column-gap:var(--col-gap);row-gap:var(--row-gap);
+  max-width:var(--shell-w);margin:0 auto;justify-items:center;width:100%;
 }
 .homeTile{
-  appearance:none;width:100%;max-width:calc(var(--tile-w) - var(--sp-2));padding:0;
+  appearance:none;width:100%;max-width:var(--cell);padding:0;
   border:0;background:transparent;color:var(--tx);
   font-family:inherit;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);
   animation:tileIn var(--mo-4) var(--ease-out) both;
 }
 .homeTile .icon{
-  width:60px;height:60px;border-radius:15px;display:grid;place-items:center;
+  width:var(--icon);height:var(--icon);border-radius:calc(var(--icon) * .25);
+  display:grid;place-items:center;
   color:#fff;flex:none;
   box-shadow:0 8px 16px -10px rgba(12,40,70,.6),
              inset 0 1px 0 rgba(255,255,255,.34),
              inset 0 -1px 0 rgba(0,0,0,.14);
   transition:transform var(--mo-2) var(--ease);
 }
-.homeTile .icon svg{width:29px;height:29px;display:block;
+.homeTile .icon svg{width:calc(var(--icon) * .48);height:calc(var(--icon) * .48);display:block;
   filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
 .homeTile:active .icon{transform:scale(.9)}
 .homeTile .name{
-  /* Two lines are reserved whether or not the name needs them. One label
-     that wraps -- "Lost and found" -- used to make its whole grid row
-     15px taller than the others, and on a laptop that row is in the
-     middle of the page rather than at the bottom, so the gap under it
-     read as a mistake. Every tile is the same height now, at every
-     screen size, which is also what lets fitPage() trust its arithmetic. */
-  margin:0;width:100%;max-width:78px;font-size:var(--fs-xs);font-weight:600;line-height:1.25;
-  min-height:2.5em;
+  /* One line, like every phone. Two lines were reserved here for a while
+     so that "Lost and found" could not make its own grid row 15px taller
+     than the others; a single line does the same job without spending
+     15px under all twenty-six names, and it is what makes the rows read
+     as a grid rather than a list. The label is allowed to be wider than
+     its column and spill into the gap -- iOS does this too -- so a long
+     name is not clipped at the icon's own width. */
+  margin:0;width:calc(100% + var(--col-gap));
+  font-size:var(--fs-xs);font-weight:600;line-height:1.3;
   letter-spacing:-.005em;text-align:center;color:var(--tx);
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 /* A shell with nothing behind it yet wears a dot, so the home screen never
    pretends every icon is finished. */
@@ -1539,8 +1541,11 @@ a.shellCall:active{transform:scale(.94)}
    rather than assuming four:
 
      --home-cols  icons across the springboard
-     --tile-w     one icon's column, which sets the grid's own width
-     --shell-w    how wide the home is allowed to get before it centres
+     --icon       the rounded square itself; everything scales off it
+     --cell       one column: the icon plus the air its label wants
+     --col-gap    the space you actually see between two icons
+     --row-gap    the space between a label and the icon under it
+     --shell-w    the grid's width, and so the home's -- derived
      --pane-w     how wide an opened app's column is allowed to get
 
    Phone keeps four columns and the full screen. An iPad gets six and
@@ -1548,34 +1553,54 @@ a.shellCall:active{transform:scale(.94)}
    web app rather than a phone drawn on a desk.
    ============================================================ */
 :root{
+  /* A springboard is five numbers, and they are the ones a phone uses.
+     iOS lays a 60pt icon on a 4-column grid with about 27pt of air
+     between icons and a one-line label under each; the icon is the unit
+     and everything else is proportional to it. --cell is one column: the
+     icon plus the little extra its label wants. --col-gap is the air you
+     actually see between two icons, which is what "too tight" was about
+     -- it used to be 8px. */
   --home-cols:4;
-  --tile-w:92px;   /* one icon plus its column gap */
+  --icon:60px;
+  --cell:72px;
+  --col-gap:16px;
+  --row-gap:22px;
   --pane-w:400px;
   /* Everything on the home is exactly as wide as the icon grid. Derived,
      not typed, so changing the column count moves all of it at once. */
-  --shell-w:calc(var(--home-cols) * var(--tile-w));
+  --shell-w:calc(var(--home-cols) * var(--cell)
+                 + (var(--home-cols) - 1) * var(--col-gap));
 }
 /* iPad, and a laptop window dragged narrow. Portrait 820 and landscape
    1180 both land here or above, and neither gets a bezel any more. */
+/* An iPad draws a bigger icon and gives it more room, the way iPadOS
+   does -- the same grid, not a phone grid stretched. */
 @media (min-width:700px){
-  :root{--home-cols:6; --pane-w:560px}
+  :root{--home-cols:6; --icon:72px; --cell:86px;
+        --col-gap:22px; --row-gap:26px; --pane-w:560px}
 }
 /* Laptop and desktop. A 14" MacBook is 1512 logical points wide. */
 @media (min-width:1100px){
-  :root{--home-cols:8; --tile-w:100px; --pane-w:680px}
-  .homeTile .icon{width:66px;height:66px;border-radius:17px}
-  .homeTile .icon svg{width:32px;height:32px}
-  .homeTile .name{max-width:88px;font-size:var(--fs-sm)}
+  :root{--home-cols:8; --icon:76px; --cell:94px;
+        --col-gap:22px; --row-gap:28px; --pane-w:680px}
+  .homeTile .name{font-size:var(--fs-sm)}
 }
 /* The home is one column of blocks; on a wide screen every one of them
    centres on the same axis instead of the avatar and the language
    button flying to opposite corners of a 27" monitor. */
+/* Everything but the pager is one grid wide and centred on it. The pager
+   itself stays full width: a page is one scrollport, and the page's own
+   padding is what centres the grid and puts the gap on the swipe seam.
+   min() keeps a margin on a screen narrower than the grid. */
 #pocketHome > .homeTop,
 #pocketHome > #homeHits,
 #pocketHome > .homeNow,
-#pocketHome > .homePager,
 #pocketHome > .homeDots,
-#pocketHome > .homeSearch{width:100%;max-width:var(--shell-w);margin-inline:auto}
+#pocketHome > .homeSearch{
+  width:min(100% - 2 * var(--sp-4), var(--shell-w));margin-inline:auto}
+/* The avatar and the language button line up with the first and last
+   icon rather than with the edge of the column they sit in. */
+#pocketHome > .homeTop{padding-inline:calc((var(--cell) - var(--icon)) / 2)}
 
 /* A pointer that hovers is a laptop. Phones never see this, and it is
    the one affordance a desktop springboard is missing: on a phone you
@@ -5754,8 +5779,8 @@ function openTt(){
 // paint, so a longer label or a bigger text size is accounted for rather
 // than assumed away.
 var PAGE_COLS = 4;
-var PAGE_TILE = 82;
-var PAGE_GAP  = 16;
+var PAGE_TILE = 83;
+var PAGE_GAP  = 20;
 var PAGE_SIZE = PAGE_COLS * 4;
 
 function fitPage(){
