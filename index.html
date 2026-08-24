@@ -878,6 +878,67 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac)}
     linear-gradient(180deg, color-mix(in srgb, var(--ac) 14%, var(--bg)) 0%, var(--bg) 48%);
 }
 body.at-home #pocketHome{display:flex}
+
+/* ---- Wallpapers ----
+   A wallpaper is a background layer over the theme, not a sixth theme:
+   the five themes still own every colour in the app, and this owns one
+   rectangle behind the icons. Bought in the Store, chosen on Account.
+   The dark ones set --tx on the home element alone, so the labels stay
+   readable without touching any other screen. */
+#pocketHome[data-wall="dawn"]{background:
+  linear-gradient(180deg,#ffd9a8 0%,#fca97f 34%,#c9738c 68%,#6d5090 100%)}
+#pocketHome[data-wall="neon"]{background:
+  radial-gradient(85% 55% at 18% 0%,rgba(124,58,237,.65),transparent 62%),
+  radial-gradient(70% 45% at 92% 22%,rgba(14,165,233,.45),transparent 60%),
+  linear-gradient(180deg,#180f33 0%,#2b1152 52%,#080b24 100%)}
+#pocketHome[data-wall="sakura"]{background:
+  radial-gradient(90% 55% at 50% -8%,#fff2f7,transparent 62%),
+  linear-gradient(180deg,#ffe6f0 0%,#ffc9de 46%,#f7a9c6 100%)}
+#pocketHome[data-wall="ocean"]{background:
+  radial-gradient(80% 50% at 50% 0%,rgba(56,189,248,.4),transparent 60%),
+  linear-gradient(180deg,#0a3b5e 0%,#0d5c82 44%,#04202f 100%)}
+#pocketHome[data-wall="grid"]{background:
+  repeating-linear-gradient(0deg,rgba(120,140,170,.16) 0 1px,transparent 1px 22px),
+  repeating-linear-gradient(90deg,rgba(120,140,170,.16) 0 1px,transparent 1px 22px),
+  linear-gradient(180deg,#f7f9fc 0%,#e8edf5 100%)}
+#pocketHome[data-wall="dusk"]{background:
+  linear-gradient(180deg,#f8b195 0%,#c06c84 40%,#6c5b7b 72%,#355c7d 100%)}
+
+/* ---- Icon skins ----
+   The glyph never changes; the plate under it does. */
+#pocketHome[data-skin="glass"] .homeTile .icon{
+  background:rgba(255,255,255,.16) !important;
+  border:1px solid rgba(255,255,255,.42);
+  backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 18px -12px rgba(10,30,60,.7)}
+#pocketHome[data-skin="ink"] .homeTile .icon{
+  background:transparent !important;border:2px solid currentColor;color:var(--tx);
+  box-shadow:none}
+#pocketHome[data-skin="mono"] .homeTile .icon{
+  background:var(--tx) !important;color:var(--bg);box-shadow:var(--e1)}
+#pocketHome[data-skin="round"] .homeTile .icon{border-radius:50%}
+
+/* ---- The Store ---- */
+.shopBal{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3)}
+.shopBal .coins{font-family:var(--mono);font-size:var(--fs-2xl);font-weight:800;
+  letter-spacing:-.03em}
+.shopGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3);
+  margin:var(--sp-3) 0 0}
+.shopCard{background:var(--card);border:1px solid var(--edge);border-radius:var(--r-lg);
+  overflow:hidden;box-shadow:var(--e1);display:flex;flex-direction:column}
+.shopSwatch{height:78px;display:grid;place-items:center}
+.shopSwatch i{width:26px;height:26px;border-radius:8px;display:block;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 4px 10px -6px rgba(10,30,60,.8)}
+.shopMeta{padding:var(--sp-3);display:flex;flex-direction:column;gap:6px;flex:1}
+.shopMeta b{font-size:var(--fs-sm);font-weight:700;letter-spacing:-.01em}
+.shopMeta .price{font-family:var(--mono);font-size:var(--fs-xs);color:var(--tx3)}
+.shopMeta button{margin-top:auto;appearance:none;border:1px solid var(--edge);
+  border-radius:var(--r-full);padding:6px 10px;font:inherit;font-size:var(--fs-xs);
+  font-weight:700;cursor:pointer;background:var(--card2);color:var(--tx);
+  transition:transform var(--mo-1) var(--ease)}
+.shopMeta button:active{transform:scale(.94)}
+.shopMeta button.on{background:var(--ac);border-color:transparent;color:var(--onac)}
+.shopMeta button.owned{background:var(--card2);color:var(--tx3)}
 body.at-home .wrap,
 body.at-home .actionbar{display:none !important}
 
@@ -1120,6 +1181,7 @@ body.editing .homePager{touch-action:none}
 .homeTile[data-id="ride"] .icon,.hitDot[data-id="ride"]{background:linear-gradient(180deg,#7fd4ea,#2a9fc4)}
 .homeTile[data-id="wall"] .icon,.hitDot[data-id="wall"]{background:linear-gradient(180deg,#f08cc4,#d45a9a)}
 .homeTile[data-id="chat"] .icon,.hitDot[data-id="chat"]{background:linear-gradient(180deg,#8ab4ff,#4f46e5)}
+.homeTile[data-id="shop"] .icon,.hitDot[data-id="shop"]{background:linear-gradient(180deg,#f9a8d4,#be185d)}
 
 @keyframes tileIn{from{opacity:0;transform:translateY(10px) scale(.94)}}
 @keyframes riseIn{from{opacity:0;transform:translateY(8px)}}
@@ -1215,6 +1277,13 @@ body:not(.at-home) #homeStub{display:none}
   border-color:transparent;color:var(--onac);font-size:var(--fs-md);font-weight:700;
   box-shadow:var(--e2)}
 .shellFab:active{transform:scale(.985)}
+/* Continue with Google. Full width, white plate, the real mark on the
+   left -- Google's brand rules want their colours on a neutral ground,
+   so this one button does not take the theme accent like the others. */
+.shellBtns button.gbtn{flex:1 1 100%;display:flex;align-items:center;justify-content:center;
+  gap:10px;padding:12px;background:#fff;color:#1f1f1f;border:1px solid #dadce0;
+  font-family:inherit;font-size:var(--fs-md);font-weight:600;box-shadow:var(--e1)}
+.shellBtns button.gbtn .gmark{flex:none}
 .shellFab.ghost{background:var(--card);border-color:var(--edge);color:var(--tx);
   box-shadow:var(--e1)}
 .shellFab.danger{background:var(--bad)}
@@ -2387,10 +2456,42 @@ zh: {
   tileMedSub :"预约与可预约时段",
   tileLost   :"失物招领",
   tileLostSub:"拾到与丢失",
+  tileShop   :"商店",
+  tileShopSub:"壁纸与图标皮肤",
+  shopHint   :"演示商店 · 金币是假的，买到的皆属本机",
+  shopBalK   :"余额",
+  shopBalS   :"演示金币。不能充值，也不会发到任何地方。",
+  shopWalls  :"壁纸",
+  shopSkins  :"图标皮肤",
+  shopBuy    :"购买",
+  shopUse    :"使用",
+  shopUsing  :"使用中",
+  shopOwned  :"已拥有",
+  shopFree   :"免费",
+  shopGot    :"买好了，已帮你换上。",
+  shopPoor   :"金币不够。",
+  shopOwnK   :"外观",
+  shopOwnT   :"壁纸与图标皮肤",
+  shopOwnS   :"只列出你已经拥有的。其余在商店里。",
+  shopSave   :"应用",
+  shopSaved  :"已换上。",
+  shopArt    :"这些图案都是原创的。",
+  wNone      :"素面",
+  wDawn      :"金宝日出",
+  wNeon      :"霓虹夜",
+  wSakura    :"樱花",
+  wOcean     :"深海",
+  wGrid      :"格子纸",
+  wDusk      :"黄昏",
+  kFlat      :"原色",
+  kGlass     :"磨砂玻璃",
+  kInk       :"线条",
+  kMono      :"单色",
+  kRound     :"圆形",
   tileMe     :"账号",
   tileMeSub  :"登录与两步验证",
   meHint     :"真实登录 · 连接 Supabase，不是演示",
-  meNote     :"这是 Pocket 里唯一会连到服务器的屏幕。其余 24 个应用不需要登录。",
+  meNote     :"这是 Pocket 里唯一会连到服务器的屏幕。其余 25 个应用不需要登录。",
   meNoCfgT   :"还没连接项目",
   meNoCfgS   :"把 Supabase 的网址和 anon key 写进 src/supabase.json，然后重新构建。步骤在：",
   meWho      :"登录",
@@ -2401,6 +2502,11 @@ zh: {
   meSignUp   :"注册",
   meSignOut  :"退出",
   meDomains  :"只接受 UTAR 邮箱（1utar.my、utar.edu.my、student.utar.edu.my）或学号。",
+  meG        :"用 Google 继续",
+  meGS       :"一下就好。密码留在 Google，Pocket 看不到。",
+  meGSoon    :"学号和密码登录以后再加；现在只用 Google。",
+  meGGoing   :"正在打开 Google…",
+  meGFail    :"Google 登录没有完成，请再试一次。",
   meBadId    :"请输入学号（6–10 位数字）或 UTAR 邮箱。",
   meShortPw  :"密码至少 8 位。",
   meWorking  :"处理中…",
@@ -3175,10 +3281,42 @@ en: {
   tileMedSub :"Slots and appointments",
   tileLost   :"Lost and found",
   tileLostSub:"Found today, lost this week",
+  tileShop   :"Store",
+  tileShopSub:"Wallpapers and icon skins",
+  shopHint   :"A demo store \u00b7 the coins are pretend, everything bought stays on this phone",
+  shopBalK   :"Balance",
+  shopBalS   :"Demo coins. There is nothing to top up and nothing is sent anywhere.",
+  shopWalls  :"Wallpapers",
+  shopSkins  :"Icon skins",
+  shopBuy    :"Buy",
+  shopUse    :"Use",
+  shopUsing  :"In use",
+  shopOwned  :"Owned",
+  shopFree   :"Free",
+  shopGot    :"Bought, and put on for you.",
+  shopPoor   :"Not enough coins.",
+  shopOwnK   :"Appearance",
+  shopOwnT   :"Wallpaper and icon skin",
+  shopOwnS   :"Only what you already own. The rest are in the Store.",
+  shopSave   :"Apply",
+  shopSaved  :"Put on.",
+  shopArt    :"Every design here is our own.",
+  wNone      :"Plain",
+  wDawn      :"Kampar Dawn",
+  wNeon      :"Neon Night",
+  wSakura    :"Sakura",
+  wOcean     :"Deep Ocean",
+  wGrid      :"Grid Paper",
+  wDusk      :"Dusk",
+  kFlat      :"Flat",
+  kGlass     :"Glass",
+  kInk       :"Outline",
+  kMono      :"Mono",
+  kRound     :"Round",
   tileMe     :"Account",
   tileMeSub  :"Sign in and two-factor",
   meHint     :"A real sign-in · talks to Supabase, not a demo",
-  meNote     :"This is the only screen in Pocket that reaches a server. The other 24 apps never ask you to sign in.",
+  meNote     :"This is the only screen in Pocket that reaches a server. The other 25 apps never ask you to sign in.",
   meNoCfgT   :"No project connected",
   meNoCfgS   :"Put your Supabase URL and anon key in src/supabase.json and rebuild. The steps are in:",
   meWho      :"Sign in",
@@ -3189,6 +3327,11 @@ en: {
   meSignUp   :"Create account",
   meSignOut  :"Sign out",
   meDomains  :"UTAR addresses only (1utar.my, utar.edu.my, student.utar.edu.my), or your student ID.",
+  meG        :"Continue with Google",
+  meGS       :"One tap. Your password stays with Google — Pocket never sees it.",
+  meGSoon    :"Student ID and password sign-in come back later. Google is the way in for now.",
+  meGGoing   :"Opening Google…",
+  meGFail    :"Google sign-in did not finish. Try again.",
   meBadId    :"Use your student ID (6–10 digits) or a UTAR email address.",
   meShortPw  :"Password must be at least 8 characters.",
   meWorking  :"Working…",
@@ -3726,6 +3869,7 @@ var MICROS = [
   { id:"job",   live:true,  t:"tileJob" },
   { id:"med",   live:true,  t:"tileMed" },
   { id:"lost",  live:true,  t:"tileLost" },
+  { id:"shop",  live:true,  t:"tileShop" },
   { id:"me",    live:true,  t:"tileMe" }
 ];
 
@@ -3757,6 +3901,7 @@ function tileGlyph(id){
     job:'<rect x="3.4" y="7.4" width="17.2" height="12" rx="2.2"/><path d="M9 7.4V5.8c0-.9.7-1.6 1.6-1.6h2.8c.9 0 1.6.7 1.6 1.6v1.6"/><path d="M3.4 12.6h17.2M11 12.6v2.2h2v-2.2"/>',
     med:'<path d="M9.4 3.6h5.2v5.8h5.8v5.2h-5.8v5.8H9.4v-5.8H3.6V9.4h5.8z"/>',
     lost:'<circle cx="10.6" cy="10.6" r="6.2"/><path d="M15.2 15.2 20.4 20.4"/><path d="M8.6 10.6h4M10.6 8.6v4"/>',
+    shop:'<path d="M5.2 8h13.6l-1.1 11.2a1.8 1.8 0 0 1-1.8 1.6H8.1a1.8 1.8 0 0 1-1.8-1.6z"/><path d="M9 8V6.4a3 3 0 0 1 6 0V8"/>',
     me:'<circle cx="12" cy="8.4" r="3.6"/><path d="M4.6 20.2c0-3.7 3.3-6.2 7.4-6.2s7.4 2.5 7.4 6.2"/>'
   };
   return '<svg '+s+' aria-hidden="true">'+(d[id] || "")+"</svg>";
@@ -4747,6 +4892,7 @@ function shellHtml(id){
   if(id === "job") return jobHtml();
   if(id === "med") return medHtml();
   if(id === "lost") return lostHtml();
+  if(id === "shop") return shopHtml();
   if(id === "me") return meHtml();
   return '<p class="shellS">'+t("stubLead")+"</p>";
 }
@@ -5161,11 +5307,183 @@ function lostHtml(){
   return html + demoNote();
 }
 
+// ---------- Store ----------
+// A marketplace for wallpapers and icon skins, with money that is not
+// money. Everything here follows the rule the other demo apps follow:
+// the goods are written into the app, what you do with them is kept on
+// this phone, and the screen says so.
+//
+// On the art: these are our own designs -- gradients with names, drawn
+// in CSS. Shipping somebody else's characters in a public demo is
+// trademark infringement, and the mechanism proves itself just as well
+// with originals. The day there is a licence, only the table changes.
+var SHOP_START = 500;   // what a new phone begins with
+
+var WALLS = [
+  { id:"none",   tx:"wNone",   p:0,   sw:"#e9eef5" },
+  { id:"dawn",   tx:"wDawn",   p:120, sw:"#fca97f" },
+  { id:"sakura", tx:"wSakura", p:140, sw:"#ffc9de" },
+  { id:"grid",   tx:"wGrid",   p:90,  sw:"#e8edf5" },
+  { id:"dusk",   tx:"wDusk",   p:130, sw:"#c06c84", ink:"#fff" },
+  { id:"neon",   tx:"wNeon",   p:160, sw:"#2b1152", ink:"#fff" },
+  { id:"ocean",  tx:"wOcean",  p:180, sw:"#0d5c82", ink:"#fff" }
+];
+
+var SKINS = [
+  { id:"flat",  tx:"kFlat",  p:0 },
+  { id:"round", tx:"kRound", p:80 },
+  { id:"ink",   tx:"kInk",   p:100 },
+  { id:"glass", tx:"kGlass", p:120 },
+  { id:"mono",  tx:"kMono",  p:150 }
+];
+
+function shopList(kind){ return kind === "skin" ? SKINS : WALLS; }
+function shopItem(kind, id){
+  var l = shopList(kind);
+  for(var i = 0; i < l.length; i++) if(l[i].id === id) return l[i];
+  return null;
+}
+function shopBal(){ return pk("shopBal", SHOP_START); }
+
+// Anything free is owned by everybody, always. Keeping that out of the
+// saved map means a cleared phone still has a wallpaper to fall back to.
+function shopOwns(kind, id){
+  var it = shopItem(kind, id);
+  if(!it) return false;
+  if(!it.p) return true;
+  return !!pk("shopOwn", {})[kind + ":" + id];
+}
+function shopBuyIt(kind, id){
+  var it = shopItem(kind, id);
+  if(!it || shopOwns(kind, id)) return false;
+  if(shopBal() < it.p) return false;
+  var own = pk("shopOwn", {});
+  own[kind + ":" + id] = 1;
+  pkSet("shopOwn", own);
+  pkSet("shopBal", shopBal() - it.p);
+  return true;
+}
+
+// What is on right now. An id that is not owned any more -- or was never
+// real -- falls back to the free one rather than to nothing.
+function wallOn(){
+  var v = String(pk("wallOn", "none"));
+  return shopOwns("wall", v) ? v : "none";
+}
+function skinOn(){
+  var v = String(pk("skinOn", "flat"));
+  return shopOwns("skin", v) ? v : "flat";
+}
+function shopUseIt(kind, id){
+  if(!shopOwns(kind, id)) return false;
+  pkSet(kind === "skin" ? "skinOn" : "wallOn", id);
+  applyLook();
+  return true;
+}
+
+// The only place that touches the home element. A wallpaper is one
+// attribute and, on the dark ones, a text colour scoped to this element
+// -- no other screen changes.
+function applyLook(){
+  var el = $("pocketHome");
+  if(!el) return;
+  var w = shopItem("wall", wallOn());
+  el.setAttribute("data-wall", w ? w.id : "none");
+  el.setAttribute("data-skin", skinOn());
+  // Guarded because this runs at boot, before anything is on screen, and
+  // because the test harnesses hand us an element that is not a real one.
+  if(!el.style || !el.style.setProperty) return;
+  if(w && w.ink){
+    el.style.setProperty("--tx", w.ink);
+    el.style.setProperty("--tx3", "rgba(255,255,255,.72)");
+  }else{
+    el.style.removeProperty("--tx");
+    el.style.removeProperty("--tx3");
+  }
+}
+
+function shopCard(kind, it){
+  var owned = shopOwns(kind, it.id);
+  var using = (kind === "skin" ? skinOn() : wallOn()) === it.id;
+  var sw = kind === "wall"
+    ? '<div class="shopSwatch" style="background:' + it.sw + '"></div>'
+    : '<div class="shopSwatch" style="background:var(--card2)"><i style="background:' +
+      (it.id === "ink" ? "transparent;border:2px solid var(--tx)"
+                       : it.id === "mono" ? "var(--tx)" : "var(--ac)") +
+      (it.id === "round" ? ";border-radius:50%" : "") + '"></i></div>';
+  var btn;
+  if(using){
+    btn = '<button type="button" class="owned" disabled>' + t("shopUsing") + "</button>";
+  }else if(owned){
+    btn = '<button type="button" class="on" data-act="shopUse" data-kind="' + kind +
+          '" data-id="' + it.id + '">' + t("shopUse") + "</button>";
+  }else{
+    btn = '<button type="button" data-act="shopBuy" data-kind="' + kind +
+          '" data-id="' + it.id + '">' + t("shopBuy") + "</button>";
+  }
+  return '<div class="shopCard">' + sw + '<div class="shopMeta"><b>' + esc(t(it.tx)) + "</b>" +
+    '<span class="price">' +
+    (it.p ? it.p + (owned ? " \u00b7 " + t("shopOwned") : "") : t("shopFree")) +
+    "</span>" + btn + "</div></div>";
+}
+
+function shopHtml(){
+  var kind = tab("shop", "wall") === "skin" ? "skin" : "wall";
+  var list = shopList(kind), i;
+  var html = '<div class="statBox"><div class="shopBal">' +
+    '<div><p class="shellK">' + t("shopBalK") + '</p><p class="shellS">' + t("shopBalS") + "</p></div>" +
+    '<span class="coins">' + shopBal() + "</span></div></div>";
+  html += seg("shop", [["wall", t("shopWalls")], ["skin", t("shopSkins")]], kind);
+  html += '<div class="shopGrid">';
+  for(i = 0; i < list.length; i++) html += shopCard(kind, list[i]);
+  html += "</div>";
+  html += '<p class="shellS" style="margin-top:12px;text-align:center;color:var(--tx3)">' +
+    t("shopArt") + "</p>";
+  return html + demoNote();
+}
+
+// The switcher that lives on the Account screen, beside the opening
+// screen. It lists what is owned and nothing else -- buying belongs in
+// the Store, and a settings screen full of things you cannot pick is a
+// worse screen.
+function lookSel(kind, id, cur){
+  var list = shopList(kind), i, html = '<label class="f"><select id="' + id + '">';
+  for(i = 0; i < list.length; i++){
+    if(!shopOwns(kind, list[i].id)) continue;
+    html += '<option value="' + esc(list[i].id) + '"' +
+      (list[i].id === cur ? " selected" : "") + ">" + esc(t(list[i].tx)) + "</option>";
+  }
+  return html + "</select></label>";
+}
+
+function lookHtml(){
+  return '<div class="statBox"><p class="shellK">' + t("shopOwnK") + "</p>" +
+    '<p class="shellT">' + t("shopOwnT") + "</p>" +
+    '<p class="shellS">' + t("shopOwnS") + "</p>" +
+    lookSel("wall", "wallSel", wallOn()) +
+    lookSel("skin", "skinSel", skinOn()) +
+    '<div class="shellBtns"><button type="button" data-act="lookSave">' +
+    t("shopSave") + "</button>" +
+    '<button type="button" data-act="lookShop">' + t("tileShop") + "</button></div></div>";
+}
+
 // ---------- Account ----------
 // The one screen in Pocket that talks to a server. It is a state machine
 // with four states and it renders whichever one it is in; there is no
 // hidden branch that leaves you looking at a screen you cannot act on.
 function authRow(k, title, sub, extra){ return shellRow(k, title, sub, extra); }
+
+// Google's four-colour G. Drawn here rather than fetched: the page is a
+// single file with no network of its own, and Google's brand rules ask
+// for the real mark rather than an approximation of it.
+function googleMark(){
+  return '<svg class="gmark" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">' +
+    '<path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.8-.4-4H24v7.3h12.1c-.2 2-1.6 5-4.5 7l-.1.3 6.5 5 .5.1c4.1-3.8 6.6-9.4 6.6-15.7z"/>' +
+    '<path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.9 1.3-4.4 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.700l-.3.1-6.7 5.2-.1.3C7.9 40.9 15.4 46 24 46z"/>' +
+    '<path fill="#FBBC05" d="M11.5 27.8c-.5-1.4-.7-2.9-.7-4.5s.3-3.1.7-4.5l0-.3-6.8-5.3-.2.1A22 22 0 0 0 2 23.3c0 3.5.9 6.9 2.5 9.9l7-5.4z"/>' +
+    '<path fill="#EA4335" d="M24 9.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 3.4 29.9 1 24 1 15.4 1 7.9 6.1 4.5 13.4l7 5.4C13.3 13.3 18.2 9.5 24 9.5z"/>' +
+    "</svg>";
+}
 
 function meHtml(){
   var html = "";
@@ -5180,22 +5498,33 @@ function meHtml(){
     t("homeFoot", MICROS.length) + "</p>";
   if(AUTH.msg) html += '<div class="statBox"><p class="shellS">' + esc(AUTH.msg) + "</p></div>";
 
-  // 1. Signed out -- one field for an ID or a UTAR email, and a password.
+  // 1. Signed out. One button: Google. The password form under it is
+  //    written and tested and switched off -- PW_LOGIN is the switch, and
+  //    flipping it is the whole job of bringing passwords back.
   if(!signedIn()){
-    var lidOut = "";
     html += '<div class="statBox">' +
       '<p class="shellK">' + t("meWho") + "</p>" +
-      '<label class="f"><span>' + t("meId") + "</span>" +
-      '<input id="meU" type="text" inputmode="email" autocomplete="username" ' +
-        'autocapitalize="off" spellcheck="false" placeholder="' + esc(t("meIdEg")) + '"></label>' +
-      '<label class="f"><span>' + t("mePw") + "</span>" +
-      '<input id="meP" type="password" autocomplete="current-password"></label>' +
-      '<div class="shellBtns">' +
-        '<button type="button" data-act="meIn" class="on">' + t("meSignIn") + "</button>" +
-        '<button type="button" data-act="meUp">' + t("meSignUp") + "</button>" +
-      "</div>" +
-      '<p class="shellS">' + t("meDomains") + "</p></div>";
-    return html + startHtml() + meFoot();
+      '<div class="shellBtns"><button type="button" data-act="meGoogle" class="on gbtn">' +
+        googleMark() + '<span>' + t("meG") + "</span></button></div>" +
+      '<p class="shellS">' + t("meGS") + "</p></div>";
+
+    if(PW_LOGIN){
+      html += '<div class="statBox">' +
+        '<label class="f"><span>' + t("meId") + "</span>" +
+        '<input id="meU" type="text" inputmode="email" autocomplete="username" ' +
+          'autocapitalize="off" spellcheck="false" placeholder="' + esc(t("meIdEg")) + '"></label>' +
+        '<label class="f"><span>' + t("mePw") + "</span>" +
+        '<input id="meP" type="password" autocomplete="current-password"></label>' +
+        '<div class="shellBtns">' +
+          '<button type="button" data-act="meIn" class="on">' + t("meSignIn") + "</button>" +
+          '<button type="button" data-act="meUp">' + t("meSignUp") + "</button>" +
+        "</div>" +
+        '<p class="shellS">' + t("meDomains") + "</p></div>";
+    }else{
+      html += '<p class="shellS" style="text-align:center;color:var(--tx3)">' +
+        t("meGSoon") + "</p>";
+    }
+    return html + startHtml() + lookHtml() + meFoot();
   }
 
   // 2. Signed in with a password only, and a factor is waiting.
@@ -5261,6 +5590,7 @@ function meHtml(){
   }
 
   html += startHtml();
+  html += lookHtml();
 
   html += '<div class="shellBtns"><button type="button" data-act="meOut">' +
     t("meSignOut") + "</button></div>";
@@ -5532,6 +5862,13 @@ function searchAll(q){
     if(typeof sb !== "string") sb = "";
     if(match(nm, sb)) hit(MICROS[i].id, nm, sb);
   }
+
+  // The store's goods. Bought or not, they are things with names that a
+  // person may reasonably look for.
+  for(i = 0; i < WALLS.length; i++)
+    if(match(t(WALLS[i].tx))) hit("shop", t(WALLS[i].tx), t("shopWalls"));
+  for(i = 0; i < SKINS.length; i++)
+    if(match(t(SKINS[i].tx))) hit("shop", t(SKINS[i].tx), t("shopSkins"));
 
   // Your own data first: classes, deadlines, courses.
   list = mine();
@@ -7682,6 +8019,14 @@ var CLOUD_OFF = true;
 // sync is switched on it should be a decision with its own tables and its
 // own row-level security, not a side effect of signing in.
 var SYNC_OFF = true;
+
+// Sign-in is Google and nothing else for now (2026-08-24). The password
+// form, the student-ID rules and the address-building around them are
+// still here, still tested, and switched off behind this one flag --
+// bringing them back is `true` plus a look at meHtml(), not a rewrite.
+// Why: a demo that asks a stranger for a student ID they do not have is
+// a demo they cannot open.
+var PW_LOGIN = false;
 // Filled in at build time from src/supabase.json (git-ignored). Empty
 // means the account screen says "not configured" and the rest of Pocket
 // carries on exactly as before -- signing in is optional by design, so a
@@ -7804,6 +8149,17 @@ function jwtSub(tok){
     var b = tok.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
     while(b.length % 4) b += "=";
     return JSON.parse(decodeURIComponent(escape(atob(b)))).sub || "";
+  }catch(e){ return ""; }
+}
+
+// The address Google (or any provider) gave us. A token from an OAuth
+// redirect arrives on its own -- there is no /user response beside it --
+// so the claim inside the token is the only thing that names the account.
+function jwtEmail(tok){
+  try{
+    var b = tok.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    while(b.length % 4) b += "=";
+    return JSON.parse(decodeURIComponent(escape(atob(b)))).email || "";
   }catch(e){ return ""; }
 }
 
@@ -7931,11 +8287,17 @@ function isUtarEmail(v){
 // A student ID: digits only, the length UTAR actually issues.
 function isStudentId(v){ return /^\d{6,10}$/.test(String(v || "").trim()); }
 
-// What may be typed into the one field: an ID, or a UTAR email. Anything
-// else is refused here rather than bounced by the server.
+// What may be typed into the one field. It used to be a UTAR address or
+// a student ID and nothing else; that shut out everybody who is not at
+// UTAR, which is most people who will ever be shown this. Now: any real
+// email address, any student ID, or a plain username -- toAuthEmail()
+// turns the last two into an address Supabase will take.
+//
+// isUtarEmail() and isStudentId() are kept: they still say which kind of
+// thing was typed, which the ID card and the timetable import both ask.
 function loginIdOk(v){
   v = String(v || "").trim();
-  return isStudentId(v) || isUtarEmail(v);
+  return isStudentId(v) || isEmailLike(v) || validUser(v);
 }
 
 // The assurance level the token carries. aal1 = password only,
@@ -8097,6 +8459,77 @@ function pkForget(){
   AUTH.locked = false;
 }
 
+// ---------- Sign in with Google ----------
+// Supabase does the whole dance; this app only has to leave and come back.
+//
+//   1. Send the browser to /auth/v1/authorize?provider=google
+//   2. Google asks the user; Supabase makes the account if it is new
+//   3. Supabase sends the browser back to redirect_to with the session
+//      in the URL **fragment**: #access_token=...&refresh_token=...
+//
+// The fragment is the point. It never reaches any server, not even the
+// one hosting this page -- which is why no client secret lives in this
+// file, and why none is needed.
+//
+// We come back to the page we left, without query or fragment. That
+// exact address has to be listed in the Supabase dashboard under
+// Redirect URLs or the round trip ends on an error page. The steps are
+// in docs/GOOGLE-AUTH.md.
+function oauthRedirectUrl(){
+  return location.origin + location.pathname;
+}
+
+function oauthUrl(provider, back){
+  return CLOUD.url + "/auth/v1/authorize?provider=" + encodeURIComponent(provider) +
+         "&redirect_to=" + encodeURIComponent(back || oauthRedirectUrl());
+}
+
+function oauthStart(provider){
+  if(!authReady()){ AUTH.msg = t("meNoCfgT"); paintHome(); return; }
+  AUTH.busy = true; AUTH.msg = t("meGGoing"); paintHome();
+  location.href = oauthUrl(provider);
+}
+
+// Pull a session out of a URL. Handed the fragment (and the query, which
+// is where a refused consent screen can put its error) as plain text, so
+// it can be tested without a browser.
+function oauthParse(hash, search){
+  var out = {}, i, kv, parts = [];
+  var h = String(hash || "").replace(/^#/, "");
+  var q = String(search || "").replace(/^\?/, "");
+  if(h) parts = parts.concat(h.split("&"));
+  if(q) parts = parts.concat(q.split("&"));
+  for(i = 0; i < parts.length; i++){
+    if(!parts[i]) continue;
+    kv = parts[i].split("=");
+    try{ out[decodeURIComponent(kv[0])] = decodeURIComponent(String(kv[1] || "").replace(/\+/g, " ")); }
+    catch(e){ out[kv[0]] = kv[1] || ""; }
+  }
+  if(out.error || out.error_description) return { error: out.error_description || out.error };
+  if(out.access_token){
+    return { access_token: out.access_token, refresh_token: out.refresh_token || "" };
+  }
+  return null;
+}
+
+// Called once on boot. Nothing in the URL -> nothing happens, and the app
+// carries on exactly as it did before any of this existed.
+function oauthReturn(){
+  var r = null;
+  try{ r = oauthParse(location.hash, location.search); }catch(e){ return false; }
+  if(!r) return false;
+  // Wipe the tokens out of the address bar before anything else: a
+  // refresh must not replay them, and they must not sit in history.
+  try{ history.replaceState(null, "", location.pathname); }catch(e){}
+  if(r.error){ AUTH.msg = cloudErr(r.error) || t("meGFail"); return true; }
+  cloudSession(r);
+  // A passkey enrolled on this device does not have to be answered for
+  // the sign-in that just happened -- the user is standing right here.
+  AUTH.locked = false;
+  authSettle();
+  return true;
+}
+
 function cloudLogin(email, pw){
   return cloudFetch("/auth/v1/token?grant_type=password", {
     method:"POST", body: JSON.stringify({ email: email, password: pw })
@@ -8109,7 +8542,7 @@ function cloudSession(j){
   CLOUD.token   = j.access_token || "";
   CLOUD.refresh = j.refresh_token || "";
   CLOUD.uid     = (j.user && j.user.id) || jwtSub(CLOUD.token);
-  CLOUD.email   = (j.user && j.user.email) || CLOUD.email;
+  CLOUD.email   = (j.user && j.user.email) || jwtEmail(CLOUD.token) || CLOUD.email;
   CLOUD.name    = emailToUser(CLOUD.email);
   cloudSaveCfg();
   scheduleRefresh();
@@ -10899,6 +11332,11 @@ $("stubStage").onclick = function(e){
   }
   // The clinic is the one that is not a toggle: you hold one slot, so
   // booking a second releases the first.
+  if(act === "meGoogle"){
+    if(AUTH.busy) return;
+    oauthStart("google");
+    return;
+  }
   if(act === "meIn" || act === "meUp"){
     var who = String(($("meU") || {}).value || "").trim();
     var pw  = String(($("meP") || {}).value || "");
@@ -10931,6 +11369,28 @@ $("stubStage").onclick = function(e){
       });
     return;
   }
+  if(act === "shopBuy"){
+    var bk = btn.dataset.kind === "skin" ? "skin" : "wall";
+    if(!shopBuyIt(bk, btn.dataset.id)){ toast(t("shopPoor")); return; }
+    // Bought is put on. Nobody buys a wallpaper to not look at it.
+    shopUseIt(bk, btn.dataset.id);
+    toast(t("shopGot"));
+    paintHome();
+    return;
+  }
+  if(act === "shopUse"){
+    shopUseIt(btn.dataset.kind === "skin" ? "skin" : "wall", btn.dataset.id);
+    paintHome();
+    return;
+  }
+  if(act === "lookSave"){
+    var ws = $("wallSel"), ks = $("skinSel");
+    if(ws) shopUseIt("wall", String(ws.value || "none"));
+    if(ks) shopUseIt("skin", String(ks.value || "flat"));
+    toast(t("shopSaved"));
+    return;
+  }
+  if(act === "lookShop"){ S.micro = "shop"; UI.open = {}; paintHome(); return; }
   if(act === "startSave"){
     var sel = $("startSel");
     pkSet("startAt", sel ? String(sel.value || "home") : "home");
@@ -11030,11 +11490,17 @@ loadRoleLocal();
   }catch(e){}
 })();
 
+applyLook();
 cloudLoadCfg();
+// Coming back from Google? The session is in the URL. This has to run
+// after the config is loaded (it saves through it) and before the
+// passkey lock below, which would otherwise lock the sign-in that just
+// this second happened.
+var backFromOauth = oauthReturn();
 paintCloudBtn();
 // A session that survived a reload still has to be unlocked if a passkey
 // was enrolled on this device, and the token may be stale.
-if(signedIn()){
+if(signedIn() && !backFromOauth){
   AUTH.locked = pkOn();
   scheduleRefresh();
   refreshIfStale();
