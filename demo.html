@@ -922,6 +922,30 @@ body.at-home .actionbar{display:none !important}
   display:grid;place-items:center}
 .qrBox img{width:100%;height:100%;display:block;image-rendering:pixelated}
 
+/* Rearranging. The wobble is two half-degree rotations out of phase, so
+   a grid of them does not pulse in unison and read as a loading state. */
+@keyframes jiggleA{50%{transform:rotate(-1.4deg) translateY(-1px)}}
+@keyframes jiggleB{50%{transform:rotate(1.4deg) translateY(1px)}}
+body.editing .homePage .homeTile{animation:jiggleA .34s ease-in-out infinite}
+body.editing .homePage .homeTile:nth-child(2n){animation-name:jiggleB;animation-delay:-.17s}
+body.editing .homePage .homeTile.held{visibility:hidden;animation:none}
+body.editing .homeDock{opacity:.4;pointer-events:none}
+body.editing .homePager{touch-action:none}
+.homeTile.ghost{
+  position:fixed;left:0;top:0;z-index:120;margin:0;pointer-events:none;
+  animation:none;opacity:.94;
+  filter:drop-shadow(0 14px 22px rgba(0,0,0,.34))}
+.homeDone{
+  flex:none;align-self:center;margin:0 0 var(--sp-2);
+  padding:8px 22px;border-radius:var(--r-full);border:0;cursor:pointer;
+  background:var(--ac);color:var(--onac);font:inherit;
+  font-size:var(--fs-sm);font-weight:700;box-shadow:var(--e2)}
+.homeDone[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){
+  body.editing .homePage .homeTile{animation:none;outline:2px dashed var(--ac);
+    outline-offset:3px;border-radius:var(--r-md)}
+}
+
 /* The search pill: small, centred, above the dock. Tapping it opens the
    real field just above. */
 .homeQPill{
@@ -1523,6 +1547,7 @@ if ("serviceWorker" in navigator)
     </svg>
     <span id="homeQPillT"></span>
   </button>
+  <button type="button" class="homeDone" id="homeDone" hidden></button>
   <div class="homeDock" id="homeDock"></div>
 </div>
 
@@ -2310,6 +2335,7 @@ zh: {
 
   qHint      :"搜索应用、课堂、截止日期…",
   qPill      :"搜索",
+  editDone   :"完成",
   sosOfficial:"校园",
   sosMine    :"紧急联系人",
   iceKin     :"联系人",
@@ -3097,6 +3123,7 @@ en: {
 
   qHint      :"Search apps, classes, deadlines…",
   qPill      :"Search",
+  editDone   :"Done",
   sosOfficial:"Campus",
   sosMine    :"My contacts",
   iceKin     :"contact",
@@ -5365,8 +5392,34 @@ var PAGE_SIZE = 16;
 // an icon on page one.
 var DOCK = ["tt", "today", "sos", "me"];
 function inDock(id){ return DOCK.indexOf(id) >= 0; }
+
+// MICROS is the catalogue, not the layout. Whatever the user dragged
+// into place wins; anything they have never seen -- an app added in a
+// later build -- lands at the end rather than disappearing because it
+// was not in a list saved last week.
+function orderedMicros(){
+  var saved = pk("appOrder", []);
+  if(!saved || typeof saved.length !== "number") saved = [];
+  var by = {}, out = [], seen = {}, i, m;
+  for(i = 0; i < MICROS.length; i++) by[MICROS[i].id] = MICROS[i];
+  for(i = 0; i < saved.length; i++){
+    m = by[saved[i]];
+    if(m && !seen[m.id]){ out.push(m); seen[m.id] = 1; }
+  }
+  for(i = 0; i < MICROS.length; i++){
+    if(!seen[MICROS[i].id]){ out.push(MICROS[i]); seen[MICROS[i].id] = 1; }
+  }
+  return out;
+}
 function pageApps(){
-  return MICROS.filter(function(m){ return !inDock(m.id); });
+  return orderedMicros().filter(function(m){ return !inDock(m.id); });
+}
+function saveOrder(list){
+  var ids = [], i;
+  for(i = 0; i < list.length; i++) ids.push(list[i].id);
+  // The dock keeps its place at the front so the saved list is the whole
+  // catalogue, not just the part that happens to be on a page today.
+  pkSet("appOrder", DOCK.concat(ids));
 }
 function pageCount(){ return Math.ceil(pageApps().length / PAGE_SIZE) || 1; }
 
@@ -5377,9 +5430,9 @@ function pageCount(){ return Math.ceil(pageApps().length / PAGE_SIZE) || 1; }
 // things, so rebuild only when one of them actually changed.
 var pagesSig = "";
 function pagesKey(){
-  var ids = [];
-  for(var i = 0; i < MICROS.length; i++) ids.push(MICROS[i].id);
-  return lang + "|" + ids.join(",");
+  var list = pageApps(), ids = [];
+  for(var i = 0; i < list.length; i++) ids.push(list[i].id);
+  return lang + "|" + (EDIT.on ? "e" : "") + "|" + ids.join(",");
 }
 
 function tileEl(m){
@@ -5591,6 +5644,140 @@ var homeQ = "", qOpen = false;
 
 // Two states, not one: the field can be open with nothing typed in it.
 // Only a query stands the springboard down.
+// ============================================================
+//  Rearranging
+//  Hold an icon, everything wobbles, drag it where you want it. The
+//  thing that makes this feel right rather than fiddly is that the
+//  *model* reorders on the way past, not on the drop: the grid behind
+//  your finger is always showing where the icon would land if you let
+//  go now. The tile you picked up is hidden in the grid and a copy of
+//  it rides under your finger, so a repaint mid-drag cannot yank the
+//  thing you are holding out from under you.
+// ============================================================
+var EDIT = { on:false, id:"", ghost:null, dx:0, dy:0, hold:null, moved:false };
+
+function editStop(save){
+  if(EDIT.ghost && EDIT.ghost.parentNode) EDIT.ghost.parentNode.removeChild(EDIT.ghost);
+  EDIT.ghost = null;
+  if(EDIT.hold){ clearTimeout(EDIT.hold); EDIT.hold = null; }
+  EDIT.id = ""; EDIT.moved = false;
+  if(save === "all"){
+    EDIT.on = false;
+    document.body.classList.remove("editing");
+    paintPages(true);
+  }
+}
+
+function editEnter(id){
+  if(EDIT.on) return;
+  EDIT.on = true;
+  document.body.classList.add("editing");
+  tap(14);
+  paintPages(true);
+}
+
+// Which page-app index is under this point, if any.
+function tileIndexAt(x, y){
+  var el = document.elementFromPoint(x, y);
+  if(!el || !el.closest) return -1;
+  var tile = el.closest(".homePage .homeTile");
+  if(!tile) return -1;
+  var list = pageApps();
+  for(var i = 0; i < list.length; i++) if(list[i].id === tile.dataset.id) return i;
+  return -1;
+}
+
+function editMoveTo(idx){
+  var list = pageApps(), from = -1, i;
+  for(i = 0; i < list.length; i++) if(list[i].id === EDIT.id) from = i;
+  if(from < 0 || idx < 0 || idx === from) return;
+  var m = list.splice(from, 1)[0];
+  list.splice(idx, 0, m);
+  saveOrder(list);
+  paintPages(true);
+  markHeld();
+}
+
+// The tile being carried is hidden where it will land, not left behind
+// where it started -- that gap is the whole feedback.
+function markHeld(){
+  var all = document.querySelectorAll(".homePage .homeTile"), i;
+  for(i = 0; i < all.length; i++){
+    all[i].classList.toggle("held", EDIT.on && all[i].dataset.id === EDIT.id);
+  }
+}
+
+(function rearrange(){
+  var startX = 0, startY = 0;
+  function tileFrom(e){
+    var el = e.target;
+    return el && el.closest ? el.closest(".homePage .homeTile") : null;
+  }
+  function lift(tile, x, y){
+    var r = tile.getBoundingClientRect();
+    var g = tile.cloneNode(true);
+    g.className = "homeTile ghost";
+    g.style.width = r.width + "px";
+    g.style.height = r.height + "px";
+    EDIT.dx = x - r.left; EDIT.dy = y - r.top;
+    document.body.appendChild(g);
+    EDIT.ghost = g;
+    EDIT.id = tile.dataset.id;
+    moveGhost(x, y);
+    markHeld();
+  }
+  function moveGhost(x, y){
+    if(!EDIT.ghost) return;
+    EDIT.ghost.style.transform =
+      "translate(" + (x - EDIT.dx) + "px," + (y - EDIT.dy) + "px) scale(1.12)";
+  }
+  try{
+    document.addEventListener("pointerdown", function(e){
+      var pager = document.getElementById("homePager");
+      if(!pager) return;
+      var tile = tileFrom(e);
+      if(!tile) return;
+      startX = e.clientX; startY = e.clientY; EDIT.moved = false;
+      if(EDIT.on){ lift(tile, e.clientX, e.clientY); return; }
+      // Not in edit mode yet: a long press gets us there, a tap does not.
+      EDIT.hold = setTimeout(function(){
+        EDIT.hold = null;
+        editEnter(tile.dataset.id);
+        var again = document.querySelector('.homePage .homeTile[data-id="' + tile.dataset.id + '"]');
+        if(again) lift(again, startX, startY);
+      }, 480);
+    }, {passive:true});
+
+    document.addEventListener("pointermove", function(e){
+      if(EDIT.hold){
+        // Moved before the hold fired -> this was a scroll or a page swipe.
+        if(Math.abs(e.clientX - startX) > 8 || Math.abs(e.clientY - startY) > 8){
+          clearTimeout(EDIT.hold); EDIT.hold = null;
+        }
+        return;
+      }
+      if(!EDIT.ghost) return;
+      e.preventDefault();
+      EDIT.moved = true;
+      moveGhost(e.clientX, e.clientY);
+      editMoveTo(tileIndexAt(e.clientX, e.clientY));
+    }, {passive:false});
+
+    var up = function(e){
+      if(EDIT.hold){ clearTimeout(EDIT.hold); EDIT.hold = null; }
+      if(EDIT.ghost){
+        editStop();
+        markHeld();
+      }
+    };
+    document.addEventListener("pointerup", up, {passive:true});
+    document.addEventListener("pointercancel", up, {passive:true});
+    document.addEventListener("keydown", function(e){
+      if(e.key === "Escape" && EDIT.on) editStop("all");
+    });
+  }catch(e){}
+})();
+
 function paintSearch(){
   var box = $("homeHits"), inp = $("homeQ"), bar = $("homeSearch"), pill = $("homeQPill");
   if(!box || !inp) return;
@@ -5621,6 +5808,10 @@ function paintHome(){
   paintPages();
   var pip = $("homeMeDot");
   if(pip) pip.hidden = !fullyIn();
+  var done = $("homeDone");
+  if(done){ done.hidden = !EDIT.on; done.textContent = t("editDone"); }
+  var pill = $("homeQPill");
+  if(pill && EDIT.on) pill.hidden = true;
   paintSearch();
   var stub = $("homeStub");
   var stubOn = stub.classList.contains("on");
@@ -10439,6 +10630,7 @@ function qShut(){
   if(q) q.blur();
   paintSearch();
 }
+$("homeDone").onclick = function(){ editStop("all"); paintHome(); };
 $("homeQPill").onclick = function(){
   if(qOpen){ qShut(); return; }
   qOpen = true;
@@ -10486,12 +10678,14 @@ $("homeDots").onclick = function(e){
 $("homeDock").onclick = function(e){
   var b = e.target.closest(".homeTile");
   if(!b) return;
+  if(EDIT.on){ editStop("all"); return; }
   if(b.dataset.id === "tt"){ tap(8); openTt(); return; }
   openMicro(b.dataset.id);
 };
 $("homePager").onclick = function(e){
   var b = e.target.closest(".homeTile");
   if(!b) return;
+  if(EDIT.on) return;   // wobbling: taps move things, they do not open them
   if(b.dataset.id === "tt"){ tap(8); openTt(); return; }
   openMicro(b.dataset.id);
 };
