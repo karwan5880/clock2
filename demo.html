@@ -1676,9 +1676,11 @@ a.shellCall:active{transform:scale(.94)}
 
 </style>
 <script>window.__FORCE_DEMO__ = true;</script>
+<script>window.BUILD = "vd467efef";</script>
 <script>
 if ("serviceWorker" in navigator) addEventListener("load", function(){
-  navigator.serviceWorker.register("sw.js").then(function(reg){
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
+    .then(function(reg){
     var reloading = false;
     if (navigator.serviceWorker.controller)
       navigator.serviceWorker.addEventListener("controllerchange", function(){
@@ -1688,7 +1690,7 @@ if ("serviceWorker" in navigator) addEventListener("load", function(){
     document.addEventListener("visibilitychange", check);
     addEventListener("pageshow", check);
     check();
-  }).catch(function(){});
+    }).catch(function(){});
 });
 </script>
 </head>
@@ -2601,6 +2603,9 @@ zh: {
   tileMeSub  :"登录与两步验证",
   meHint     :"真实登录 · 连接 Supabase，不是演示",
   meNote     :"这是 Pocket 里唯一会连到服务器的屏幕。其余 25 个应用不需要登录。",
+  meBuild    :"版本",
+  meUpdate   :"检查更新",
+  meUpdating :"正在重新载入…",
   meNoCfgT   :"还没连接项目",
   meNoCfgS   :"把 Supabase 的网址和 anon key 写进 src/supabase.json，然后重新构建。步骤在：",
   meWho      :"登录",
@@ -3426,6 +3431,9 @@ en: {
   tileMeSub  :"Sign in and two-factor",
   meHint     :"A real sign-in · talks to Supabase, not a demo",
   meNote     :"This is the only screen in Pocket that reaches a server. The other 25 apps never ask you to sign in.",
+  meBuild    :"Build",
+  meUpdate   :"Check for updates",
+  meUpdating :"Reloading…",
   meNoCfgT   :"No project connected",
   meNoCfgS   :"Put your Supabase URL and anon key in src/supabase.json and rebuild. The steps are in:",
   meWho      :"Sign in",
@@ -5751,7 +5759,28 @@ function startHtml(){
 
 function meFoot(){
   return '<p class="shellS" style="margin-top:14px;text-align:center;color:var(--tx3)">' +
-    t("meNote") + "</p>";
+    t("meNote") + "</p>" + buildHtml();
+}
+
+// Which build is this, and a way out of a stale one.
+//
+// Installed to an iPhone's home screen there is no address bar, no reload
+// button, and the app disables overscroll -- so pull-to-refresh is gone
+// too. That leaves a user with a cached page and no way on earth to get
+// off it except deleting the app. This row is that way: it names the
+// build, so "did the fix arrive" is answerable, and the button throws
+// away every cache and reloads.
+//
+// BUILD is stamped in by tools/build-demo.js. Served straight off the
+// ESP32 there is no build step and no service worker, so it says dev and
+// the button is only a reload.
+function buildHtml(){
+  var v = (typeof BUILD === "string" && BUILD) ? BUILD : "dev";
+  return '<div class="statBox" style="margin-top:var(--sp-3)">' +
+    '<p class="shellK">' + t("meBuild") + "</p>" +
+    '<p class="shellS" style="font-family:var(--mono)">' + esc(v) + "</p>" +
+    '<div class="shellBtns"><button type="button" data-act="swFresh">' +
+      t("meUpdate") + "</button></div></div>";
 }
 
 // One place that decides which of the four states we are in, so no
@@ -11536,6 +11565,24 @@ $("stubStage").onclick = function(e){
   }
   // The clinic is the one that is not a toggle: you hold one slot, so
   // booking a second releases the first.
+  if(act === "swFresh"){
+    toast(t("meUpdating"));
+    var done = function(){ location.reload(); };
+    var caughtUp = Promise.resolve();
+    try{
+      if(typeof caches !== "undefined" && caches.keys)
+        caughtUp = caches.keys().then(function(ks){
+          return Promise.all(ks.map(function(k){ return caches.delete(k); }));
+        });
+    }catch(e){}
+    caughtUp.then(function(){
+      if(navigator.serviceWorker && navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){
+          return r ? r.update().catch(function(){}) : null;
+        }).catch(function(){});
+    }).then(done, done);
+    return;
+  }
   if(act === "meGoogle"){
     if(AUTH.busy) return;
     oauthStart("google");
