@@ -875,7 +875,11 @@ body.at-home #pocketHome{display:block}
 body.at-home .wrap,
 body.at-home .actionbar{display:none !important}
 
-.homeTop{display:flex;justify-content:space-between;align-items:center}
+/* The search bar used to carry the gap under the top row. It is hidden
+   now, so the gap belongs here or the first row of icons sits under
+   the buttons. */
+.homeTop{display:flex;justify-content:space-between;align-items:center;
+  margin:0 0 var(--sp-6)}
 .homeMe{
   position:relative;width:34px;height:34px;padding:0;display:grid;place-items:center;
   border-radius:var(--r-full);border:1px solid var(--edge);
@@ -910,8 +914,21 @@ body.at-home .actionbar{display:none !important}
   display:grid;place-items:center}
 .qrBox img{width:100%;height:100%;display:block;image-rendering:pixelated}
 
+.homeTools{display:flex;align-items:center;gap:var(--sp-2)}
+.homeIcoBtn{
+  width:34px;height:34px;padding:0;display:grid;place-items:center;
+  border-radius:var(--r-full);border:1px solid var(--edge);
+  background:color-mix(in srgb, var(--card) 62%, transparent);color:var(--tx);cursor:pointer;
+  backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);
+  transition:transform var(--mo-1) var(--ease)}
+.homeIcoBtn:active{transform:scale(.93)}
+.homeIcoBtn svg{width:18px;height:18px;display:block}
+.homeIcoBtn[aria-expanded="true"]{background:var(--ac);border-color:transparent;color:var(--onac)}
+
+/* Closed by default. A search field is a thing you go and get, not a
+   permanent bar across the top of a home screen. */
 .homeSearch{
-  display:flex;align-items:center;gap:var(--sp-2);
+  display:none;align-items:center;gap:var(--sp-2);
   margin:var(--sp-2) 0 var(--sp-6);padding:0 var(--sp-4);
   height:44px;border-radius:var(--r-full);
   border:1px solid var(--edge);
@@ -920,6 +937,8 @@ body.at-home .actionbar{display:none !important}
   box-shadow:var(--e1);
   transition:border-color var(--mo-2) linear,box-shadow var(--mo-2) linear;
 }
+.homeSearch.on{display:flex;animation:qOpen var(--mo-2) var(--ease-out) both}
+@keyframes qOpen{from{opacity:0;transform:translateY(-8px) scaleY(.86)}}
 .homeSearch:focus-within{border-color:var(--ac);box-shadow:var(--e2)}
 .homeSearch svg{width:18px;height:18px;flex:none;color:var(--tx3)}
 .homeSearch input{
@@ -933,10 +952,8 @@ body.at-home .actionbar{display:none !important}
   flex:none;width:22px;height:22px;padding:0;border:0;border-radius:50%;
   background:var(--card2);color:var(--tx2);font-size:11px;line-height:1;
   cursor:pointer;display:grid;place-items:center}
-/* display:grid outranks the user agent's [hidden]{display:none}, so the
-   clear button has to hide itself explicitly or it sits there on an
-   empty field. */
-#homeQx[hidden]{display:none}
+/* The x is always there now: on an empty field it closes the search
+   rather than clearing it, which is the only thing left to do with it. */
 
 /* One row per hit. The colour square is the app's own tile face, shrunk --
    it is how you tell at a glance that this line lives in Deadlines and
@@ -1452,16 +1469,25 @@ if ("serviceWorker" in navigator)
       </svg>
       <i id="homeMeDot" hidden></i>
     </button>
-    <button type="button" class="homeLang" id="homeLang">EN</button>
+    <span class="homeTools">
+      <button type="button" class="homeIcoBtn" id="homeQBtn" aria-label="Search"
+              aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
+             stroke-linecap="round" aria-hidden="true">
+          <circle cx="10.6" cy="10.6" r="6.4"/><path d="m15.4 15.4 4.6 4.6"/>
+        </svg>
+      </button>
+      <button type="button" class="homeLang" id="homeLang">EN</button>
+    </span>
   </div>
-  <div class="homeSearch">
+  <div class="homeSearch" id="homeSearch">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
          stroke-linecap="round" aria-hidden="true">
       <circle cx="10.6" cy="10.6" r="6.4"/><path d="m15.4 15.4 4.6 4.6"/>
     </svg>
     <input id="homeQ" type="search" autocomplete="off" autocapitalize="off"
            spellcheck="false" enterkeyhint="search" aria-label="Search">
-    <button type="button" id="homeQx" hidden aria-label="Clear">&#10005;</button>
+    <button type="button" id="homeQx" aria-label="Close">&#10005;</button>
   </div>
   <div id="homeHits" hidden></div>
   <button type="button" class="homeNow" id="homeNow"></button>
@@ -4587,6 +4613,7 @@ function tap(ms){
 
 function openMicro(id){
   if(NAV.busy) return;
+  if(qOpen) qShut();
   UI.open = {};
   S.micro = id;
   var st = $("homeStub");
@@ -5150,9 +5177,24 @@ function openTt(){
 var PAGE_SIZE = 16;
 function pageCount(){ return Math.ceil(MICROS.length / PAGE_SIZE) || 1; }
 
-function paintPages(){
+// Rebuilding the grid re-runs tileIn on all 25 icons. paintHome() is
+// called on the way out of every app, so coming back used to flash the
+// whole springboard and then animate it in again -- which reads as the
+// screen glitching, not as a transition. The tiles depend on exactly two
+// things, so rebuild only when one of them actually changed.
+var pagesSig = "";
+function pagesKey(){
+  var ids = [];
+  for(var i = 0; i < MICROS.length; i++) ids.push(MICROS[i].id);
+  return lang + "|" + ids.join(",");
+}
+
+function paintPages(force){
   var pager = $("homePager"), dots = $("homeDots"), pages = pageCount(), p, g, i, m, b;
   if(!pager) return;
+  var sig = pagesKey();
+  if(!force && sig === pagesSig && pager.children.length === pages) return;
+  pagesSig = sig;
   pager.innerHTML = "";
   for(p = 0; p < pages; p++){
     g = document.createElement("div");
@@ -5338,12 +5380,16 @@ function hitsHtml(hits){
 
 // The search field owns the home: while there is a query, the springboard
 // and everything under it stands down rather than scrolling below results.
-var homeQ = "";
+var homeQ = "", qOpen = false;
+
+// Two states, not one: the field can be open with nothing typed in it.
+// Only a query stands the springboard down.
 function paintSearch(){
-  var box = $("homeHits"), inp = $("homeQ"), x = $("homeQx");
+  var box = $("homeHits"), inp = $("homeQ"), bar = $("homeSearch"), btn = $("homeQBtn");
   if(!box || !inp) return;
   var on = !!homeQ;
-  if(x) x.hidden = !on;
+  if(bar) bar.classList.toggle("on", qOpen);
+  if(btn) btn.setAttribute("aria-expanded", qOpen ? "true" : "false");
   box.hidden = !on;
   var pager = $("homePager"), dots = $("homeDots"), now = $("homeNow"), foot = $("homeFoot");
   if(pager) pager.style.display = on ? "none" : "";
@@ -5486,7 +5532,7 @@ function demoLoad(){
 }
 function demoSave(){
   // Logged in -> store in the cloud; not logged in -> store on this phone
-  if(CLOUD.on){ cloudScheduleSave(); return; }
+  if(!SYNC_OFF && CLOUD.on){ cloudScheduleSave(); return; }
   try{ localStorage.setItem("clockDemo", JSON.stringify(DB)); }catch(e){}
 }
 
@@ -7226,13 +7272,23 @@ function shownOnDay(dayI, w){
 //  switching to another Supabase project needs no reflash.
 // ============================================================
 // karwan5880: no hosted backend. Cloud UI stays in the file but stays off.
+// The old cloud era: a sheet where you pasted a URL and a key, hosted Web
+// Push, and a timetable that lived in Postgres. All of that stays off.
+// The account screen added on 2026-08-24 is NOT this -- it reads
+// DEFAULT_CLOUD_URL / DEFAULT_CLOUD_KEY and talks to Supabase Auth only.
 var CLOUD_OFF = true;
+
+// Nothing on this phone is uploaded. `CLOUD.on` means "there is a
+// session", not "we are syncing" -- keep the two apart, because the day
+// sync is switched on it should be a decision with its own tables and its
+// own row-level security, not a side effect of signing in.
+var SYNC_OFF = true;
 // Filled in at build time from src/supabase.json (git-ignored). Empty
 // means the account screen says "not configured" and the rest of Pocket
 // carries on exactly as before -- signing in is optional by design, so a
 // missing project must never be able to break a demo.
-var DEFAULT_CLOUD_URL = "";
-var DEFAULT_CLOUD_KEY = "";
+var DEFAULT_CLOUD_URL = "https://lelymzpuawkopsmawndl.supabase.co";
+var DEFAULT_CLOUD_KEY = "sb_publishable_vB6Cnm0ooPSm_vUmPDtIyA_R_13aE_F";
 
 // A Supabase account has to be an email address. But the user does not want to type an email,
 // so internally the username gets a fixed domain appended -- the screen only ever shows the username.
@@ -7315,12 +7371,6 @@ function saveRoleLocal(r){
 }
 
 function cloudLoadCfg(){
-  if(CLOUD_OFF){
-    CLOUD.url = CLOUD.key = CLOUD.token = CLOUD.refresh = "";
-    CLOUD.uid = CLOUD.email = CLOUD.name = "";
-    CLOUD.on = false;
-    return;
-  }
   try{
     CLOUD.url     = localStorage.getItem("cloudUrl")   || "";
     CLOUD.key     = localStorage.getItem("cloudKey")   || "";
@@ -7738,6 +7788,7 @@ function cloudCacheLoad(){
 
 // ---------- Reading and writing the whole state ----------
 function cloudPull(){
+  if(SYNC_OFF) return Promise.reject(new Error("sync off"));
   return cloudFetch("/rest/v1/user_state?select=data&user_id=eq." + CLOUD.uid)
     .then(function(rows){
       // A trigger creates the row at sign-up; if it did not, create it here
@@ -7770,6 +7821,7 @@ function cloudPush(data){
 
 // Something changed -> push it 800ms later (a burst of edits does not become a burst of requests)
 function cloudScheduleSave(){
+  if(SYNC_OFF) return;   // belt and braces: nothing leaves this phone
   // The cloud copy has not been read yet -> save locally only and wait for cloudPull().
   // Without this line, the /api/mode the app sends on startup would push an empty state up.
   if(!cloudReady){ cloudCacheSave(DB); return; }
@@ -10147,17 +10199,35 @@ $("langBtn").onclick = function(){
 
 $("homeLang").onclick = function(){ $("langBtn").click(); };
 $("homeMe").onclick = function(){ tap(8); openMicro("me"); };
+function qShut(){
+  var q = $("homeQ");
+  if(q) q.value = "";
+  homeQ = ""; qOpen = false;
+  if(q) q.blur();
+  paintSearch();
+}
+$("homeQBtn").onclick = function(){
+  if(qOpen){ qShut(); return; }
+  qOpen = true;
+  paintSearch();
+  tap(6);
+  var q = $("homeQ");
+  // The field is display:none until paintSearch has run, and focusing a
+  // hidden input does nothing -- so this waits for the frame.
+  if(q) setTimeout(function(){ try{ q.focus(); }catch(e){} }, 30);
+};
 $("homeQ").oninput = function(){
   homeQ = String(this.value || "").slice(0, 60);
   paintSearch();
 };
 $("homeQ").onkeydown = function(e){
-  if(e.key !== "Escape") return;
-  this.value = ""; homeQ = ""; this.blur(); paintSearch();
+  if(e.key === "Escape") qShut();
 };
 $("homeQx").onclick = function(){
+  // Something typed -> clear it and stay. Nothing typed -> close.
   var q = $("homeQ");
-  q.value = ""; homeQ = ""; q.focus(); paintSearch();
+  if(homeQ){ q.value = ""; homeQ = ""; q.focus(); paintSearch(); return; }
+  qShut();
 };
 // A hit opens the app it belongs to and clears the query behind it, so
 // coming back with Back lands on the springboard rather than on a stale
@@ -10166,10 +10236,7 @@ $("homeHits").onclick = function(e){
   var b = e.target.closest ? e.target.closest(".hitRow") : null;
   if(!b) return;
   var app = b.dataset.app;
-  var q = $("homeQ");
-  if(q) q.value = "";
-  homeQ = "";
-  paintSearch();
+  qShut();
   if(app === "tt"){ tap(8); openTt(); return; }
   openMicro(app);
 };
@@ -10489,7 +10556,14 @@ try {
 loadRoleLocal();
 cloudLoadCfg();
 paintCloudBtn();
-if(CLOUD.on){
+// A session that survived a reload still has to be unlocked if a passkey
+// was enrolled on this device, and the token may be stale.
+if(signedIn()){
+  AUTH.locked = pkOn();
+  scheduleRefresh();
+  refreshIfStale();
+}
+if(!SYNC_OFF && CLOUD.on){
   // Put last time's data up first, rather than making the user stare at a blank screen waiting for the network
   var cached = cloudCacheLoad();
   if(cached) enterCloud(cached);
@@ -10529,7 +10603,7 @@ try{
     if(!document.hidden) refreshIfStale();
   });
   addEventListener("focus", refreshIfStale);
-  addEventListener("online", function(){ refreshIfStale(); if(CLOUD.on) cloudScheduleSave(); });
+  addEventListener("online", function(){ refreshIfStale(); if(!SYNC_OFF && CLOUD.on) cloudScheduleSave(); });
 }catch(e){}
 setInterval(tick, 1000);
 setInterval(demoTick, 1000);
