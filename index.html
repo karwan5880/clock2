@@ -1129,8 +1129,11 @@ body.editing .homePager{touch-action:none}
    nothing on the seam, which is what makes the swipe legible. */
 .homePager > .homePage{flex:0 0 100%;max-width:none;
   scroll-snap-align:start;scroll-snap-stop:always;
-  padding-inline:max(var(--sp-4), calc((100% - 364px) / 2));
+  padding-inline:max(var(--sp-4), calc((100% - var(--shell-w)) / 2));
   align-content:start}
+/* Nothing to line up against, so it sits in the middle of the screen
+   rather than hugging the top of a 1180px iPad. */
+.homePager.single > .homePage{align-content:center}
 .homeDots{flex:none;display:flex;justify-content:center;gap:8px;
   margin:var(--sp-4) 0 var(--sp-3);min-height:8px}
 .homeDots button{
@@ -1140,12 +1143,12 @@ body.editing .homePager{touch-action:none}
 .homeDots button.on{opacity:.85;transform:scale(1.2)}
 
 .homeGrid{
-  display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));
-  gap:var(--sp-4) var(--sp-2);max-width:364px;margin:0 auto;justify-items:center;
-  width:100%;
+  display:grid;grid-template-columns:repeat(var(--home-cols), minmax(0, 1fr));
+  gap:var(--sp-4) var(--sp-2);max-width:var(--shell-w);margin:0 auto;
+  justify-items:center;width:100%;
 }
 .homeTile{
-  appearance:none;width:100%;max-width:84px;padding:0;
+  appearance:none;width:100%;max-width:calc(var(--tile-w) - var(--sp-2));padding:0;
   border:0;background:transparent;color:var(--tx);
   font-family:inherit;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);
@@ -1163,7 +1166,14 @@ body.editing .homePager{touch-action:none}
   filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
 .homeTile:active .icon{transform:scale(.9)}
 .homeTile .name{
+  /* Two lines are reserved whether or not the name needs them. One label
+     that wraps -- "Lost and found" -- used to make its whole grid row
+     15px taller than the others, and on a laptop that row is in the
+     middle of the page rather than at the bottom, so the gap under it
+     read as a mistake. Every tile is the same height now, at every
+     screen size, which is also what lets fitPage() trust its arithmetic. */
   margin:0;width:100%;max-width:78px;font-size:var(--fs-xs);font-weight:600;line-height:1.25;
+  min-height:2.5em;
   letter-spacing:-.005em;text-align:center;color:var(--tx);
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
 }
@@ -1232,7 +1242,7 @@ body.editing .homePager{touch-action:none}
 #homeStub.on{display:block}
 /* The timetable is its own pane; an app must not hang over it. */
 body:not(.at-home) #homeStub{display:none}
-.stubPane{max-width:400px;margin:0 auto}
+.stubPane{max-width:var(--pane-w);margin:0 auto}
 #homeStub.pushing{animation:pushIn var(--mo-3) var(--ease) both}
 #homeStub.popping{animation:pushOut var(--mo-2) var(--ease) both}
 #homeStub.dragging{transition:none}
@@ -1513,78 +1523,83 @@ a.shellCall:active{transform:scale(.94)}
 }
 
 /* ============================================================
-   The device frame
+   Three sizes, one app
    ------------------------------------------------------------
-   On anything bigger than a phone there is no such thing as "full
-   screen" for this product -- it is a phone app, and a phone app
-   stretched across 1180px of iPad or 1440px of browser reads as a
-   web page no matter how the inside is drawn. So above a phone's
-   size the whole shell shrinks to a 390x844 device sitting on a dim
-   backdrop, with a bezel, a notch and a home indicator.
+   This used to draw a 390x844 phone with a bezel and a notch on any
+   screen bigger than a phone, on the argument that a phone app
+   stretched across a laptop reads as a web page. That was wrong about
+   who uses this. Students open Pocket on a MacBook, on an iPad and on
+   a phone in the same day, and on the laptop they were handed a
+   picture of a phone sitting on a dark backdrop -- a demo of a demo.
 
-   Keyed on size alone, not on the pointer. It used to require
-   pointer:fine, which meant a laptop got the frame and an iPad --
-   coarse, and easily the likeliest thing to demo from -- did not,
-   and got a stretched page with a broken grid instead. A phone in
-   landscape is under the height floor, so it keeps the full screen,
-   which is what it should have.
+   There is no frame now, and no second layout either. The panes were
+   already centred columns (.wrap 640, .stubPane, .homeNow), so what
+   changes with the screen is four numbers, declared here and read by
+   everything below -- and by fitPage(), which asks for --home-cols
+   rather than assuming four:
 
-   The trick that makes it cheap: body already owns the viewport
-   (position:fixed, every pane absolute inside it), so giving body
-   a transform turns it into the containing block for the fixed
-   layers too -- sheets, masks, the action bar and toasts land
-   inside the phone instead of escaping to the window. Nothing in
-   the app needs to know the frame exists.
+     --home-cols  icons across the springboard
+     --tile-w     one icon's column, which sets the grid's own width
+     --shell-w    how wide the home is allowed to get before it centres
+     --pane-w     how wide an opened app's column is allowed to get
+
+   Phone keeps four columns and the full screen. An iPad gets six and
+   the full screen. A laptop gets eight in a centred canvas, which is a
+   web app rather than a phone drawn on a desk.
    ============================================================ */
-@media (min-width:700px) and (min-height:700px){
-  html{
-    background:radial-gradient(120% 90% at 50% 0%, #1b2430 0%, #0a0e14 68%);
-  }
-  body{
-    inset:auto; top:50%; left:50%;
-    width:390px; height:844px;
-    max-height:calc(100dvh - 40px);
-    transform:translate(-50%,-50%);
-    border-radius:46px;
-    overflow:hidden;
-    box-shadow:
-      0 0 0 10px #14181f,
-      0 0 0 11px rgba(255,255,255,.13),
-      0 0 0 12px rgba(0,0,0,.55),
-      0 44px 90px -24px rgba(0,0,0,.75),
-      0 8px 24px rgba(0,0,0,.4);
-  }
-  /* notch */
-  body::before{
-    content:"";position:absolute;z-index:100;pointer-events:none;
-    top:0;left:50%;transform:translateX(-50%);
-    width:118px;height:29px;background:#000;
-    border-radius:0 0 19px 19px;
-  }
-  /* home indicator */
-  body::after{
-    content:"";position:absolute;z-index:100;pointer-events:none;
-    bottom:8px;left:50%;transform:translateX(-50%);
-    width:134px;height:5px;border-radius:var(--r-full);
-    background:color-mix(in srgb, var(--tx) 48%, transparent);
-  }
-  /* the status bar a phone always has, above the panes, under nothing */
-  #deviceBar{
-    display:flex;align-items:center;justify-content:space-between;
-    position:absolute;z-index:101;pointer-events:none;
-    top:0;left:0;right:0;height:30px;padding:0 24px 0 30px;
-    color:var(--tx);font-size:12.5px;font-weight:700;
-    font-variant-numeric:tabular-nums;letter-spacing:.01em;
-  }
-  #deviceBar .dbR{display:flex;align-items:center;gap:6px;line-height:0}
-  /* nothing may sit under the notch or the indicator */
-  #pocketHome{padding-top:calc(var(--sp-4) + 34px)}
-  .wrap{padding-top:34px;padding-bottom:calc(104px + 18px)}
-  .actionbar{padding-bottom:18px}
-  .sheet{max-height:88%;padding-bottom:44px}
-  #homeStub{padding-top:calc(var(--sp-4) + 34px)}
-  .toast{bottom:126px}
+:root{
+  --home-cols:4;
+  --tile-w:92px;   /* one icon plus its column gap */
+  --pane-w:400px;
+  /* Everything on the home is exactly as wide as the icon grid. Derived,
+     not typed, so changing the column count moves all of it at once. */
+  --shell-w:calc(var(--home-cols) * var(--tile-w));
 }
+/* iPad, and a laptop window dragged narrow. Portrait 820 and landscape
+   1180 both land here or above, and neither gets a bezel any more. */
+@media (min-width:700px){
+  :root{--home-cols:6; --pane-w:560px}
+}
+/* Laptop and desktop. A 14" MacBook is 1512 logical points wide. */
+@media (min-width:1100px){
+  :root{--home-cols:8; --tile-w:100px; --pane-w:680px}
+  .homeTile .icon{width:66px;height:66px;border-radius:17px}
+  .homeTile .icon svg{width:32px;height:32px}
+  .homeTile .name{max-width:88px;font-size:var(--fs-sm)}
+}
+/* The home is one column of blocks; on a wide screen every one of them
+   centres on the same axis instead of the avatar and the language
+   button flying to opposite corners of a 27" monitor. */
+#pocketHome > .homeTop,
+#pocketHome > #homeHits,
+#pocketHome > .homeNow,
+#pocketHome > .homePager,
+#pocketHome > .homeDots,
+#pocketHome > .homeSearch{width:100%;max-width:var(--shell-w);margin-inline:auto}
+
+/* A pointer that hovers is a laptop. Phones never see this, and it is
+   the one affordance a desktop springboard is missing: on a phone you
+   know a tile is a button because you can feel it. */
+@media (hover:hover) and (pointer:fine){
+  .homeTile .icon{transition:transform var(--mo-2) var(--ease),
+                             box-shadow var(--mo-2) var(--ease)}
+  .homeTile:hover .icon{transform:translateY(-3px) scale(1.04);
+    box-shadow:0 16px 26px -12px rgba(12,40,70,.6),
+               inset 0 1px 0 rgba(255,255,255,.34),
+               inset 0 -1px 0 rgba(0,0,0,.14)}
+  .homeTile:hover .name{color:var(--ac)}
+  .hitRow:hover,.shellRow:hover{border-color:var(--ac)}
+}
+
+/* A bottom sheet that runs the full width of a monitor is a banner. It
+   keeps the same gesture and the same animation, in a column. */
+@media (min-width:700px){
+  .sheet{max-width:560px;margin-inline:auto;border-radius:22px 22px 0 0}
+}
+
+/* The device status bar belonged to the frame and went with it. */
+#deviceBar{display:none !important}
+
 </style>
 <script>window.__FORCE_DEMO__ = true;</script>
 <script>
@@ -5731,11 +5746,13 @@ function openTt(){
 // page it is on and only the last page is short, so the row count comes
 // from the pager's own height.
 //
-// Four columns is the phone grid and does not change. PAGE_TILE/PAGE_GAP
-// are the CSS values (a 60px icon, its label, and the grid's row gap);
-// they are seeds only -- fitPage() remeasures them from a real tile after
-// the first paint, so a longer label or a bigger text size is accounted
-// for rather than assumed away.
+// The column count is the stylesheet's, not this file's: --home-cols is 4
+// on a phone, 6 on an iPad and 8 on a laptop, and asking for it here is
+// what stops the two from drifting apart. PAGE_TILE/PAGE_GAP are the CSS
+// values (a 60px icon, its label, and the grid's row gap); they are seeds
+// only -- fitPage() remeasures them from a real tile after the first
+// paint, so a longer label or a bigger text size is accounted for rather
+// than assumed away.
 var PAGE_COLS = 4;
 var PAGE_TILE = 82;
 var PAGE_GAP  = 16;
@@ -5746,6 +5763,8 @@ function fitPage(){
   if(!pager) return PAGE_SIZE;
   var h = pager.clientHeight;
   if(!h) return PAGE_SIZE;          // not laid out yet; keep the seed
+  var cols = parseInt(getComputedStyle(pager).getPropertyValue("--home-cols"), 10);
+  if(cols > 0) PAGE_COLS = cols;
   var tile = pager.querySelector(".homeTile"), gap;
   if(tile && tile.offsetHeight > 0){
     PAGE_TILE = tile.offsetHeight;
@@ -5861,6 +5880,13 @@ function paintPages(force){
     pages = build();
   }
   pagesSig = pagesKey();
+  // An iPad is tall enough for ten rows and there are twenty-six apps, so
+  // one page can leave half the screen empty under the icons. When there
+  // is only one page there is nothing to line it up with, so centre the
+  // block. The row gaps do not change -- it is space-evenly that was the
+  // bug, not centring -- and with two pages both go back to the top so
+  // they still match mid-swipe.
+  pager.classList.toggle("single", pages === 1);
   // A repaint that drops a page (a taller pager, an app hidden) would
   // otherwise leave the scroll parked past the end, showing blank glass.
   var last = (pages - 1) * pager.clientWidth;
@@ -11178,6 +11204,23 @@ addEventListener("resize", function(){
     paintPages();
     markPage();
   }, 150);
+});
+// A laptop has arrow keys and no swipe. Home only, never while an app is
+// open or a field has focus -- the timetable's own keys and every text
+// input come first.
+document.addEventListener("keydown", function(e){
+  if(e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  if(!document.body.classList.contains("at-home")) return;
+  if($("homeStub").classList.contains("on") || EDIT.on || homeQ) return;
+  var a = document.activeElement;
+  if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  var pager = $("homePager"), w = pager.clientWidth || 1;
+  var to = Math.round(pager.scrollLeft / w) + (e.key === "ArrowRight" ? 1 : -1);
+  var max = pager.children.length - 1;
+  if(to < 0 || to > max) return;
+  e.preventDefault();
+  pager.scrollLeft = to * w;
+  tap(6);
 });
 $("homeDots").onclick = function(e){
   var b = e.target.closest ? e.target.closest("button") : null;
