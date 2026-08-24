@@ -425,8 +425,9 @@ html,body{
   margin:0;padding:0;width:100%;
   overflow:hidden;overscroll-behavior:none;
 }
-/* svh first for anything that does not know dvh; dvh wins where it does. */
-html{height:100%;height:100svh;height:100dvh}
+/* svh first for anything that does not know dvh; dvh wins where it does.
+   --app-h overrides both once JS has measured the real thing. */
+html{height:100%;height:100svh;height:100dvh;height:var(--app-h,100dvh)}
 /* No `height` here on purpose. When a fixed element has top, bottom AND
    height, the spec says bottom loses -- so `height:100%` was quietly
    sizing the whole app to 100% of <html> instead of to the viewport, and
@@ -436,7 +437,18 @@ html{height:100%;height:100svh;height:100dvh}
    the home screen on a real iPhone. inset:0 alone is the viewport, in
    every browser, installed or not. */
 body{
-  position:fixed;inset:0;
+  /* Pinned to the top-left and given a measured height, rather than
+     inset:0. Every viewport unit and every inset lies somewhere: iOS
+     standalone reports a dvh that is not the layout viewport (a strip of
+     the launcher's background_color shows under the app), and Chrome's
+     collapsing toolbar means the layout viewport is the LARGE one, so an
+     app sized to it runs underneath the toolbar and its bottom row is
+     unreachable. Same defect, opposite symptom. fitViewport() writes the
+     one number both cases need -- visualViewport.height -- into --app-h
+     and keeps it there; 100dvh is only the value before the first frame
+     of JavaScript. */
+  position:fixed;top:0;left:0;width:100%;
+  height:100dvh;height:var(--app-h,100dvh);
   background:var(--bg); color:var(--tx);
   background-image:radial-gradient(125% 62% at 50% -4%,var(--sky) 0%,transparent 64%);
   font:var(--fs-md)/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI Variable Text",
@@ -1676,7 +1688,7 @@ a.shellCall:active{transform:scale(.94)}
 
 </style>
 <script>window.__FORCE_DEMO__ = true;</script>
-<script>window.BUILD = "vd467efef";</script>
+<script>window.BUILD = "v24592e97";</script>
 <script>
 if ("serviceWorker" in navigator) addEventListener("load", function(){
   navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
@@ -5778,9 +5790,68 @@ function buildHtml(){
   var v = (typeof BUILD === "string" && BUILD) ? BUILD : "dev";
   return '<div class="statBox" style="margin-top:var(--sp-3)">' +
     '<p class="shellK">' + t("meBuild") + "</p>" +
-    '<p class="shellS" style="font-family:var(--mono)">' + esc(v) + "</p>" +
+    '<button type="button" data-act="swDiag" class="selectable" ' +
+      'style="appearance:none;border:0;background:transparent;padding:0;' +
+      'font:inherit;font-family:var(--mono);font-size:var(--fs-sm);' +
+      'color:var(--tx2);cursor:pointer">' + esc(v) + "</button>" +
     '<div class="shellBtns"><button type="button" data-act="swFresh">' +
-      t("meUpdate") + "</button></div></div>";
+      t("meUpdate") + "</button></div>" +
+    (DIAG ? diagHtml() : "") + "</div>";
+}
+
+// What the browser actually reports, on the device that is arguing with
+// us. Every viewport bug in this project so far has been a number that
+// disagreed with another number, and screenshots cannot show either.
+// Tap the build string to unfold it; it is off by default.
+var DIAG = false;
+function diagHtml(){
+  var probe = document.createElement("div"), pad = { top:"?", bottom:"?" };
+  try{
+    probe.style.cssText = "position:absolute;visibility:hidden;" +
+      "padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)";
+    document.body.appendChild(probe);
+    var cs = getComputedStyle(probe);
+    pad.top = cs.paddingTop; pad.bottom = cs.paddingBottom;
+    document.body.removeChild(probe);
+  }catch(e){}
+  function mode(){
+    var m = ["standalone", "minimal-ui", "fullscreen", "browser"], i;
+    for(i = 0; i < m.length; i++)
+      if(window.matchMedia && matchMedia("(display-mode: " + m[i] + ")").matches) return m[i];
+    return "?";
+  }
+  function box(el){
+    if(!el) return "-";
+    var r = el.getBoundingClientRect();
+    return Math.round(r.width) + "x" + Math.round(r.height) + " top " +
+           Math.round(r.top) + " bot " + Math.round(r.bottom);
+  }
+  var vv = window.visualViewport;
+  var pager = $("homePager");
+  var rows = [
+    ["mode",     mode() + (navigator.standalone ? " ios-standalone" : "")],
+    ["window",   window.innerWidth + "x" + window.innerHeight],
+    ["visual",   vv ? Math.round(vv.width) + "x" + Math.round(vv.height) +
+                      " offY " + Math.round(vv.offsetTop) + " scale " + (Math.round(vv.scale*100)/100)
+                    : "unsupported"],
+    ["screen",   screen.width + "x" + screen.height + " dpr " + (window.devicePixelRatio || 1)],
+    ["--app-h",  getComputedStyle(document.documentElement).getPropertyValue("--app-h").trim() || "unset"],
+    ["safe-top", pad.top], ["safe-bot", pad.bottom],
+    ["html",     box(document.documentElement)],
+    ["body",     box(document.body)],
+    ["home",     box($("pocketHome"))],
+    ["stub",     box($("homeStub"))],
+    ["pager",    pager ? Math.round(pager.clientHeight) + "h  pages " + pager.children.length : "-"],
+    ["cols",     pager ? getComputedStyle(pager).getPropertyValue("--home-cols").trim() : "-"],
+    ["ua",       navigator.userAgent]
+  ];
+  var out = "";
+  for(var i = 0; i < rows.length; i++)
+    out += esc(rows[i][0]) + ": " + esc(String(rows[i][1])) + String.fromCharCode(10);
+  return '<pre class="selectable" style="margin:var(--sp-3) 0 0;padding:var(--sp-2);' +
+    'white-space:pre-wrap;word-break:break-all;font-family:var(--mono);' +
+    'font-size:var(--fs-2xs);line-height:1.5;color:var(--tx2);' +
+    'background:var(--card2);border-radius:var(--r-sm);overflow-x:auto">' + out + "</pre>";
 }
 
 // One place that decides which of the four states we are in, so no
@@ -11308,6 +11379,41 @@ $("homeHits").onclick = function(e){
 };
 $("homeNow").onclick = function(){ openMicro("today"); };
 $("homeBtn").onclick = goHome;
+// ============================================================
+//  How tall is the screen, really
+//
+//  Every unit that claims to answer this is wrong somewhere:
+//    100vh   the large viewport; under Chrome's toolbar
+//    100dvh  right in a tab, not in an iOS standalone app
+//    inset:0 the layout viewport, which is the large one in Chrome
+//  visualViewport.height is the only thing that reports the pixels a
+//  person can actually see, in a tab and installed alike. It is written
+//  to --app-h, which body's height reads, so the app is exactly the
+//  visible area and nothing hangs off either end.
+//
+//  It fires on toolbar collapse, rotation, split screen and the software
+//  keyboard, so it has to be cheap: one style write, and only when the
+//  number actually moved. paintPages() re-fits the grid off the back of
+//  the resize listener below, debounced, not from here.
+// ============================================================
+var appH = 0;
+function fitViewport(){
+  var vv = window.visualViewport;
+  var h = Math.round((vv && vv.height) || window.innerHeight || 0);
+  if(!h || h === appH) return;
+  appH = h;
+  document.documentElement.style.setProperty("--app-h", h + "px");
+}
+fitViewport();
+addEventListener("resize", fitViewport);
+addEventListener("orientationchange", fitViewport);
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", fitViewport);
+  // iOS moves the visual viewport without resizing it when the keyboard
+  // slides; re-asserting on scroll keeps the shell pinned to what is seen.
+  window.visualViewport.addEventListener("scroll", fitViewport);
+}
+
 $("homePager").onscroll = markPage;
 // The page holds as many rows as the pager is tall, so a rotate, a split
 // screen or a browser resize changes how many icons fit. Debounced: a
@@ -11315,7 +11421,7 @@ $("homePager").onscroll = markPage;
 // frame of it is what makes a home screen flicker. Never mid-drag -- the
 // tile being carried is a child of the grid we would be throwing away.
 var pagerFit = null;
-addEventListener("resize", function(){
+function pagerRefit(){
   if(pagerFit) clearTimeout(pagerFit);
   pagerFit = setTimeout(function(){
     pagerFit = null;
@@ -11323,7 +11429,10 @@ addEventListener("resize", function(){
     paintPages();
     markPage();
   }, 150);
-});
+}
+addEventListener("resize", pagerRefit);
+addEventListener("orientationchange", pagerRefit);
+if(window.visualViewport) window.visualViewport.addEventListener("resize", pagerRefit);
 // A laptop has arrow keys and no swipe. Home only, never while an app is
 // open or a field has focus -- the timetable's own keys and every text
 // input come first.
@@ -11565,6 +11674,7 @@ $("stubStage").onclick = function(e){
   }
   // The clinic is the one that is not a toggle: you hold one slot, so
   // booking a second releases the first.
+  if(act === "swDiag"){ DIAG = !DIAG; paintHome(); return; }
   if(act === "swFresh"){
     toast(t("meUpdating"));
     var done = function(){ location.reload(); };
