@@ -870,8 +870,11 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac)}
   flex-direction:column;
   overflow-x:hidden;overflow-y:auto;overscroll-behavior:none;
   -webkit-overflow-scrolling:touch;touch-action:pan-y;
-  padding:calc(var(--sp-4) + env(safe-area-inset-top)) 0
-          calc(var(--sp-10) + env(safe-area-inset-bottom));
+  /* --sp-10 under the pill was 40px of nothing at the bottom of every
+     phone -- most of the row of icons that now fits there instead. The
+     safe-area insets still get their space on a device that has them. */
+  padding:calc(var(--sp-3) + env(safe-area-inset-top)) 0
+          calc(var(--sp-3) + env(safe-area-inset-bottom));
   box-sizing:border-box;
   background:
     radial-gradient(120% 70% at 50% -10%, color-mix(in srgb, var(--ac) 28%, #fff), transparent 62%),
@@ -946,7 +949,7 @@ body.at-home .actionbar{display:none !important}
    now, so the gap belongs here or the first row of icons sits under
    the buttons. */
 .homeTop{display:flex;justify-content:space-between;align-items:center;
-  margin:0 0 var(--sp-6)}
+  margin:0 0 var(--sp-3)}
 .homeMe{
   position:relative;width:34px;height:34px;padding:0;display:grid;place-items:center;
   border-radius:var(--r-full);border:1px solid var(--edge);
@@ -1009,15 +1012,22 @@ body.editing .homePager{touch-action:none}
 /* The search pill: small, centred, above the dock. Tapping it opens the
    real field just above. */
 .homeQPill{
-  flex:none;align-self:center;display:flex;align-items:center;gap:7px;
-  padding:7px 16px;border-radius:var(--r-full);cursor:pointer;
-  border:1px solid var(--edge);color:var(--tx2);
-  background:color-mix(in srgb, var(--card) 58%, transparent);
-  backdrop-filter:blur(16px) saturate(1.5);-webkit-backdrop-filter:blur(16px) saturate(1.5);
-  font:inherit;font-size:var(--fs-sm);font-weight:650;
-  transition:transform var(--mo-1) var(--ease),opacity var(--mo-2) linear}
+  /* The one on an iPhone is a small dim capsule you stop seeing after a
+     week, and that is the whole design: it has to be findable, not
+     noticed. This used to be a 13px semibold label in a bordered white
+     pill with a saturating blur -- the loudest thing on the screen after
+     the icons. No border, no card, a smaller and quieter label, and a
+     fixed height so it costs the layout a known 26px. */
+  flex:none;align-self:center;display:flex;align-items:center;gap:5px;
+  height:26px;padding:0 12px;border-radius:var(--r-full);cursor:pointer;
+  border:0;color:var(--tx3);
+  background:color-mix(in srgb, var(--card) 34%, transparent);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  font:inherit;font-size:var(--fs-xs);font-weight:600;line-height:1;
+  transition:transform var(--mo-1) var(--ease),
+             opacity var(--mo-2) linear,color var(--mo-2) linear}
 .homeQPill:active{transform:scale(.95)}
-.homeQPill svg{width:15px;height:15px;display:block;flex:none}
+.homeQPill svg{width:13px;height:13px;display:block;flex:none}
 .homeQPill[hidden]{display:none}
 
 /* Closed by default. A search field is a thing you go and get, not a
@@ -1134,8 +1144,11 @@ body.editing .homePager{touch-action:none}
 /* Nothing to line up against, so it sits in the middle of the screen
    rather than hugging the top of a 1180px iPad. */
 .homePager.single > .homePage{align-content:center}
+/* paintPages() empties this when there is only one page, and an empty
+   row of dots still spent 36px of a phone's screen on nothing. */
 .homeDots{flex:none;display:flex;justify-content:center;gap:8px;
-  margin:var(--sp-4) 0 var(--sp-3);min-height:8px}
+  margin:var(--sp-3) 0 var(--sp-2);min-height:8px}
+.homeDots:empty{display:none}
 .homeDots button{
   width:8px;height:8px;padding:0;border:0;border-radius:50%;cursor:pointer;
   background:var(--tx3);opacity:.3;
