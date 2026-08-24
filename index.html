@@ -896,6 +896,11 @@ body.at-home .actionbar{display:none !important}
   appearance:none;width:100%;box-sizing:border-box;padding:10px 12px;border:0;
   border-radius:12px;background:var(--card);color:var(--tx);font:inherit}
 .dueFormRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gpaHead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  background:var(--card);border-radius:16px;padding:14px;margin:0 0 8px;
+  box-shadow:0 8px 24px -18px var(--shadow)}
+.gpaHead .n{font-size:30px;font-weight:800;letter-spacing:-.03em}
+.gpaFormRow{display:grid;grid-template-columns:1fr auto;gap:8px}
 a.shellCall{
   flex:none;display:inline-block;padding:7px 14px;border-radius:99px;
   background:#dc2626;color:#fff;font-size:12px;font-weight:800;text-decoration:none}
@@ -1707,6 +1712,16 @@ zh: {
   dueTmr     :"明天",
   dueOver    :"过了",
   dueOpen    :"全部作业",
+  gpaHint    :"记在这台手机 · 不是官方成绩单",
+  gpaEmpty   :"还没有科目",
+  gpaAdd     :"＋ 新科目",
+  gpaNamePh  :"科目 / 代号",
+  gpaCrPh    :"学分",
+  gpaNeed    :"先填科目和学分",
+  gpaNow     :"这学期",
+  gpaCr      : function(n){ return n + " 学分"; },
+  gpaTotal   : function(n){ return "共 " + n + " 学分"; },
+  gpaScale   :"UTAR 等级 · A 4.00 到 F 0.00",
   sos999     :"全国急救",
   sosDss     :"安全处 DSS",
   sosDsa     :"学生事务 DSA",
@@ -2246,6 +2261,16 @@ en: {
   dueTmr     :"Tomorrow",
   dueOver    :"Overdue",
   dueOpen    :"All deadlines",
+  gpaHint    :"Saved on this phone · not an official transcript",
+  gpaEmpty   :"No courses yet",
+  gpaAdd     :"+ Add course",
+  gpaNamePh  :"Course / code",
+  gpaCrPh    :"Credits",
+  gpaNeed    :"Need a course and its credits",
+  gpaNow     :"This semester",
+  gpaCr      : function(n){ return n + " cr"; },
+  gpaTotal   : function(n){ return n + " credits total"; },
+  gpaScale   :"UTAR scale · A 4.00 down to F 0.00",
   sos999     :"National emergency",
   sosDss     :"Safety & Security (DSS)",
   sosDsa     :"Student Affairs (DSA)",
@@ -2510,6 +2535,14 @@ try {
   if(Array.isArray(du)) DUE = du;
 } catch(e){}
 
+var GPA = [];
+try {
+  var gp = JSON.parse(localStorage.getItem("clockGpa") || "[]");
+  if(Array.isArray(gp)) GPA = gp;
+} catch(e){}
+// The grade the add form is sitting on. Not stored - it resets to A on reopen.
+var gpaNewG = 0;
+
 var MICROS = [
   { id:"sos",   live:true,  t:"tileSos" },
   { id:"today", live:true,  t:"tileToday" },
@@ -2517,7 +2550,7 @@ var MICROS = [
   { id:"att",   live:true,  t:"tileAtt" },
   { id:"due",   live:true,  t:"tileDue" },
   { id:"ev",    live:false, t:"tileEv" },
-  { id:"gpa",   live:false, t:"tileGpa" },
+  { id:"gpa",   live:true,  t:"tileGpa" },
   { id:"id",    live:false, t:"tileId" },
   { id:"cash",  live:false, t:"tileCash" },
   { id:"bus",   live:false, t:"tileBus" },
@@ -2840,6 +2873,80 @@ function dueHtml(){
   return html;
 }
 
+// ---------- GPA ----------
+// UTAR's own scale, best first. The letter is what gets stored, so the
+// numbers can be corrected later without touching anyone's saved courses.
+var GRADES = [
+  ["A",  4.00],
+  ["A-", 3.75],
+  ["B+", 3.50],
+  ["B",  3.00],
+  ["B-", 2.75],
+  ["C+", 2.50],
+  ["C",  2.00],
+  ["F",  0.00]
+];
+function gradeI(g){
+  for(var i = 0; i < GRADES.length; i++) if(GRADES[i][0] === g) return i;
+  return 0;
+}
+function gpaSave(){
+  try { localStorage.setItem("clockGpa", JSON.stringify(GPA)); } catch(e){}
+}
+function gpaNorm(x){
+  if(!x || typeof x !== "object") return null;
+  var name = String(x.name || "").trim().slice(0, 40);
+  var cr = Math.round(parseFloat(x.cr) * 2) / 2;
+  if(!name || !isFinite(cr) || cr <= 0 || cr > 20) return null;
+  return {
+    id: String(x.id || ("g" + Date.now().toString(36))),
+    name: name,
+    cr: cr,
+    g: GRADES[gradeI(String(x.g || "A"))][0]
+  };
+}
+function gpaList(){
+  var out = [];
+  GPA.forEach(function(x){ var n = gpaNorm(x); if(n) out.push(n); });
+  return out;
+}
+// Credits carry the weight, so an F still counts against you - it brings
+// its credits with zero points, which is what a real transcript does.
+function gpaCalc(list){
+  var pts = 0, cr = 0;
+  for(var i = 0; i < list.length; i++){
+    pts += GRADES[gradeI(list[i].g)][1] * list[i].cr;
+    cr += list[i].cr;
+  }
+  return { cr: cr, gpa: cr ? pts / cr : null };
+}
+function gpaNum(n){ return n.toFixed(2); }
+function gpaHtml(){
+  var list = gpaList();
+  var sum = gpaCalc(list);
+  var html = '<div class="gpaHead"><div><p class="shellK">'+t("gpaNow")+'</p>'+
+    '<p class="n">'+(sum.gpa === null ? "\u2014" : gpaNum(sum.gpa))+"</p></div>"+
+    '<p class="shellS">'+t("gpaTotal", sum.cr)+"</p></div>";
+  var i, c;
+  if(!list.length) html += shellRow("", t("gpaEmpty"), "");
+  for(i = 0; i < list.length; i++){
+    c = list[i];
+    html += shellRow(t("gpaCr", c.cr), esc(c.name), "",
+      '<div class="shellBtns">'+
+      '<button type="button" class="on" data-act="gpaG" data-id="'+esc(c.id)+'">'+c.g+"</button>"+
+      '<button type="button" data-act="gpaDel" data-id="'+esc(c.id)+'">\u00d7</button></div>');
+  }
+  html += '<div class="dueForm">'+
+    '<input id="gpaName" maxlength="40" placeholder="'+esc(t("gpaNamePh"))+'">'+
+    '<div class="gpaFormRow">'+
+      '<input id="gpaCr" type="number" min="0.5" max="20" step="0.5" placeholder="'+esc(t("gpaCrPh"))+'">'+
+      '<div class="shellBtns"><button type="button" class="on" data-act="gpaNewG">'+GRADES[gpaNewG][0]+"</button></div>"+
+    "</div></div>"+
+    '<button type="button" class="shellFab" data-act="gpaAdd">'+t("gpaAdd")+"</button>"+
+    '<p class="shellS">'+t("gpaScale")+"</p>";
+  return html;
+}
+
 function shellHtml(id){
   var zh = lang === "zh";
   if(id === "sos"){
@@ -2879,12 +2986,7 @@ function shellHtml(id){
     shellRow("Fri 16:00", zh?"篮球友谊赛":"Friendly basketball", "", shellBtns("demo", [zh?"加入":"Add"], -1)) +
     '<button type="button" class="shellFab" data-act="demo">'+(zh?"＋ 自己加一场":"+ My event")+"</button>"
   );
-  if(id === "gpa") return (
-    shellRow("3 cr", zh?"微积分":"Calculus", "A-", shellBtns("tog", ["A","A-","B+"], 1)) +
-    shellRow("2 cr", zh?"英语":"English", "B+", shellBtns("tog", ["A","A-","B+"], 2)) +
-    shellRow("1 cr", zh?"体育":"PE", "A", shellBtns("tog", ["A","A-","B+"], 0)) +
-    '<button type="button" class="shellFab" data-act="demo">CGPA 3.47 · '+(zh?"假如":"what-if")+"</button>"
-  );
+  if(id === "gpa") return gpaHtml();
   if(id === "id") return (
     '<div class="idCard"><p class="shellK">Universiti Tunku Abdul Rahman</p><p class="idNo">240XXXX</p><p class="idName">'+
     (zh?"预览姓名":"Preview name")+'</p><p class="shellS">'+
@@ -2980,7 +3082,8 @@ function paintHome(){
     $("stubHint").textContent = S.micro === "sos" ? t("sosHint")
       : S.micro === "today" ? t("todayHint")
       : S.micro === "att" ? t("attHint")
-      : S.micro === "due" ? t("dueHint") : t("shellPreview");
+      : S.micro === "due" ? t("dueHint")
+      : S.micro === "gpa" ? t("gpaHint") : t("shellPreview");
     $("stubStage").innerHTML = shellHtml(S.micro);
   }
   paintHomeNow();
@@ -7594,6 +7697,40 @@ $("stubStage").onclick = function(e){
     if(!item){ toast(t("dueNeed")); return; }
     DUE.push(item);
     dueSave();
+    paintHome();
+    return;
+  }
+  // The add form's own grade button. Repainting here would wipe what they
+  // have already typed, so this one edits itself in place.
+  if(act === "gpaNewG"){
+    gpaNewG = (gpaNewG + 1) % GRADES.length;
+    btn.textContent = GRADES[gpaNewG][0];
+    return;
+  }
+  if(act === "gpaG"){
+    GPA.forEach(function(x){
+      if(String(x.id) === btn.dataset.id) x.g = GRADES[(gradeI(x.g) + 1) % GRADES.length][0];
+    });
+    gpaSave();
+    paintHome();
+    return;
+  }
+  if(act === "gpaDel"){
+    GPA = GPA.filter(function(x){ return String(x.id) !== btn.dataset.id; });
+    gpaSave();
+    paintHome();
+    return;
+  }
+  if(act === "gpaAdd"){
+    var course = gpaNorm({
+      id: "g" + Date.now().toString(36),
+      name: ($("gpaName") || {}).value,
+      cr: ($("gpaCr") || {}).value,
+      g: GRADES[gpaNewG][0]
+    });
+    if(!course){ toast(t("gpaNeed")); return; }
+    GPA.push(course);
+    gpaSave();
     paintHome();
     return;
   }
