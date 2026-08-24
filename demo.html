@@ -860,8 +860,14 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac)}
     issued numbers, and lining them up is what makes a list of grades or
     ringgit read as a record rather than as text.
    ============================================================ */
+/* A home screen is not a document that happens to be short. It fills the
+   glass: the icons take whatever height is left over, and search and the
+   dock sit at the bottom where a thumb is. Anything else leaves a dead
+   band under the last row, which is the one thing no phone home screen
+   has ever had. */
 #pocketHome{
   display:none;position:absolute;inset:0;
+  flex-direction:column;
   overflow-x:hidden;overflow-y:auto;overscroll-behavior:none;
   -webkit-overflow-scrolling:touch;touch-action:pan-y;
   padding:calc(var(--sp-4) + env(safe-area-inset-top)) var(--sp-5)
@@ -871,7 +877,7 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac)}
     radial-gradient(120% 70% at 50% -10%, color-mix(in srgb, var(--ac) 28%, #fff), transparent 62%),
     linear-gradient(180deg, color-mix(in srgb, var(--ac) 14%, var(--bg)) 0%, var(--bg) 48%);
 }
-body.at-home #pocketHome{display:block}
+body.at-home #pocketHome{display:flex}
 body.at-home .wrap,
 body.at-home .actionbar{display:none !important}
 
@@ -901,6 +907,8 @@ body.at-home .actionbar{display:none !important}
 .homeLang:active{transform:scale(.94);opacity:.75}
 
 /* ---------- The lockup: crest, name, campus ---------- */
+/* The search field itself. It only appears once the pill is tapped, and
+   it appears next to the pill rather than at the top of the screen. */
 /* The lid -- crest, "Pocket", campus chip -- came off on 2026-08-24. A
    home screen does not caption itself, and the three of them were the
    only thing on this page that read as a web page's masthead. What the
@@ -914,22 +922,39 @@ body.at-home .actionbar{display:none !important}
   display:grid;place-items:center}
 .qrBox img{width:100%;height:100%;display:block;image-rendering:pixelated}
 
-.homeTools{display:flex;align-items:center;gap:var(--sp-2)}
-.homeIcoBtn{
-  width:34px;height:34px;padding:0;display:grid;place-items:center;
-  border-radius:var(--r-full);border:1px solid var(--edge);
-  background:color-mix(in srgb, var(--card) 62%, transparent);color:var(--tx);cursor:pointer;
-  backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);
-  transition:transform var(--mo-1) var(--ease)}
-.homeIcoBtn:active{transform:scale(.93)}
-.homeIcoBtn svg{width:18px;height:18px;display:block}
-.homeIcoBtn[aria-expanded="true"]{background:var(--ac);border-color:transparent;color:var(--onac)}
+/* The search pill: small, centred, above the dock. Tapping it opens the
+   real field just above. */
+.homeQPill{
+  flex:none;align-self:center;display:flex;align-items:center;gap:7px;
+  padding:7px 16px;border-radius:var(--r-full);cursor:pointer;
+  border:1px solid var(--edge);color:var(--tx2);
+  background:color-mix(in srgb, var(--card) 58%, transparent);
+  backdrop-filter:blur(16px) saturate(1.5);-webkit-backdrop-filter:blur(16px) saturate(1.5);
+  font:inherit;font-size:var(--fs-sm);font-weight:650;
+  transition:transform var(--mo-1) var(--ease),opacity var(--mo-2) linear}
+.homeQPill:active{transform:scale(.95)}
+.homeQPill svg{width:15px;height:15px;display:block;flex:none}
+.homeQPill[hidden]{display:none}
+
+/* The dock. Four apps, no labels, on their own pane of glass -- and they
+   are taken out of the pages, so nothing appears twice. */
+.homeDock{
+  flex:none;display:grid;grid-template-columns:repeat(4, 1fr);
+  gap:var(--sp-2);align-items:center;justify-items:center;
+  max-width:364px;width:100%;margin:var(--sp-3) auto 0;
+  padding:var(--sp-3) var(--sp-2);
+  border-radius:26px;border:1px solid var(--edge);
+  background:color-mix(in srgb, var(--card) 46%, transparent);
+  backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);
+}
+.homeDock .homeTile{animation:none;max-width:64px}
+.homeDock .homeTile .name{display:none}
 
 /* Closed by default. A search field is a thing you go and get, not a
    permanent bar across the top of a home screen. */
 .homeSearch{
-  display:none;align-items:center;gap:var(--sp-2);
-  margin:var(--sp-2) 0 var(--sp-6);padding:0 var(--sp-4);
+  flex:none;display:none;align-items:center;gap:var(--sp-2);
+  margin:0 0 var(--sp-2);padding:0 var(--sp-4);
   height:44px;border-radius:var(--r-full);
   border:1px solid var(--edge);
   background:color-mix(in srgb, var(--card) 74%, transparent);
@@ -938,7 +963,7 @@ body.at-home .actionbar{display:none !important}
   transition:border-color var(--mo-2) linear,box-shadow var(--mo-2) linear;
 }
 .homeSearch.on{display:flex;animation:qOpen var(--mo-2) var(--ease-out) both}
-@keyframes qOpen{from{opacity:0;transform:translateY(-8px) scaleY(.86)}}
+@keyframes qOpen{from{opacity:0;transform:translateY(8px) scaleY(.86)}}
 .homeSearch:focus-within{border-color:var(--ac);box-shadow:var(--e2)}
 .homeSearch svg{width:18px;height:18px;flex:none;color:var(--tx3)}
 .homeSearch input{
@@ -958,6 +983,8 @@ body.at-home .actionbar{display:none !important}
 /* One row per hit. The colour square is the app's own tile face, shrunk --
    it is how you tell at a glance that this line lives in Deadlines and
    the one under it lives in Exams. */
+#homeHits{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:none}
+#homeHits[hidden]{display:none}
 .hitGroup{margin:0 0 var(--sp-4)}
 .hitK{margin:0 0 var(--sp-2);font-size:var(--fs-2xs);font-weight:700;
   letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);font-family:var(--mono)}
@@ -999,7 +1026,8 @@ body.at-home .actionbar{display:none !important}
    the ends, trackpad and touch alike -- so there is no drag handler here
    to fight the one that owns the back swipe. */
 .homePager{
-  display:flex;align-items:start;overflow-x:auto;overflow-y:hidden;
+  flex:1 1 auto;min-height:0;
+  display:flex;align-items:stretch;overflow-x:auto;overflow-y:hidden;
   scroll-snap-type:x mandatory;overscroll-behavior-x:contain;
   touch-action:pan-x;scroll-behavior:smooth;
 }
@@ -1008,8 +1036,11 @@ body.at-home .actionbar{display:none !important}
    previous page's icons down the left edge. align-items:start keeps a
    short page's rows at their own height instead of stretching them to
    match the tallest page. */
-.homePage{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always}
-.homeDots{display:flex;justify-content:center;gap:8px;margin:var(--sp-5) 0 0;min-height:8px}
+.homePage{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;
+  align-content:space-evenly}
+.homePage.part{align-content:start;row-gap:var(--sp-5)}
+.homeDots{flex:none;display:flex;justify-content:center;gap:8px;
+  margin:var(--sp-4) 0 var(--sp-3);min-height:8px}
 .homeDots button{
   width:8px;height:8px;padding:0;border:0;border-radius:50%;cursor:pointer;
   background:var(--tx3);opacity:.3;
@@ -1019,6 +1050,7 @@ body.at-home .actionbar{display:none !important}
 .homeGrid{
   display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));
   gap:var(--sp-5) var(--sp-2);max-width:364px;margin:0 auto;justify-items:center;
+  width:100%;
 }
 .homeTile{
   appearance:none;width:100%;max-width:84px;padding:0;
@@ -1344,7 +1376,7 @@ a.shellCall:active{transform:scale(.94)}
 .bar i{display:block;height:100%;background:var(--ac);
   transition:width var(--mo-4) var(--ease-out)}
 
-.homeFoot{margin:var(--sp-8) 0 0;text-align:center;font-size:var(--fs-2xs);
+.homeFoot{flex:none;margin:var(--sp-3) 0 0;text-align:center;font-size:var(--fs-2xs);
   color:var(--tx3);letter-spacing:.02em}
 .sectionK{margin:var(--sp-6) 0 var(--sp-2);font-size:var(--fs-2xs);font-weight:700;
   letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);font-family:var(--mono)}
@@ -1469,17 +1501,12 @@ if ("serviceWorker" in navigator)
       </svg>
       <i id="homeMeDot" hidden></i>
     </button>
-    <span class="homeTools">
-      <button type="button" class="homeIcoBtn" id="homeQBtn" aria-label="Search"
-              aria-expanded="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
-             stroke-linecap="round" aria-hidden="true">
-          <circle cx="10.6" cy="10.6" r="6.4"/><path d="m15.4 15.4 4.6 4.6"/>
-        </svg>
-      </button>
-      <button type="button" class="homeLang" id="homeLang">EN</button>
-    </span>
+    <button type="button" class="homeLang" id="homeLang">EN</button>
   </div>
+  <div id="homeHits" hidden></div>
+  <button type="button" class="homeNow" id="homeNow"></button>
+  <div class="homePager" id="homePager"></div>
+  <div class="homeDots" id="homeDots" role="tablist"></div>
   <div class="homeSearch" id="homeSearch">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
          stroke-linecap="round" aria-hidden="true">
@@ -1489,11 +1516,14 @@ if ("serviceWorker" in navigator)
            spellcheck="false" enterkeyhint="search" aria-label="Search">
     <button type="button" id="homeQx" aria-label="Close">&#10005;</button>
   </div>
-  <div id="homeHits" hidden></div>
-  <button type="button" class="homeNow" id="homeNow"></button>
-  <div class="homePager" id="homePager"></div>
-  <div class="homeDots" id="homeDots" role="tablist"></div>
-    <p class="homeFoot" id="homeFoot"></p>
+  <button type="button" class="homeQPill" id="homeQPill">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+         stroke-linecap="round" aria-hidden="true">
+      <circle cx="10.6" cy="10.6" r="6.4"/><path d="m15.4 15.4 4.6 4.6"/>
+    </svg>
+    <span id="homeQPillT"></span>
+  </button>
+  <div class="homeDock" id="homeDock"></div>
 </div>
 
 <div id="homeStub">
@@ -2279,6 +2309,7 @@ zh: {
   tRoleSaved   :"身份改好了",
 
   qHint      :"搜索应用、课堂、截止日期…",
+  qPill      :"搜索",
   qNoneT     :"没有找到",
   qNoneS     :"换个词试试，或者直接打开应用。",
   homeTitle  :"今天要用哪一个？",
@@ -3042,6 +3073,7 @@ en: {
   tRoleSaved   :"Role updated",
 
   qHint      :"Search apps, classes, deadlines…",
+  qPill      :"Search",
   qNoneT     :"Nothing found",
   qNoneS     :"Try another word, or open the app itself.",
   homeTitle  :"What do you need?",
@@ -5020,6 +5052,8 @@ function meHtml(){
       '<p class="shellS" style="text-align:center;color:var(--tx3)">docs/AUTH-SETUP.md</p>';
   }
 
+  html += '<p class="shellS" style="text-align:center;color:var(--tx3);margin:0 0 var(--sp-4)">' +
+    t("homeFoot", MICROS.length) + "</p>";
   if(AUTH.msg) html += '<div class="statBox"><p class="shellS">' + esc(AUTH.msg) + "</p></div>";
 
   // 1. Signed out -- one field for an ID or a UTAR email, and a password.
@@ -5175,7 +5209,16 @@ function openTt(){
 // Sixteen to a page, the way a phone lays a home screen out. Adding a
 // seventeenth app adds a page and a dot; nothing else has to know.
 var PAGE_SIZE = 16;
-function pageCount(){ return Math.ceil(MICROS.length / PAGE_SIZE) || 1; }
+
+// The dock holds the four you open without thinking. They are taken out
+// of the pages, the way a phone does it -- an app in the dock is not also
+// an icon on page one.
+var DOCK = ["tt", "today", "sos", "me"];
+function inDock(id){ return DOCK.indexOf(id) >= 0; }
+function pageApps(){
+  return MICROS.filter(function(m){ return !inDock(m.id); });
+}
+function pageCount(){ return Math.ceil(pageApps().length / PAGE_SIZE) || 1; }
 
 // Rebuilding the grid re-runs tileIn on all 25 icons. paintHome() is
 // called on the way out of every app, so coming back used to flash the
@@ -5189,28 +5232,42 @@ function pagesKey(){
   return lang + "|" + ids.join(",");
 }
 
+function tileEl(m){
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "homeTile";
+  b.dataset.id = m.id;
+  b.setAttribute("aria-label", t(m.t) + (m.live ? "" : " — " + t("shellPreview")));
+  b.innerHTML = '<span class="icon">' + tileGlyph(m.id) + "</span>" +
+    '<span class="name">' + t(m.t) + "</span>";
+  return b;
+}
+
 function paintPages(force){
-  var pager = $("homePager"), dots = $("homeDots"), pages = pageCount(), p, g, i, m, b;
+  var pager = $("homePager"), dots = $("homeDots"), pages = pageCount(), p, g, i, b;
   if(!pager) return;
   var sig = pagesKey();
   if(!force && sig === pagesSig && pager.children.length === pages) return;
   pagesSig = sig;
+  var list = pageApps();
   pager.innerHTML = "";
   for(p = 0; p < pages; p++){
     g = document.createElement("div");
-    g.className = "homePage homeGrid";
-    for(i = p * PAGE_SIZE; i < Math.min(MICROS.length, (p + 1) * PAGE_SIZE); i++){
-      m = MICROS[i];
-      b = document.createElement("button");
-      b.type = "button";
-      b.className = "homeTile";
-      b.dataset.id = m.id;
-      b.setAttribute("aria-label", t(m.t) + (m.live ? "" : " — " + t("shellPreview")));
-      b.innerHTML = '<span class="icon">' + tileGlyph(m.id) + "</span>" +
-        '<span class="name">' + t(m.t) + "</span>";
-      g.appendChild(b);
-    }
+    var end = Math.min(list.length, (p + 1) * PAGE_SIZE);
+    var full = end - p * PAGE_SIZE === PAGE_SIZE;
+    // A page that is not full keeps its rows at the top. Spreading two
+    // rows over a whole screen looks like a bug, not like breathing room.
+    g.className = "homePage homeGrid" + (full ? "" : " part");
+    for(i = p * PAGE_SIZE; i < end; i++) g.appendChild(tileEl(list[i]));
     pager.appendChild(g);
+  }
+  var dock = $("homeDock");
+  if(dock){
+    dock.innerHTML = "";
+    for(i = 0; i < DOCK.length; i++){
+      var dm = MICROS.filter(function(m){ return m.id === DOCK[i]; })[0];
+      if(dm) dock.appendChild(tileEl(dm));
+    }
   }
   if(!dots) return;
   dots.innerHTML = "";
@@ -5385,11 +5442,12 @@ var homeQ = "", qOpen = false;
 // Two states, not one: the field can be open with nothing typed in it.
 // Only a query stands the springboard down.
 function paintSearch(){
-  var box = $("homeHits"), inp = $("homeQ"), bar = $("homeSearch"), btn = $("homeQBtn");
+  var box = $("homeHits"), inp = $("homeQ"), bar = $("homeSearch"), pill = $("homeQPill");
   if(!box || !inp) return;
   var on = !!homeQ;
   if(bar) bar.classList.toggle("on", qOpen);
-  if(btn) btn.setAttribute("aria-expanded", qOpen ? "true" : "false");
+  // The pill is the field's closed state, so the two are never both up.
+  if(pill) pill.hidden = qOpen;
   box.hidden = !on;
   var pager = $("homePager"), dots = $("homeDots"), now = $("homeNow"), foot = $("homeFoot");
   if(pager) pager.style.display = on ? "none" : "";
@@ -5403,14 +5461,14 @@ function paintHome(){
   var q = $("homeQ");
   if(!q) return;
   q.placeholder = t("qHint");
+  var pt = $("homeQPillT");
+  if(pt) pt.textContent = t("qPill");
   $("homeLang").textContent = (lang === "zh" ? "EN" : "中");
     // The back control is a 36px chevron, so the words that used to sit
     // beside it become its accessible name instead of being clipped.
     $("stubBack").textContent = "‹";
     $("stubBack").setAttribute("aria-label", t("stubBack"));
   paintPages();
-  var foot = $("homeFoot");
-  if(foot) foot.textContent = t("homeFoot", MICROS.length);
   var pip = $("homeMeDot");
   if(pip) pip.hidden = !fullyIn();
   paintSearch();
@@ -10206,7 +10264,7 @@ function qShut(){
   if(q) q.blur();
   paintSearch();
 }
-$("homeQBtn").onclick = function(){
+$("homeQPill").onclick = function(){
   if(qOpen){ qShut(); return; }
   qOpen = true;
   paintSearch();
@@ -10249,6 +10307,12 @@ $("homeDots").onclick = function(e){
   var pager = $("homePager");
   pager.scrollLeft = (+b.dataset.page) * pager.clientWidth;
   tap(6);
+};
+$("homeDock").onclick = function(e){
+  var b = e.target.closest(".homeTile");
+  if(!b) return;
+  if(b.dataset.id === "tt"){ tap(8); openTt(); return; }
+  openMicro(b.dataset.id);
 };
 $("homePager").onclick = function(e){
   var b = e.target.closest(".homeTile");
