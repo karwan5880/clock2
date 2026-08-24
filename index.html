@@ -921,6 +921,28 @@ body.at-home .actionbar{display:none !important}
 .homeNow:active{transform:scale(.985)}
 
 /* ---------- The grid ---------- */
+/* A home screen with more apps than fit gets pages, not a longer column.
+   Scroll snapping does the whole gesture -- momentum, the rubber band at
+   the ends, trackpad and touch alike -- so there is no drag handler here
+   to fight the one that owns the back swipe. */
+.homePager{
+  display:flex;align-items:start;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;overscroll-behavior-x:contain;
+  touch-action:pan-x;scroll-behavior:smooth;
+}
+/* Exactly the scrollport wide, snapped to its start: any padding here and
+   the snap point stops matching the page, which shows as a sliver of the
+   previous page's icons down the left edge. align-items:start keeps a
+   short page's rows at their own height instead of stretching them to
+   match the tallest page. */
+.homePage{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always}
+.homeDots{display:flex;justify-content:center;gap:8px;margin:var(--sp-5) 0 0;min-height:8px}
+.homeDots button{
+  width:8px;height:8px;padding:0;border:0;border-radius:50%;cursor:pointer;
+  background:var(--tx3);opacity:.3;
+  transition:opacity var(--mo-2) linear,transform var(--mo-2) var(--ease)}
+.homeDots button.on{opacity:.85;transform:scale(1.2)}
+
 .homeGrid{
   display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));
   gap:var(--sp-5) var(--sp-2);max-width:364px;margin:0 auto;justify-items:center;
@@ -978,6 +1000,17 @@ body.at-home .actionbar{display:none !important}
 /* The device status bar. Off everywhere except inside the frame. */
 #deviceBar{display:none}
 
+/* Page two of the home. The palette keeps walking round the wheel so no
+   two neighbours share a hue and nothing lands on another app's colour. */
+.homeTile[data-id="lib"] .icon{background:linear-gradient(180deg,#f0a868,#c2410c)}
+.homeTile[data-id="exam"] .icon{background:linear-gradient(180deg,#a5b4fc,#4338ca)}
+.homeTile[data-id="print"] .icon{background:linear-gradient(180deg,#9ca3af,#374151)}
+.homeTile[data-id="wash"] .icon{background:linear-gradient(180deg,#7dd3fc,#0369a1)}
+.homeTile[data-id="club"] .icon{background:linear-gradient(180deg,#fca5a5,#b91c1c)}
+.homeTile[data-id="job"] .icon{background:linear-gradient(180deg,#5eead4,#0f766e)}
+.homeTile[data-id="med"] .icon{background:linear-gradient(180deg,#fda4af,#be123c)}
+.homeTile[data-id="lost"] .icon{background:linear-gradient(180deg,#fcd34d,#b45309)}
+
 /* ---------- An app, opened ---------- */
 /* Home and an app are two panes on a stack, not one pane with its middle
    swapped out. Opening pushes the app in from the right and lets home
@@ -1031,6 +1064,7 @@ body:not(.at-home) #homeStub{display:none}
   background:var(--card);border:1px solid var(--edge);border-radius:var(--r-md);
   padding:var(--sp-3) var(--sp-4);margin:0 0 var(--sp-2);box-shadow:var(--e1);
   animation:rowIn var(--mo-3) var(--ease-out) both}
+.shellK.hot{color:var(--bad)}
 .shellK{font-size:var(--fs-2xs);font-weight:700;color:var(--tx3);margin:0 0 3px;
   letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono)}
 .shellT{font-size:var(--fs-md);font-weight:650;margin:0;letter-spacing:-.012em}
@@ -1365,7 +1399,8 @@ if ("serviceWorker" in navigator)
     <button type="button" class="homeCampus" id="homeCampus"></button>
   </header>
   <button type="button" class="homeNow" id="homeNow"></button>
-  <div class="homeGrid" id="homeGrid"></div>
+  <div class="homePager" id="homePager"></div>
+  <div class="homeDots" id="homeDots" role="tablist"></div>
     <p class="homeFoot" id="homeFoot"></p>
 </div>
 
@@ -2166,6 +2201,23 @@ zh: {
   tileEvSub  :"讲座、社团、考试",
   tileWall   :"告白墙",
   tileWallSub:"校园匿名板",
+  homePage   :function(n, all){ return "第 " + n + " 页，共 " + all + " 页"; },
+  tileLib    :"图书馆",
+  tileLibSub :"借阅与座位",
+  tileExam   :"考试",
+  tileExamSub:"考期时间表",
+  tilePrint  :"打印",
+  tilePrintSub:"校园打印机",
+  tileWash   :"洗衣房",
+  tileWashSub:"宿舍洗衣机",
+  tileClub   :"学会",
+  tileClubSub:"社团与活动",
+  tileJob    :"实习",
+  tileJobSub :"实习与就业",
+  tileMed    :"诊所",
+  tileMedSub :"预约与可预约时段",
+  tileLost   :"失物招领",
+  tileLostSub:"拾到与丢失",
   tileFood   :"吃饭",
   tileFoodSub:"食堂、拼单、宵夜",
   tileRide   :"拼车",
@@ -2253,6 +2305,68 @@ zh: {
   evNoneT    :"还没选活动",
   evNoneS    :"在活动上点「我要去」，就会出现在这里。",
   wallHint   :"匿名墙 · 发的内容只存在这台手机",
+  libHint    :"示例借阅 · 续借只存在这台手机",
+  libLoans   :"借阅中",
+  libSeats   :"座位",
+  libDue     :function(n){ return n <= 0 ? "今天到期" : "还有 " + n + " 天到期"; },
+  libOver    :"已逾期",
+  libRenew   :"续借",
+  libRenewed :"已续借",
+  libFree    :"个座位空着",
+  examHint   :"示例考期 · 不是官方考试时间表",
+  examNext   :"下一场",
+  examIn     :function(n){ return n <= 0 ? "今天" : n + " 天后"; },
+  examSeat   :"座位",
+  printHint  :"示例打印机 · 任务只存在这台手机",
+  printCredit:"打印余额",
+  printRate  :"黑白 RM 0.10 / 彩色 RM 0.50",
+  printReady :"就绪",
+  printBusy  :"忙碌",
+  printPaper :"缺纸",
+  printQueue :function(n){ return n === 0 ? "没人排队" : "排队 " + n + " 份"; },
+  printPos   :function(n){ return "你的任务 · 第 " + n + " 位"; },
+  printSend  :"发 4 页",
+  printCancel:"取消",
+  washHint   :"示例洗衣房 · 提醒只存在这台手机",
+  washBlock  :"宿舍 A 座 · 洗衣房",
+  washFreeNow:"台空着",
+  washWasher :"洗衣机",
+  washDryer  :"烘干机",
+  washFree   :"空着",
+  washBusy   :function(n){ return "还有 " + n + " 分钟"; },
+  washTellBtn:"好了告诉我",
+  washTelling:"会告诉你",
+  clubHint   :"示例社团 · 加入只存在这台手机",
+  clubMembers:function(n){ return n + " 位成员"; },
+  clubNext   :"下次活动",
+  clubJoin   :"加入",
+  clubLeave  :"退出",
+  clubOn     :"已加入",
+  jobHint    :"示例职位 · 收藏只存在这台手机",
+  jobAll     :"全部",
+  jobSaved   :"已收藏",
+  jobSaveIt  :"收藏",
+  jobCloses  :function(n){ return n <= 0 ? "今天截止" : n + " 天后截止"; },
+  jobMonth   :"月",
+  jobNoneT   :"还没收藏",
+  jobNoneS   :"在“全部”里收藏几个，它们会出现在这里。",
+  medHint    :"示例预约 · 只存在这台手机，不是真预约",
+  medOpen    :"校医室 · 今天",
+  medWalkIn  :"也接受现场排队",
+  medQueue   :function(n){ return "你的号码 · " + n + " 号"; },
+  medFree    :"可预约",
+  medTaken   :"已被预约",
+  medBook    :"预约",
+  medCancel  :"取消",
+  medYours   :"你预约的时段",
+  lostHint   :"示例失物 · 认领只存在这台手机",
+  lostFound  :"拾到",
+  lostLost   :"丢失",
+  lostWhere  :"地点",
+  lostMineBtn:"这是我的",
+  lostClaimed:"已认领",
+  lostNoneT  :"这里还空着",
+  lostNoneS  :"换另一个页签看看。",
   wallPh     :"想说就说。没人会看到你的名字。",
   wallPost   :"匿名发出",
   wallAnon   :"不带名字，也不会离开这台手机。",
@@ -2811,6 +2925,23 @@ en: {
   tileEvSub  :"Talks, clubs, exams",
   tileWall   :"Wall",
   tileWallSub:"Anonymous campus board",
+  homePage   :function(n, all){ return "Page " + n + " of " + all; },
+  tileLib    :"Library",
+  tileLibSub :"Loans and study seats",
+  tileExam   :"Exams",
+  tileExamSub:"Exam timetable and seat",
+  tilePrint  :"Print",
+  tilePrintSub:"Campus printers",
+  tileWash   :"Laundry",
+  tileWashSub:"Hostel washers and dryers",
+  tileClub   :"Clubs",
+  tileClubSub:"Societies and activities",
+  tileJob    :"Careers",
+  tileJobSub :"Internships and jobs",
+  tileMed    :"Clinic",
+  tileMedSub :"Slots and appointments",
+  tileLost   :"Lost and found",
+  tileLostSub:"Found today, lost this week",
   tileFood   :"Food",
   tileFoodSub:"Canteen, group order",
   tileRide   :"Ride",
@@ -2898,6 +3029,68 @@ en: {
   evNoneT    :"Nothing marked yet",
   evNoneS    :"Tap Going on an event and it shows up here.",
   wallHint   :"Anonymous board · posts stay on this phone",
+  libHint    :"Sample loans · renewals stay on this phone",
+  libLoans   :"On loan",
+  libSeats   :"Seats",
+  libDue     :function(n){ return n <= 0 ? "due today" : "due in " + n + (n === 1 ? " day" : " days"); },
+  libOver    :"overdue",
+  libRenew   :"Renew",
+  libRenewed :"Renewed",
+  libFree    :"seats free",
+  examHint   :"Sample exam period · not the official timetable",
+  examNext   :"Next paper",
+  examIn     :function(n){ return n <= 0 ? "today" : "in " + n + (n === 1 ? " day" : " days"); },
+  examSeat   :"seat",
+  printHint  :"Sample printers · jobs stay on this phone",
+  printCredit:"Print credit",
+  printRate  :"RM 0.10 mono · RM 0.50 colour",
+  printReady :"ready",
+  printBusy  :"busy",
+  printPaper :"out of paper",
+  printQueue :function(n){ return n === 0 ? "no queue" : n + " in the queue"; },
+  printPos   :function(n){ return "your job · number " + n; },
+  printSend  :"Send 4 pages",
+  printCancel:"Cancel",
+  washHint   :"Sample laundry room · reminders stay on this phone",
+  washBlock  :"Hostel block A · laundry",
+  washFreeNow:"free now",
+  washWasher :"washer",
+  washDryer  :"dryer",
+  washFree   :"Free",
+  washBusy   :function(n){ return n + " min left"; },
+  washTellBtn:"Tell me when free",
+  washTelling:"Will tell you",
+  clubHint   :"Sample societies · joining stays on this phone",
+  clubMembers:function(n){ return n + " members"; },
+  clubNext   :"Next",
+  clubJoin   :"Join",
+  clubLeave  :"Leave",
+  clubOn     :"Joined",
+  jobHint    :"Sample listings · saves stay on this phone",
+  jobAll     :"All",
+  jobSaved   :"Saved",
+  jobSaveIt  :"Save",
+  jobCloses  :function(n){ return n <= 0 ? "closes today" : "closes in " + n + (n === 1 ? " day" : " days"); },
+  jobMonth   :"month",
+  jobNoneT   :"Nothing saved yet",
+  jobNoneS   :"Save a listing from All and it turns up here.",
+  medHint    :"Sample slots · booking stays on this phone, nothing is reserved",
+  medOpen    :"Campus clinic · today",
+  medWalkIn  :"Walk-ins are taken as well",
+  medQueue   :function(n){ return "your queue number · " + n; },
+  medFree    :"free",
+  medTaken    :"taken",
+  medBook    :"Book",
+  medCancel  :"Cancel",
+  medYours   :"Your slot",
+  lostHint   :"Sample items · claims stay on this phone",
+  lostFound  :"Found",
+  lostLost   :"Lost",
+  lostWhere  :"at",
+  lostMineBtn:"This is mine",
+  lostClaimed:"Claimed",
+  lostNoneT  :"Nothing here yet",
+  lostNoneS  :"Try the other tab.",
   wallPh     :"Say it. Nobody sees your name.",
   wallPost   :"Post anonymously",
   wallAnon   :"No name is attached, and nothing leaves this phone.",
@@ -3249,7 +3442,15 @@ var MICROS = [
   { id:"dorm",  live:true,  t:"tileDorm" },
   { id:"food",  live:true,  t:"tileFood" },
   { id:"ride",  live:true,  t:"tileRide" },
-  { id:"wall",  live:true,  t:"tileWall" }
+  { id:"wall",  live:true,  t:"tileWall" },
+  { id:"lib",   live:true,  t:"tileLib" },
+  { id:"exam",  live:true,  t:"tileExam" },
+  { id:"print", live:true,  t:"tilePrint" },
+  { id:"wash",  live:true,  t:"tileWash" },
+  { id:"club",  live:true,  t:"tileClub" },
+  { id:"job",   live:true,  t:"tileJob" },
+  { id:"med",   live:true,  t:"tileMed" },
+  { id:"lost",  live:true,  t:"tileLost" }
 ];
 
 function tileGlyph(id){
@@ -3271,11 +3472,22 @@ function tileGlyph(id){
     ride:'<path d="M4 13.8h16v3.3a1.5 1.5 0 0 1-1.5 1.5"/><path d="M4 13.8 6.2 8.6A2 2 0 0 1 8 7.4h8a2 2 0 0 1 1.8 1.2L20 13.8"/><circle cx="7.2" cy="17.5" r="1.55"/><circle cx="16.8" cy="17.5" r="1.55"/>',
     wall:'<path d="M4.2 15.2 3.7 19l3.6-.7c.4.2.9.3 1.5.3 2.8 0 5-1.8 5-4.1S11.6 10.4 8.8 10.4c-2.6 0-4.7 1.6-4.7 3.7 0 .4.2.8.4 1.1z"/><path d="M10.6 9.2c.5-2.2 2.7-3.9 5.4-3.9 3 0 5.4 1.9 5.4 4.3 0 2.3-2.1 4.2-5 4.4L14 16.3l.4-2.2c-.3-.3-.5-.7-.5-1.1"/>'
 ,
-    chat:'<path d="M20.5 12.4c0 3.7-3.6 6.7-8 6.7-1 0-2-.2-2.9-.5l-4.6 1.3 1.4-3.9c-1.2-1-1.9-2.3-1.9-3.6 0-3.7 3.6-6.7 8-6.7s8 3 8 6.7z"/><path d="M9 12.2h.01M12.5 12.2h.01M16 12.2h.01"/>'
+    chat:'<path d="M20.5 12.4c0 3.7-3.6 6.7-8 6.7-1 0-2-.2-2.9-.5l-4.6 1.3 1.4-3.9c-1.2-1-1.9-2.3-1.9-3.6 0-3.7 3.6-6.7 8-6.7s8 3 8 6.7z"/><path d="M9 12.2h.01M12.5 12.2h.01M16 12.2h.01"/>',
+    lib:'<path d="M4 5.2c0-.7.6-1.2 1.3-1.2h4.4c1.3 0 2.3 1 2.3 2.3V19c0-1-.8-1.8-1.8-1.8H5.3C4.6 17.2 4 16.7 4 16z"/><path d="M20 5.2c0-.7-.6-1.2-1.3-1.2h-4.4c-1.3 0-2.3 1-2.3 2.3V19c0-1 .8-1.8 1.8-1.8h4.9c.7 0 1.3-.5 1.3-1.2z"/>',
+    exam:'<path d="M5 4.6h11.2L19 7.4V19a1.4 1.4 0 0 1-1.4 1.4H5A1.4 1.4 0 0 1 3.6 19V6a1.4 1.4 0 0 1 1.4-1.4z"/><path d="M7.4 9.6h6M7.4 13h6M7.4 16.4h3.4"/>',
+    print:'<path d="M7 9V4.4h10V9"/><rect x="3.6" y="9" width="16.8" height="7" rx="1.8"/><path d="M7 14h10v5.6H7z"/><path d="M17.4 11.8h.01"/>',
+    wash:'<rect x="4.2" y="3.4" width="15.6" height="17.2" rx="2.6"/><circle cx="12" cy="14" r="4.2"/><path d="M8.2 6.6h.01M11.4 6.6h.01"/><path d="M9.4 14c1.7-1.4 3.5 1.4 5.2 0"/>',
+    club:'<circle cx="9" cy="8.4" r="3"/><path d="M3.4 19.4c0-3 2.5-5 5.6-5s5.6 2 5.6 5"/><circle cx="17" cy="9.6" r="2.4"/><path d="M15 14.8c3 0 5.6 1.7 5.6 4.6"/>',
+    job:'<rect x="3.4" y="7.4" width="17.2" height="12" rx="2.2"/><path d="M9 7.4V5.8c0-.9.7-1.6 1.6-1.6h2.8c.9 0 1.6.7 1.6 1.6v1.6"/><path d="M3.4 12.6h17.2M11 12.6v2.2h2v-2.2"/>',
+    med:'<path d="M9.4 3.6h5.2v5.8h5.8v5.2h-5.8v5.8H9.4v-5.8H3.6V9.4h5.8z"/>',
+    lost:'<circle cx="10.6" cy="10.6" r="6.2"/><path d="M15.2 15.2 20.4 20.4"/><path d="M8.6 10.6h4M10.6 8.6v4"/>'
   };
   return '<svg '+s+' aria-hidden="true">'+(d[id] || "")+"</svg>";
 }
 
+// A key that is counting down. Used by the library, exams and careers --
+// three different screens, one way of saying "this one is close".
+function hotK(text, hot){ return hot ? '<span class="shellK hot">'+text+"</span>" : text; }
 function shellRow(k, title, sub, extra){
   return '<div class="shellRow"><div class="shellMain"><p class="shellK">'+k+'</p><p class="shellT">'+
     title+"</p>"+(sub ? '<p class="shellS">'+sub+"</p>" : "")+"</div>"+(extra || "")+"</div>";
@@ -4199,6 +4411,14 @@ function shellHtml(id){
   if(id === "food") return foodHtml();
   if(id === "ride") return rideHtml();
   if(id === "wall") return wallHtml();
+  if(id === "lib") return libHtml();
+  if(id === "exam") return examHtml();
+  if(id === "print") return printHtml();
+  if(id === "wash") return washHtml();
+  if(id === "club") return clubHtml();
+  if(id === "job") return jobHtml();
+  if(id === "med") return medHtml();
+  if(id === "lost") return lostHtml();
   return '<p class="shellS">'+t("stubLead")+"</p>";
 }
 
@@ -4335,6 +4555,282 @@ try{
   }catch(e){}
 })();
 
+
+// ============================================================
+//  Page two of the home
+//  Eight more of the week a student actually has: the library, exams,
+//  the printer, the laundry room, societies, internships, the clinic
+//  and the lost-property table. Same contract as the rest of the demo
+//  half -- the content is written into the app, what you do to it is
+//  kept on this phone, and every screen says so at the foot.
+// ============================================================
+
+// ---------- Library ----------
+function libSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"b1", t:zh?"\u6570\u636e\u7ed3\u6784\u4e0e\u7b97\u6cd5":"Data Structures and Algorithms", a:zh?"\u7b2c 4 \u7248":"4th edition", d:2 },
+    { id:"b2", t:zh?"\u79bb\u6563\u6570\u5b66":"Discrete Mathematics", a:zh?"\u91d1\u5b9d\u9986\u85cf":"Kampar shelf", d:9 },
+    { id:"b3", t:zh?"\u63a7\u5236\u7cfb\u7edf\u5de5\u7a0b":"Control Systems Engineering", a:"Nise", d:-3 },
+    { id:"b4", t:zh?"\u5b66\u672f\u5199\u4f5c":"Academic Writing", a:zh?"\u77ed\u671f\u501f\u9605":"Short loan", d:5 }
+  ];
+}
+function libSeats(){
+  var zh = lang === "zh";
+  return [
+    { n:zh?"\u4e00\u697c \u00b7 \u9759\u97f3\u533a":"Level 1 - Quiet", free:12, all:60 },
+    { n:zh?"\u4e8c\u697c \u00b7 \u8ba8\u8bba\u533a":"Level 2 - Discussion", free:31, all:48 },
+    { n:zh?"\u4e09\u697c \u00b7 \u7814\u7a76\u95f4":"Level 3 - Study rooms", free:2, all:10 },
+    { n:zh?"\u56db\u697c \u00b7 \u7535\u8111\u533a":"Level 4 - Computers", free:0, all:24 }
+  ];
+}
+function libHtml(){
+  var which = tab("lib", "loan"), done = pk("libRen", {}), i, x, html, over, d;
+  html = seg("lib", [["loan", t("libLoans")], ["seat", t("libSeats")]], which);
+  if(which === "loan"){
+    var list = libSeed();
+    for(i = 0; i < list.length; i++){
+      x = list[i];
+      d = done[x.id] ? x.d + 14 : x.d;
+      over = d < 0;
+      html += shellRow(
+        hotK(over ? t("libOver") : t("libDue", d), d <= 2),
+        esc(x.t),
+        esc(x.a),
+        '<div class="shellBtns"><button type="button" data-act="libRenew" data-id="'+x.id+'"'+
+          (done[x.id] ? ' class="on"' : "")+">"+(done[x.id] ? t("libRenewed") : t("libRenew"))+
+          "</button></div>"
+      );
+    }
+  } else {
+    var seats = libSeats();
+    for(i = 0; i < seats.length; i++){
+      x = seats[i];
+      html += '<div class="statBox"><p class="shellK">'+esc(x.n)+"</p>"+
+        '<p class="shellT"><span class="num">'+x.free+'</span> / <span class="num">'+
+        x.all+"</span> "+t("libFree")+"</p>"+
+        '<div class="bar"><i style="width:'+Math.round(100 - (x.free / x.all) * 100)+'%"></i></div></div>';
+    }
+  }
+  return html + demoNote();
+}
+
+// ---------- Exams ----------
+function examSeed(){
+  var zh = lang === "zh";
+  return [
+    { c:zh?"\u6570\u636e\u7ed3\u6784":"Data Structures", code:"UECS2103", d:4, w:"09:00", v:zh?"\u591a\u529f\u80fd\u5385 A":"Multipurpose Hall A", s:"C-14" },
+    { c:zh?"\u79bb\u6563\u6570\u5b66":"Discrete Mathematics", code:"UECM1653", d:7, w:"14:00", v:zh?"\u591a\u529f\u80fd\u5385 B":"Multipurpose Hall B", s:"F-02" },
+    { c:zh?"\u63a7\u5236\u7cfb\u7edf":"Control Systems", code:"UEME2123", d:11, w:"09:00", v:zh?"KB \u5927\u697c 305":"Block KB 305", s:"A-21" },
+    { c:zh?"\u5de5\u7a0b\u6570\u5b66":"Engineering Mathematics", code:"UEME1213", d:14, w:"14:00", v:zh?"\u591a\u529f\u80fd\u5385 A":"Multipurpose Hall A", s:"D-08" }
+  ];
+}
+function examHtml(){
+  var list = examSeed(), i, x, html = "";
+  html += '<div class="statBox"><p class="shellK">'+t("examNext")+"</p>"+
+    '<p class="shellT" style="font-size:var(--fs-2xl);letter-spacing:-.03em">'+esc(list[0].c)+"</p>"+
+    '<p class="shellS">'+t("examIn", list[0].d)+" \u00b7 "+esc(list[0].w)+"</p></div>";
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    html += shellRow(
+      '<span class="num">'+esc(x.code)+"</span> \u00b7 "+hotK(t("examIn", x.d), x.d <= 4),
+      esc(x.c),
+      esc(x.v)+" \u00b7 "+t("examSeat")+' <span class="num">'+esc(x.s)+"</span>",
+      '<span class="tag'+(x.d <= 4 ? " hot" : "")+'"><span class="num">'+esc(x.w)+"</span></span>"
+    );
+  }
+  return html + demoNote();
+}
+
+// ---------- Print ----------
+function printSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"p1", n:zh?"\u56fe\u4e66\u9986 \u4e00\u697c":"Library, level 1", q:3, st:"ok" },
+    { id:"p2", n:zh?"KB \u5927\u697c \u7535\u8111\u5ba4":"Block KB computer lab", q:0, st:"ok" },
+    { id:"p3", n:zh?"\u5b66\u751f\u4e2d\u5fc3":"Student centre", q:7, st:"busy" },
+    { id:"p4", n:zh?"\u5bbf\u820d A \u5ea7":"Hostel block A", q:0, st:"paper" }
+  ];
+}
+function printHtml(){
+  var jobs = pk("printJobs", {}), list = printSeed(), i, x, html, mine;
+  html = '<div class="statBox"><p class="shellK">'+t("printCredit")+"</p>"+
+    '<p class="shellT"><span class="money">RM 12.40</span></p>'+
+    '<p class="shellS">'+t("printRate")+"</p></div>";
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    mine = !!jobs[x.id];
+    html += shellRow(
+      x.st === "ok" ? t("printReady") : (x.st === "busy" ? t("printBusy") : t("printPaper")),
+      esc(x.n),
+      mine ? t("printPos", x.q + 1) : t("printQueue", x.q),
+      '<div class="shellBtns"><button type="button" data-act="printSend" data-id="'+x.id+'"'+
+        (mine ? ' class="on"' : "")+">"+
+        (mine ? t("printCancel") : t("printSend"))+"</button></div>"
+    );
+  }
+  return html + demoNote();
+}
+
+// ---------- Laundry ----------
+function washSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"w1", n:zh?"\u6d17\u8863\u673a 1":"Washer 1", dry:false, left:0 },
+    { id:"w2", n:zh?"\u6d17\u8863\u673a 2":"Washer 2", dry:false, left:18 },
+    { id:"w3", n:zh?"\u6d17\u8863\u673a 3":"Washer 3", dry:false, left:41 },
+    { id:"d1", n:zh?"\u70d8\u5e72\u673a 1":"Dryer 1", dry:true, left:0 },
+    { id:"d2", n:zh?"\u70d8\u5e72\u673a 2":"Dryer 2", dry:true, left:7 },
+    { id:"d3", n:zh?"\u70d8\u5e72\u673a 3":"Dryer 3", dry:true, left:0 }
+  ];
+}
+function washHtml(){
+  var tell = pk("washTellMe", {}), list = washSeed(), i, x, free, html, freeN = 0;
+  for(i = 0; i < list.length; i++) if(!list[i].left) freeN++;
+  html = '<div class="statBox"><p class="shellK">'+t("washBlock")+"</p>"+
+    '<p class="shellT"><span class="num">'+freeN+'</span> / <span class="num">'+
+    list.length+"</span> "+t("washFreeNow")+"</p></div>";
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    free = !x.left;
+    html += shellRow(
+      x.dry ? t("washDryer") : t("washWasher"),
+      esc(x.n),
+      free ? t("washFree") : t("washBusy", x.left),
+      free ? '<span class="tag ok">'+t("washFree")+"</span>"
+           : '<div class="shellBtns"><button type="button" data-act="washTell" data-id="'+x.id+'"'+
+             (tell[x.id] ? ' class="on"' : "")+">"+
+             (tell[x.id] ? t("washTelling") : t("washTellBtn"))+"</button></div>"
+    );
+  }
+  return html + demoNote();
+}
+
+// ---------- Clubs ----------
+function clubSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"c1", n:zh?"\u673a\u5668\u4eba\u5b66\u4f1a":"Robotics Society", m:184, nx:zh?"\u5468\u4e09 19:00 \u00b7 \u5faa\u7ebf\u8d5b":"Wed 19:00 - line-follower race" },
+    { id:"c2", n:zh?"\u6444\u5f71\u5b66\u4f1a":"Photography Club", m:96, nx:zh?"\u5468\u516d 07:00 \u00b7 \u65e5\u51fa\u5916\u62cd":"Sat 07:00 - sunrise shoot" },
+    { id:"c3", n:zh?"\u8fa9\u8bba\u961f":"Debate Team", m:41, nx:zh?"\u5468\u56db 20:00 \u00b7 \u5faa\u73af\u8d5b":"Thu 20:00 - round robin" },
+    { id:"c4", n:zh?"\u7fbd\u6bdb\u7403\u4f1a":"Badminton Club", m:230, nx:zh?"\u5468\u4e8c 21:00 \u00b7 \u4e09\u53f7\u7403\u573a":"Tue 21:00 - court 3" },
+    { id:"c5", n:zh?"\u521b\u4e1a\u793e":"Entrepreneur Circle", m:63, nx:zh?"\u5468\u4e94 18:30 \u00b7 \u8def\u6f14\u591c":"Fri 18:30 - pitch night" }
+  ];
+}
+function clubHtml(){
+  var joined = pk("clubIn", {}), list = clubSeed(), i, x, on, html = "";
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    on = !!joined[x.id];
+    html += '<div class="feedCard">'+
+      '<div class="feedTop"><div class="av">'+esc(initials(x.n))+"</div>"+
+      '<div class="feedWho"><b>'+esc(x.n)+"</b><span>"+
+        t("clubMembers", x.m + (on ? 1 : 0))+"</span></div>"+
+      (on ? '<span class="tag ok">'+t("clubOn")+"</span>" : "")+
+      "</div>"+
+      '<p class="feedBody">'+t("clubNext")+" \u00b7 "+esc(x.nx)+"</p>"+
+      '<div class="shellBtns"><button type="button" data-act="clubJoin" data-id="'+x.id+'"'+
+        (on ? ' class="on"' : "")+">"+(on ? t("clubLeave") : t("clubJoin"))+"</button></div>"+
+      "</div>";
+  }
+  return html + demoNote();
+}
+
+// ---------- Career ----------
+function jobSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"j1", co:"Intel Penang", r:zh?"\u56fa\u4ef6\u5b9e\u4e60":"Firmware intern", pay:"RM 1,200", d:5 },
+    { id:"j2", co:"Grab", r:zh?"\u6570\u636e\u5206\u6790\u5b9e\u4e60":"Data analyst intern", pay:"RM 1,500", d:12 },
+    { id:"j3", co:zh?"\u91d1\u5b9d\u5e02\u8bae\u4f1a":"Kampar Council", r:zh?"\u571f\u6728\u5de5\u7a0b\u5b9e\u4e60":"Civil engineering intern", pay:"RM 800", d:2 },
+    { id:"j4", co:"Petronas", r:zh?"\u673a\u68b0\u5b9e\u4e60":"Mechanical intern", pay:"RM 1,800", d:20 },
+    { id:"j5", co:zh?"\u672c\u5730\u521d\u521b":"Local startup", r:zh?"\u524d\u7aef\u5b9e\u4e60":"Frontend intern", pay:"RM 1,000", d:8 }
+  ];
+}
+function jobHtml(){
+  var saved = pk("jobKeep", {}), which = tab("job", "all"), list = jobSeed(), i, x, on, shown = 0;
+  var html = seg("job", [["all", t("jobAll")], ["mine", t("jobSaved")]], which);
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    on = !!saved[x.id];
+    if(which === "mine" && !on) continue;
+    shown++;
+    html += shellRow(
+      esc(x.co)+" \u00b7 "+hotK(t("jobCloses", x.d), x.d <= 3),
+      esc(x.r),
+      '<span class="money">'+esc(x.pay)+"</span> / "+t("jobMonth"),
+      '<div class="shellBtns"><button type="button" data-act="jobSave" data-id="'+x.id+'"'+
+        (on ? ' class="on"' : "")+">"+(on ? t("jobSaved") : t("jobSaveIt"))+"</button></div>"
+    );
+  }
+  if(!shown) html += emptyBox(t("jobNoneT"), t("jobNoneS"));
+  return html + demoNote();
+}
+
+// ---------- Clinic ----------
+function medSeed(){
+  return [
+    { id:"m1", w:"09:00", taken:true },
+    { id:"m2", w:"09:30", taken:false },
+    { id:"m3", w:"10:00", taken:false },
+    { id:"m4", w:"11:15", taken:true },
+    { id:"m5", w:"14:00", taken:false },
+    { id:"m6", w:"15:30", taken:false }
+  ];
+}
+function medHtml(){
+  var mine = pk("medSlot", ""), list = medSeed(), i, x, html;
+  html = '<div class="statBox"><p class="shellK">'+t("medOpen")+"</p>"+
+    '<p class="shellT"><span class="num">08:30 - 17:00</span></p>'+
+    '<p class="shellS">'+(mine ? t("medQueue", 4) : t("medWalkIn"))+"</p></div>";
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    html += shellRow(
+      x.taken && mine !== x.id ? t("medTaken") : t("medFree"),
+      '<span class="num">'+esc(x.w)+"</span>",
+      mine === x.id ? t("medYours") : "",
+      x.taken && mine !== x.id
+        ? '<span class="tag">'+t("medTaken")+"</span>"
+        : '<div class="shellBtns"><button type="button" data-act="medBook" data-id="'+x.id+'"'+
+          (mine === x.id ? ' class="on"' : "")+">"+
+          (mine === x.id ? t("medCancel") : t("medBook"))+"</button></div>"
+    );
+  }
+  return html + demoNote();
+}
+
+// ---------- Lost and found ----------
+function lostSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"l1", side:"found", w:zh?"\u84dd\u8272\u4fdd\u6e29\u74f6":"Blue water bottle", p:zh?"\u56fe\u4e66\u9986 \u4e8c\u697c":"Library level 2", t:zh?"\u4eca\u5929 11:20":"Today 11:20" },
+    { id:"l2", side:"found", w:zh?"\u5b66\u751f\u8bc1 \u00b7 \u59d3 Tan":"Student card, surname Tan", p:zh?"\u5b66\u751f\u4e2d\u5fc3":"Student centre", t:zh?"\u4eca\u5929 09:05":"Today 09:05" },
+    { id:"l3", side:"found", w:zh?"\u9ed1\u8272\u96e8\u4f1e":"Black umbrella", p:zh?"KB \u5927\u697c \u5165\u53e3":"Block KB entrance", t:zh?"\u6628\u5929 17:40":"Yesterday 17:40" },
+    { id:"l4", side:"lost", w:zh?"\u8033\u673a \u00b7 \u767d\u8272":"Earbuds, white case", p:zh?"\u4e09\u53f7\u7403\u573a\u9644\u8fd1":"Near court 3", t:zh?"\u6628\u5929 21:00":"Yesterday 21:00" },
+    { id:"l5", side:"lost", w:zh?"\u8ba1\u7b97\u5668 fx-570":"Calculator fx-570", p:zh?"\u591a\u529f\u80fd\u5385 A":"Multipurpose Hall A", t:zh?"\u5468\u4e00 15:30":"Mon 15:30" }
+  ];
+}
+function lostHtml(){
+  var claimed = pk("lostMine", {}), which = tab("lost", "found"), list = lostSeed();
+  var i, x, on, shown = 0;
+  var html = seg("lost", [["found", t("lostFound")], ["lost", t("lostLost")]], which);
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(x.side !== which) continue;
+    on = !!claimed[x.id];
+    shown++;
+    html += shellRow(
+      esc(x.t),
+      esc(x.w),
+      t("lostWhere")+" "+esc(x.p),
+      '<div class="shellBtns"><button type="button" data-act="lostClaim" data-id="'+x.id+'"'+
+        (on ? ' class="on"' : "")+">"+(on ? t("lostClaimed") : t("lostMineBtn"))+"</button></div>"
+    );
+  }
+  if(!shown) html += emptyBox(t("lostNoneT"), t("lostNoneS"));
+  return html + demoNote();
+}
+
 function goHome(){
   if(NAV.depth > 0){ NAV.depth = 0; try{ history.go(-1); }catch(e){} }
   S.micro = "home";
@@ -4354,6 +4850,60 @@ function openTt(){
   if(!S.roleSet && !S.roleLocal) openRole();
 }
 
+// Sixteen to a page, the way a phone lays a home screen out. Adding a
+// seventeenth app adds a page and a dot; nothing else has to know.
+var PAGE_SIZE = 16;
+function pageCount(){ return Math.ceil(MICROS.length / PAGE_SIZE) || 1; }
+
+function paintPages(){
+  var pager = $("homePager"), dots = $("homeDots"), pages = pageCount(), p, g, i, m, b;
+  if(!pager) return;
+  pager.innerHTML = "";
+  for(p = 0; p < pages; p++){
+    g = document.createElement("div");
+    g.className = "homePage homeGrid";
+    for(i = p * PAGE_SIZE; i < Math.min(MICROS.length, (p + 1) * PAGE_SIZE); i++){
+      m = MICROS[i];
+      b = document.createElement("button");
+      b.type = "button";
+      b.className = "homeTile";
+      b.dataset.id = m.id;
+      b.setAttribute("aria-label", t(m.t) + (m.live ? "" : " — " + t("shellPreview")));
+      b.innerHTML = '<span class="icon">' + tileGlyph(m.id) + "</span>" +
+        '<span class="name">' + t(m.t) + "</span>";
+      g.appendChild(b);
+    }
+    pager.appendChild(g);
+  }
+  if(!dots) return;
+  dots.innerHTML = "";
+  if(pages < 2) return;
+  for(p = 0; p < pages; p++){
+    b = document.createElement("button");
+    b.type = "button";
+    b.dataset.page = p;
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-label", t("homePage", p + 1, pages));
+    dots.appendChild(b);
+  }
+  markPage();
+}
+
+// Which page the pager is showing. Read back from scrollLeft rather than
+// kept in a variable: the scroll can come from a finger, a trackpad, a dot
+// or the keyboard, and only one of those goes through our code.
+function markPage(){
+  var pager = $("homePager"), dots = $("homeDots");
+  if(!pager || !dots) return;
+  var w = pager.clientWidth || 1;
+  var cur = Math.round(pager.scrollLeft / w);
+  var kids = dots.children;
+  for(var i = 0; i < kids.length; i++){
+    kids[i].className = (i === cur ? "on" : "");
+    kids[i].setAttribute("aria-selected", i === cur ? "true" : "false");
+  }
+}
+
 function paintHome(){
   var eye = $("homeEye");
   if(!eye) return;
@@ -4366,18 +4916,7 @@ function paintHome(){
     // beside it become its accessible name instead of being clipped.
     $("stubBack").textContent = "‹";
     $("stubBack").setAttribute("aria-label", t("stubBack"));
-  var g = $("homeGrid");
-  g.innerHTML = "";
-  MICROS.forEach(function(m){
-    var b = document.createElement("button");
-    b.type = "button";
-    b.className = "homeTile";
-    b.dataset.id = m.id;
-    b.setAttribute("aria-label", t(m.t) + (m.live ? "" : " — " + t("shellPreview")));
-    b.innerHTML = '<span class="icon">' + tileGlyph(m.id) + "</span>" +
-      '<span class="name">' + t(m.t) + "</span>";
-    g.appendChild(b);
-  });
+  paintPages();
   var foot = $("homeFoot");
   if(foot) foot.textContent = t("homeFoot", MICROS.length);
   var stub = $("homeStub");
@@ -8980,7 +9519,15 @@ $("homeCampus").onclick = function(){
 };
 $("homeNow").onclick = function(){ openMicro("today"); };
 $("homeBtn").onclick = goHome;
-$("homeGrid").onclick = function(e){
+$("homePager").onscroll = markPage;
+$("homeDots").onclick = function(e){
+  var b = e.target.closest ? e.target.closest("button") : null;
+  if(!b || b.dataset.page === undefined) return;
+  var pager = $("homePager");
+  pager.scrollLeft = (+b.dataset.page) * pager.clientWidth;
+  tap(6);
+};
+$("homePager").onclick = function(e){
   var b = e.target.closest(".homeTile");
   if(!b) return;
   if(b.dataset.id === "tt"){ tap(8); openTt(); return; }
@@ -9182,6 +9729,25 @@ $("stubStage").onclick = function(e){
     return;
   }
   if(act === "mapPick"){ UI.open.map = btn.dataset.id; paintHome(); return; }
+  // Page two. Every one of these is the same shape: flip a flag that lives
+  // on this phone, repaint. Nothing is sent, nothing is reserved.
+  if(act === "libRenew" || act === "printSend" || act === "washTell" ||
+     act === "clubJoin" || act === "jobSave"  || act === "lostClaim"){
+    var box = { libRenew:"libRen", printSend:"printJobs", washTell:"washTellMe",
+                clubJoin:"clubIn", jobSave:"jobKeep", lostClaim:"lostMine" }[act];
+    var flags = pk(box, {});
+    flags[btn.dataset.id] = !flags[btn.dataset.id];
+    pkSet(box, flags);
+    paintHome();
+    return;
+  }
+  // The clinic is the one that is not a toggle: you hold one slot, so
+  // booking a second releases the first.
+  if(act === "medBook"){
+    pkSet("medSlot", pk("medSlot", "") === btn.dataset.id ? "" : btn.dataset.id);
+    paintHome();
+    return;
+  }
   if(act === "dormPaid"){
     var paidRows = pk("dormDone", {});
     paidRows[btn.dataset.id] = !paidRows[btn.dataset.id];
