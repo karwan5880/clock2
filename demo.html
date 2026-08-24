@@ -875,7 +875,20 @@ body.at-home #pocketHome{display:block}
 body.at-home .wrap,
 body.at-home .actionbar{display:none !important}
 
-.homeTop{display:flex;justify-content:flex-end}
+.homeTop{display:flex;justify-content:space-between;align-items:center}
+.homeMe{
+  position:relative;width:34px;height:34px;padding:0;display:grid;place-items:center;
+  border-radius:var(--r-full);border:1px solid var(--edge);
+  background:color-mix(in srgb, var(--card) 62%, transparent);color:var(--tx);cursor:pointer;
+  backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);
+  transition:transform var(--mo-1) var(--ease)}
+.homeMe:active{transform:scale(.93)}
+.homeMe svg{width:19px;height:19px;display:block}
+/* A green pip when a session is live, so "am I signed in" is answered
+   from the home rather than by opening the screen to find out. */
+.homeMe i{position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;
+  background:var(--ok);border:2px solid var(--bg);display:block}
+.homeMe i[hidden]{display:none}
 .homeLang{padding:6px 13px;border-radius:var(--r-full);border:1px solid var(--edge);
   background:color-mix(in srgb, var(--card) 62%, transparent);color:var(--tx);
   font-size:var(--fs-sm);font-weight:700;font-family:inherit;cursor:pointer;
@@ -889,6 +902,14 @@ body.at-home .actionbar{display:none !important}
    only thing on this page that read as a web page's masthead. What the
    space is worth instead is search: the one super-app affordance the
    home was missing. */
+/* The enrolment QR. Supabase hands back an SVG as a data URI, so this is
+   only a frame: white behind it whatever the theme, because a scanner
+   wants black on white and a dark card would break it. */
+.qrBox{margin:var(--sp-3) auto;width:200px;height:200px;padding:10px;
+  background:#fff;border-radius:var(--r-md);border:1px solid var(--edge);
+  display:grid;place-items:center}
+.qrBox img{width:100%;height:100%;display:block;image-rendering:pixelated}
+
 .homeSearch{
   display:flex;align-items:center;gap:var(--sp-2);
   margin:var(--sp-2) 0 var(--sp-6);padding:0 var(--sp-4);
@@ -1045,6 +1066,7 @@ body.at-home .actionbar{display:none !important}
 .homeTile[data-id="job"] .icon,.hitDot[data-id="job"]{background:linear-gradient(180deg,#5eead4,#0f766e)}
 .homeTile[data-id="med"] .icon,.hitDot[data-id="med"]{background:linear-gradient(180deg,#fda4af,#be123c)}
 .homeTile[data-id="lost"] .icon,.hitDot[data-id="lost"]{background:linear-gradient(180deg,#fcd34d,#b45309)}
+.homeTile[data-id="me"] .icon,.hitDot[data-id="me"]{background:linear-gradient(180deg,#64748b,#0f172a)}
 
 /* ---------- An app, opened ---------- */
 /* Home and an app are two panes on a stack, not one pane with its middle
@@ -1421,7 +1443,17 @@ if ("serviceWorker" in navigator)
 <body class="at-home">
 
 <div id="pocketHome">
-  <div class="homeTop"><button type="button" class="homeLang" id="homeLang">EN</button></div>
+  <div class="homeTop">
+    <button type="button" class="homeMe" id="homeMe" aria-label="Account">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+           stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="8.4" r="3.6"/>
+        <path d="M4.6 20.2c0-3.7 3.3-6.2 7.4-6.2s7.4 2.5 7.4 6.2"/>
+      </svg>
+      <i id="homeMeDot" hidden></i>
+    </button>
+    <button type="button" class="homeLang" id="homeLang">EN</button>
+  </div>
   <div class="homeSearch">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
          stroke-linecap="round" aria-hidden="true">
@@ -2252,6 +2284,45 @@ zh: {
   tileMedSub :"预约与可预约时段",
   tileLost   :"失物招领",
   tileLostSub:"拾到与丢失",
+  tileMe     :"账号",
+  tileMeSub  :"登录与两步验证",
+  meHint     :"真实登录 · 连接 Supabase，不是演示",
+  meNote     :"这是 Pocket 里唯一会连到服务器的屏幕。其余 24 个应用不需要登录。",
+  meNoCfgT   :"还没连接项目",
+  meNoCfgS   :"把 Supabase 的网址和 anon key 写进 src/supabase.json，然后重新构建。步骤在：",
+  meWho      :"登录",
+  meId       :"学号或大学邮箱",
+  meIdEg     :"2601114",
+  mePw       :"密码",
+  meSignIn   :"登录",
+  meSignUp   :"注册",
+  meSignOut  :"退出",
+  meDomains  :"只接受 UTAR 邮箱（1utar.my、utar.edu.my、student.utar.edu.my）或学号。",
+  meBadId    :"请输入学号（6–10 位数字）或 UTAR 邮箱。",
+  meShortPw  :"密码至少 8 位。",
+  meWorking  :"处理中…",
+  meCheckMail:"去邮箱点确认链接，然后回来登录。",
+  me2fa      :"两步验证",
+  me2faAsk   :"输入验证器应用里的 6 位数字",
+  me2faOn    :"已开启",
+  me2faWhy   :"密码被看到也不够登录。",
+  meOnTag    :"开",
+  meEnrolT   :"先设置两步验证",
+  meEnrolS   :"用 Google Authenticator、Authy 或 1Password 扫描下方二维码，再输入它给的 6 位数字。",
+  meVerify   :"验证",
+  meBadCode  :"验证码是 6 位数字。",
+  meIn       :"已登录",
+  meLocked   :"已锁定",
+  meUnlockBtn:"用 Face ID / 指纹解锁",
+  mePk       :"快速解锁",
+  mePkOn     :"Face ID / 指纹已开",
+  mePkOff    :"Face ID / 指纹未开",
+  mePkWhat   :"只在这台设备上解锁已有的登录，不取代两步验证。",
+  mePkAdd    :"开启",
+  mePkForget :"关闭",
+  mePkSaved  :"以后可以直接解锁了。",
+  mePkGone   :"已关闭。",
+  mePkNo     :"这台设备现在用不了。",
   tileFood   :"吃饭",
   tileFoodSub:"食堂、拼单、宵夜",
   tileRide   :"拼车",
@@ -2976,6 +3047,45 @@ en: {
   tileMedSub :"Slots and appointments",
   tileLost   :"Lost and found",
   tileLostSub:"Found today, lost this week",
+  tileMe     :"Account",
+  tileMeSub  :"Sign in and two-factor",
+  meHint     :"A real sign-in · talks to Supabase, not a demo",
+  meNote     :"This is the only screen in Pocket that reaches a server. The other 24 apps never ask you to sign in.",
+  meNoCfgT   :"No project connected",
+  meNoCfgS   :"Put your Supabase URL and anon key in src/supabase.json and rebuild. The steps are in:",
+  meWho      :"Sign in",
+  meId       :"Student ID or university email",
+  meIdEg     :"2601114",
+  mePw       :"Password",
+  meSignIn   :"Sign in",
+  meSignUp   :"Create account",
+  meSignOut  :"Sign out",
+  meDomains  :"UTAR addresses only (1utar.my, utar.edu.my, student.utar.edu.my), or your student ID.",
+  meBadId    :"Use your student ID (6–10 digits) or a UTAR email address.",
+  meShortPw  :"Password must be at least 8 characters.",
+  meWorking  :"Working…",
+  meCheckMail:"Check your email for the confirmation link, then come back and sign in.",
+  me2fa      :"Two-factor",
+  me2faAsk   :"Enter the 6-digit code from your authenticator app",
+  me2faOn    :"Two-factor is on",
+  me2faWhy   :"Your password alone will not get anyone in.",
+  meOnTag    :"on",
+  meEnrolT   :"Set up two-factor first",
+  meEnrolS   :"Scan this with Google Authenticator, Authy or 1Password, then type the 6 digits it shows.",
+  meVerify   :"Verify",
+  meBadCode  :"The code is 6 digits.",
+  meIn       :"Signed in",
+  meLocked   :"Locked",
+  meUnlockBtn:"Unlock with Face ID / fingerprint",
+  mePk       :"Fast unlock",
+  mePkOn     :"Face ID / fingerprint is on",
+  mePkOff    :"Face ID / fingerprint is off",
+  mePkWhat   :"Unlocks the sign-in this device already holds. It does not replace two-factor.",
+  mePkAdd    :"Turn on",
+  mePkForget :"Turn off",
+  mePkSaved  :"You can unlock straight away next time.",
+  mePkGone   :"Turned off.",
+  mePkNo     :"This device would not do it.",
   tileFood   :"Food",
   tileFoodSub:"Canteen, group order",
   tileRide   :"Ride",
@@ -3484,7 +3594,8 @@ var MICROS = [
   { id:"club",  live:true,  t:"tileClub" },
   { id:"job",   live:true,  t:"tileJob" },
   { id:"med",   live:true,  t:"tileMed" },
-  { id:"lost",  live:true,  t:"tileLost" }
+  { id:"lost",  live:true,  t:"tileLost" },
+  { id:"me",    live:true,  t:"tileMe" }
 ];
 
 function tileGlyph(id){
@@ -3514,7 +3625,8 @@ function tileGlyph(id){
     club:'<circle cx="9" cy="8.4" r="3"/><path d="M3.4 19.4c0-3 2.5-5 5.6-5s5.6 2 5.6 5"/><circle cx="17" cy="9.6" r="2.4"/><path d="M15 14.8c3 0 5.6 1.7 5.6 4.6"/>',
     job:'<rect x="3.4" y="7.4" width="17.2" height="12" rx="2.2"/><path d="M9 7.4V5.8c0-.9.7-1.6 1.6-1.6h2.8c.9 0 1.6.7 1.6 1.6v1.6"/><path d="M3.4 12.6h17.2M11 12.6v2.2h2v-2.2"/>',
     med:'<path d="M9.4 3.6h5.2v5.8h5.8v5.2h-5.8v5.8H9.4v-5.8H3.6V9.4h5.8z"/>',
-    lost:'<circle cx="10.6" cy="10.6" r="6.2"/><path d="M15.2 15.2 20.4 20.4"/><path d="M8.6 10.6h4M10.6 8.6v4"/>'
+    lost:'<circle cx="10.6" cy="10.6" r="6.2"/><path d="M15.2 15.2 20.4 20.4"/><path d="M8.6 10.6h4M10.6 8.6v4"/>',
+    me:'<circle cx="12" cy="8.4" r="3.6"/><path d="M4.6 20.2c0-3.7 3.3-6.2 7.4-6.2s7.4 2.5 7.4 6.2"/>'
   };
   return '<svg '+s+' aria-hidden="true">'+(d[id] || "")+"</svg>";
 }
@@ -4453,6 +4565,7 @@ function shellHtml(id){
   if(id === "job") return jobHtml();
   if(id === "med") return medHtml();
   if(id === "lost") return lostHtml();
+  if(id === "me") return meHtml();
   return '<p class="shellS">'+t("stubLead")+"</p>";
 }
 
@@ -4865,6 +4978,154 @@ function lostHtml(){
   return html + demoNote();
 }
 
+// ---------- Account ----------
+// The one screen in Pocket that talks to a server. It is a state machine
+// with four states and it renders whichever one it is in; there is no
+// hidden branch that leaves you looking at a screen you cannot act on.
+function authRow(k, title, sub, extra){ return shellRow(k, title, sub, extra); }
+
+function meHtml(){
+  var html = "";
+
+  // 0. No project configured. Say exactly that, and where the answer is.
+  if(!authReady()){
+    return emptyBox(t("meNoCfgT"), t("meNoCfgS")) +
+      '<p class="shellS" style="text-align:center;color:var(--tx3)">docs/AUTH-SETUP.md</p>';
+  }
+
+  if(AUTH.msg) html += '<div class="statBox"><p class="shellS">' + esc(AUTH.msg) + "</p></div>";
+
+  // 1. Signed out -- one field for an ID or a UTAR email, and a password.
+  if(!signedIn()){
+    html += '<div class="statBox">' +
+      '<p class="shellK">' + t("meWho") + "</p>" +
+      '<label class="f"><span>' + t("meId") + "</span>" +
+      '<input id="meU" type="text" inputmode="email" autocomplete="username" ' +
+        'autocapitalize="off" spellcheck="false" placeholder="' + esc(t("meIdEg")) + '"></label>' +
+      '<label class="f"><span>' + t("mePw") + "</span>" +
+      '<input id="meP" type="password" autocomplete="current-password"></label>' +
+      '<div class="shellBtns">' +
+        '<button type="button" data-act="meIn" class="on">' + t("meSignIn") + "</button>" +
+        '<button type="button" data-act="meUp">' + t("meSignUp") + "</button>" +
+      "</div>" +
+      '<p class="shellS">' + t("meDomains") + "</p></div>";
+    return html + meFoot();
+  }
+
+  // 2. Signed in with a password only, and a factor is waiting.
+  if(AUTH.step === "code"){
+    html += '<div class="statBox"><p class="shellK">' + t("me2fa") + "</p>" +
+      '<p class="shellT">' + t("me2faAsk") + "</p>" +
+      '<label class="f"><input id="meC" type="text" inputmode="numeric" ' +
+        'autocomplete="one-time-code" maxlength="6" placeholder="000000"></label>' +
+      '<div class="shellBtns">' +
+        '<button type="button" data-act="meCode" class="on">' + t("meVerify") + "</button>" +
+        '<button type="button" data-act="meOut">' + t("meSignOut") + "</button>" +
+      "</div></div>";
+    return html + meFoot();
+  }
+
+  // 3. Signed in, no second factor yet. It is required, so this is the
+  //    only thing on the screen until it is done.
+  if(AUTH.step === "enrol"){
+    html += '<div class="statBox"><p class="shellK">' + t("me2fa") + "</p>" +
+      '<p class="shellT">' + t("meEnrolT") + "</p>" +
+      '<p class="shellS">' + t("meEnrolS") + "</p>" +
+      (AUTH.qr ? '<div class="qrBox"><img alt="" src="' + esc(AUTH.qr) + '"></div>' : "") +
+      (AUTH.secret ? '<p class="shellS" style="text-align:center">' +
+        '<span class="num">' + esc(AUTH.secret) + "</span></p>" : "") +
+      '<label class="f"><input id="meC" type="text" inputmode="numeric" ' +
+        'autocomplete="one-time-code" maxlength="6" placeholder="000000"></label>' +
+      '<div class="shellBtns">' +
+        '<button type="button" data-act="meCode" class="on">' + t("meVerify") + "</button>" +
+        '<button type="button" data-act="meOut">' + t("meSignOut") + "</button>" +
+      "</div></div>";
+    return html + meFoot();
+  }
+
+  if(!fullyIn() && AUTH.locked){
+    html += '<div class="statBox"><p class="shellK">' + t("meLocked") + "</p>" +
+      '<p class="shellT">' + esc(toDisplayName(CLOUD.email)) + "</p>" +
+      '<div class="shellBtns"><button type="button" data-act="meUnlock" class="on">' +
+        t("meUnlockBtn") + '</button>' +
+      '<button type="button" data-act="meOut">' + t("meSignOut") + "</button></div></div>";
+    return html + meFoot();
+  }
+
+  // 4. In, with both factors answered.
+  html += '<div class="statBox">' +
+    '<p class="shellK">' + t("meIn") + "</p>" +
+    '<p class="shellT" style="font-size:var(--fs-2xl);letter-spacing:-.03em">' +
+      esc(toDisplayName(CLOUD.email)) + "</p>" +
+    '<p class="shellS">' + esc(CLOUD.email) + "</p></div>";
+
+  html += authRow(t("me2fa"), t("me2faOn"), t("me2faWhy"),
+    '<span class="tag ok">' + t("meOnTag") + "</span>");
+
+  if(pkSupported()){
+    html += authRow(t("mePk"), pkOn() ? t("mePkOn") : t("mePkOff"), t("mePkWhat"),
+      '<div class="shellBtns"><button type="button" data-act="mePk"' +
+        (pkOn() ? ' class="on"' : "") + ">" +
+        (pkOn() ? t("mePkForget") : t("mePkAdd")) + "</button></div>");
+  }
+
+  html += '<div class="shellBtns"><button type="button" data-act="meOut">' +
+    t("meSignOut") + "</button></div>";
+  return html + meFoot();
+}
+
+// Every screen in Pocket says what it is. This one is the only place
+// where a line about a real server belongs, so it says that instead.
+function meFoot(){
+  return '<p class="shellS" style="margin-top:14px;text-align:center;color:var(--tx3)">' +
+    t("meNote") + "</p>";
+}
+
+// One place that decides which of the four states we are in, so no
+// handler has to reason about it.
+function authSettle(){
+  AUTH.busy = false;
+  if(!signedIn()){ AUTH.step = "in"; paintHome(); return Promise.resolve(); }
+  return mfaFactors().then(function(list){
+    var ok = mfaVerified(list);
+    if(jwtAal(CLOUD.token) === "aal2"){
+      AUTH.step = "done";
+      AUTH.locked = pkOn() ? AUTH.locked : false;
+    } else if(ok.length){
+      AUTH.step = "code";
+      AUTH.factor = ok[0].id;
+      return mfaChallenge(AUTH.factor).then(function(c){
+        AUTH.chal = (c && c.id) || "";
+        paintHome();
+      });
+    } else {
+      // Half-finished enrolments block a new one, so clear them.
+      var stale = (list || []).filter(function(f){ return f.status !== "verified"; });
+      var drop = stale.length ? mfaDrop(stale[0].id) : Promise.resolve();
+      return drop.then(mfaEnrol).then(function(j){
+        AUTH.step   = "enrol";
+        AUTH.factor = (j && j.id) || "";
+        AUTH.qr     = (j && j.totp && j.totp.qr_code) || "";
+        AUTH.secret = (j && j.totp && j.totp.secret) || "";
+        return mfaChallenge(AUTH.factor);
+      }).then(function(c){
+        AUTH.chal = (c && c.id) || "";
+        paintHome();
+      });
+    }
+    paintHome();
+  }).catch(function(err){
+    AUTH.msg = cloudErr(err && err.message);
+    paintHome();
+  });
+}
+
+function authFail(err){
+  AUTH.busy = false;
+  AUTH.msg = cloudErr((err && err.message) || "");
+  paintHome();
+}
+
 function goHome(){
   if(NAV.depth > 0){ NAV.depth = 0; try{ history.go(-1); }catch(e){} }
   S.micro = "home";
@@ -5104,6 +5365,8 @@ function paintHome(){
   paintPages();
   var foot = $("homeFoot");
   if(foot) foot.textContent = t("homeFoot", MICROS.length);
+  var pip = $("homeMeDot");
+  if(pip) pip.hidden = !fullyIn();
   paintSearch();
   var stub = $("homeStub");
   var stubOn = stub.classList.contains("on");
@@ -6964,7 +7227,12 @@ function shownOnDay(dayI, w){
 // ============================================================
 // karwan5880: no hosted backend. Cloud UI stays in the file but stays off.
 var CLOUD_OFF = true;
+// Filled in at build time from src/supabase.json (git-ignored). Empty
+// means the account screen says "not configured" and the rest of Pocket
+// carries on exactly as before -- signing in is optional by design, so a
+// missing project must never be able to break a demo.
 var DEFAULT_CLOUD_URL = "";
+var DEFAULT_CLOUD_KEY = "";
 
 // A Supabase account has to be an email address. But the user does not want to type an email,
 // so internally the username gets a fixed domain appended -- the screen only ever shows the username.
@@ -7063,6 +7331,7 @@ function cloudLoadCfg(){
   }catch(e){}
   CLOUD.name = emailToUser(CLOUD.email);
   if(!CLOUD.url) CLOUD.url = DEFAULT_CLOUD_URL;
+  if(!CLOUD.key) CLOUD.key = DEFAULT_CLOUD_KEY;
   CLOUD.on = !!(CLOUD.url && CLOUD.key && CLOUD.token && CLOUD.uid);
 }
 function cloudSaveCfg(){
@@ -7173,6 +7442,185 @@ function cloudSignup(email, pw){
     if(j && j.access_token) return cloudSession(j);
     return { needVerify: true };
   });
+}
+
+// ============================================================
+//  Who you are
+//  Pocket's first real service. Everything above this line runs on the
+//  phone; from here down there is a Supabase project on the other end.
+//
+//  Three ideas, and they are separate on purpose:
+//    1. WHAT YOU TYPE  -- a student ID (2601114) or a UTAR email. The ID
+//       becomes an address Supabase will accept; see toAuthEmail().
+//    2. WHAT PROVES IT -- a password, then a six-digit code from an
+//       authenticator app. Supabase calls the second one MFA and stamps
+//       the token aal2; a password alone is aal1 and is not enough.
+//    3. WHAT SKIPS IT  -- a passkey. Face ID, a fingerprint, Windows
+//       Hello. It is a *device* unlock over a session you already hold,
+//       not a factor the server checks, and this file says so in the
+//       one place a reader might assume otherwise.
+//
+//  Signing in is optional. Nothing on the home needs it, and if the
+//  project is paused or the wi-fi is bad the other 24 apps do not care.
+// ============================================================
+
+// UTAR addresses, and nothing else. This check is a courtesy -- it saves
+// a round trip and gives a better message than the server's. It is NOT
+// the enforcement: anyone can POST to the API directly, so the real gate
+// is the trigger on auth.users in docs/AUTH-SETUP.md. Never move a rule
+// like this into the page and call it done.
+var UTAR_DOMAINS = ["1utar.my", "utar.edu.my", "student.utar.edu.my"];
+function isUtarEmail(v){
+  v = String(v || "").trim().toLowerCase();
+  var at = v.lastIndexOf("@");
+  if(at < 1) return false;
+  var d = v.slice(at + 1);
+  for(var i = 0; i < UTAR_DOMAINS.length; i++) if(d === UTAR_DOMAINS[i]) return true;
+  return false;
+}
+
+// A student ID: digits only, the length UTAR actually issues.
+function isStudentId(v){ return /^\d{6,10}$/.test(String(v || "").trim()); }
+
+// What may be typed into the one field: an ID, or a UTAR email. Anything
+// else is refused here rather than bounced by the server.
+function loginIdOk(v){
+  v = String(v || "").trim();
+  return isStudentId(v) || isUtarEmail(v);
+}
+
+// The assurance level the token carries. aal1 = password only,
+// aal2 = the second factor was answered.
+function jwtAal(tok){
+  try{
+    var b = tok.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    while(b.length % 4) b += "=";
+    return JSON.parse(decodeURIComponent(escape(atob(b)))).aal || "aal1";
+  }catch(e){ return "aal1"; }
+}
+
+var AUTH = {
+  step: "in",        // in | code | enrol | done
+  msg: "",
+  busy: false,
+  factor: "",        // the TOTP factor being challenged or enrolled
+  chal: "",          // the challenge id that goes with it
+  qr: "",            // enrolment QR, an SVG data URI from Supabase
+  secret: "",        // the same secret in text, for a keyboard
+  locked: false      // a passkey is enrolled and has not been answered yet
+};
+
+function authReady(){ return !!(CLOUD.url && CLOUD.key); }
+function signedIn(){ return !!(CLOUD.token && CLOUD.uid); }
+function fullyIn(){ return signedIn() && jwtAal(CLOUD.token) === "aal2" && !AUTH.locked; }
+
+// ---------- Second factor: TOTP ----------
+// Supabase's own MFA. No SMS provider, no codes table of ours, no email
+// round trip -- the phone and the server agree on a clock and a secret.
+
+function mfaFactors(){
+  return cloudFetch("/auth/v1/user", {}, true).then(function(u){
+    return (u && u.factors) || [];
+  });
+}
+function mfaVerified(list){
+  return (list || []).filter(function(f){
+    return f.factor_type === "totp" && f.status === "verified";
+  });
+}
+function mfaEnrol(){
+  return cloudFetch("/auth/v1/factors", {
+    method:"POST",
+    body: JSON.stringify({ factor_type:"totp", friendly_name:"Pocket " + Date.now() })
+  }, true);
+}
+function mfaChallenge(id){
+  return cloudFetch("/auth/v1/factors/" + encodeURIComponent(id) + "/challenge",
+    { method:"POST" }, true);
+}
+function mfaVerify(id, chal, code){
+  return cloudFetch("/auth/v1/factors/" + encodeURIComponent(id) + "/verify", {
+    method:"POST",
+    body: JSON.stringify({ challenge_id: chal, code: String(code || "").trim() })
+  }, true).then(cloudSession);
+}
+// An enrolment that was started and abandoned leaves an unverified factor
+// behind, and Supabase refuses to enrol a second one. Clear it first.
+function mfaDrop(id){
+  return cloudFetch("/auth/v1/factors/" + encodeURIComponent(id), { method:"DELETE" }, true)
+    .catch(function(){ return null; });
+}
+
+// ---------- Passkey ----------
+// Face ID / fingerprint / Windows Hello. Read the note at the top of this
+// section: this unlocks a session this device already has. It is not a
+// factor, the server never sees it, and it can never stand in for the
+// TOTP code at sign-in.
+
+function b64u(buf){
+  var b = "", a = new Uint8Array(buf), i;
+  for(i = 0; i < a.length; i++) b += String.fromCharCode(a[i]);
+  return btoa(b).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function unb64u(str){
+  var b = String(str || "").replace(/-/g, "+").replace(/_/g, "/");
+  while(b.length % 4) b += "=";
+  var raw = atob(b), a = new Uint8Array(raw.length), i;
+  for(i = 0; i < raw.length; i++) a[i] = raw.charCodeAt(i);
+  return a.buffer;
+}
+function rand32(){
+  var a = new Uint8Array(32);
+  (window.crypto || window.msCrypto).getRandomValues(a);
+  return a.buffer;
+}
+function pkSupported(){
+  return typeof window !== "undefined" &&
+         !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+}
+function pkId(){ try{ return localStorage.getItem("pocketPk") || ""; }catch(e){ return ""; } }
+function pkOn(){ return !!pkId(); }
+
+function pkEnrol(){
+  if(!pkSupported()) return Promise.reject(new Error("no webauthn"));
+  var uid = new TextEncoder().encode(CLOUD.uid || "pocket");
+  return navigator.credentials.create({ publicKey: {
+    challenge: rand32(),
+    rp: { name: "Pocket" },
+    user: { id: uid, name: CLOUD.email || "pocket", displayName: toDisplayName(CLOUD.email) },
+    pubKeyCredParams: [{ type:"public-key", alg:-7 }, { type:"public-key", alg:-257 }],
+    authenticatorSelection: {
+      authenticatorAttachment: "platform",
+      userVerification: "required",
+      residentKey: "preferred"
+    },
+    timeout: 60000,
+    attestation: "none"
+  }}).then(function(cred){
+    if(!cred) throw new Error("cancelled");
+    try{ localStorage.setItem("pocketPk", b64u(cred.rawId)); }catch(e){}
+    return true;
+  });
+}
+
+function pkUnlock(){
+  var id = pkId();
+  if(!id || !pkSupported()) return Promise.reject(new Error("no passkey"));
+  return navigator.credentials.get({ publicKey: {
+    challenge: rand32(),
+    allowCredentials: [{ type:"public-key", id: unb64u(id) }],
+    userVerification: "required",
+    timeout: 60000
+  }}).then(function(a){
+    if(!a) throw new Error("cancelled");
+    AUTH.locked = false;
+    return true;
+  });
+}
+
+function pkForget(){
+  try{ localStorage.removeItem("pocketPk"); }catch(e){}
+  AUTH.locked = false;
 }
 
 function cloudLogin(email, pw){
@@ -9698,6 +10146,7 @@ $("langBtn").onclick = function(){
 };
 
 $("homeLang").onclick = function(){ $("langBtn").click(); };
+$("homeMe").onclick = function(){ tap(8); openMicro("me"); };
 $("homeQ").oninput = function(){
   homeQ = String(this.value || "").slice(0, 60);
   paintSearch();
@@ -9950,6 +10399,56 @@ $("stubStage").onclick = function(e){
   }
   // The clinic is the one that is not a toggle: you hold one slot, so
   // booking a second releases the first.
+  if(act === "meIn" || act === "meUp"){
+    var who = String(($("meU") || {}).value || "").trim();
+    var pw  = String(($("meP") || {}).value || "");
+    if(!loginIdOk(who)){ AUTH.msg = t("meBadId"); paintHome(); return; }
+    if(pw.length < 8){ AUTH.msg = t("meShortPw"); paintHome(); return; }
+    if(AUTH.busy) return;
+    AUTH.busy = true; AUTH.msg = t("meWorking"); paintHome();
+    var mail = toAuthEmail(who);
+    (act === "meUp" ? cloudSignup(mail, pw) : cloudLogin(mail, pw))
+      .then(function(r){
+        if(r && r.needVerify){ AUTH.busy = false; AUTH.msg = t("meCheckMail"); paintHome(); return; }
+        AUTH.msg = "";
+        return authSettle();
+      })
+      .catch(authFail);
+    return;
+  }
+  if(act === "meCode"){
+    var code = String(($("meC") || {}).value || "").replace(/\D/g, "");
+    if(code.length !== 6){ AUTH.msg = t("meBadCode"); paintHome(); return; }
+    if(AUTH.busy) return;
+    AUTH.busy = true; AUTH.msg = t("meWorking"); paintHome();
+    mfaVerify(AUTH.factor, AUTH.chal, code)
+      .then(function(){ AUTH.msg = ""; AUTH.qr = ""; AUTH.secret = ""; return authSettle(); })
+      .catch(function(err){
+        // A wrong code burns the challenge, so ask for a fresh one or the
+        // next attempt fails for the wrong reason.
+        authFail(err);
+        if(AUTH.factor) mfaChallenge(AUTH.factor).then(function(c){ AUTH.chal = (c && c.id) || ""; });
+      });
+    return;
+  }
+  if(act === "meOut"){
+    cloudLogout();
+    AUTH.step = "in"; AUTH.msg = ""; AUTH.qr = ""; AUTH.secret = "";
+    AUTH.factor = ""; AUTH.chal = ""; AUTH.locked = false;
+    paintHome();
+    return;
+  }
+  if(act === "mePk"){
+    if(pkOn()){ pkForget(); toast(t("mePkGone")); paintHome(); return; }
+    pkEnrol().then(function(){ toast(t("mePkSaved")); paintHome(); })
+             .catch(function(){ toast(t("mePkNo")); });
+    return;
+  }
+  if(act === "meUnlock"){
+    pkUnlock().then(function(){ AUTH.msg = ""; paintHome(); })
+              .catch(function(){ toast(t("mePkNo")); });
+    return;
+  }
   if(act === "medBook"){
     pkSet("medSlot", pk("medSlot", "") === btn.dataset.id ? "" : btn.dataset.id);
     paintHome();
