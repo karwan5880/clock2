@@ -30,6 +30,7 @@
   --demo1:#00a0e9; --demo2:#00669c;      /* DEMO banner */
   --shadow:#0a5c86;
   --r:18px;
+
 }
 /* ============================================================
     Other themes: override only the variables above -- not one line of component CSS changes.
@@ -98,6 +99,52 @@
   --ring1:#c9182b; --ring2:#e08a00;
   --demo1:#c98a3a; --demo2:#8d4d10;
   --shadow:#876840;
+}
+
+/* ============================================================
+    Shared design tokens. Deliberately NOT part of the colour block
+    above and never restated by a theme: a theme changes colour, it
+    does not get its own type scale or its own idea of a corner.
+    The theme test enforces that split -- everything in the colour
+    :root must appear in every theme, and this block must not.
+   ============================================================ */
+:root{
+/* ============================================================
+    Design system. Colours stay per-theme above; everything below is
+    shared, so a theme never has to restate a size or a duration.
+
+    Numbers are the signature of this app. A campus runs on issued
+    numbers -- matric, GPA, credits, room, bus time, ringgit -- so every
+    one of them is set in --mono with tabular figures. That is why the
+    column of grades in GPA lines up and the balance in Wallet does not
+    jitter as it changes.
+   ============================================================ */
+--mono:ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono","Roboto Mono",
+       "DejaVu Sans Mono",Menlo,Consolas,monospace;
+
+/* Type scale. Nothing in the app should use a size that is not here. */
+--fs-2xs:10.5px; --fs-xs:11.5px; --fs-sm:13px; --fs-md:15px;
+--fs-lg:17px;    --fs-xl:20px;   --fs-2xl:26px; --fs-3xl:34px;
+
+/* Spacing. A 4px grid, named so the rhythm survives editing. */
+--sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;
+--sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+
+/* Corners */
+--r-xs:8px; --r-sm:12px; --r-md:16px; --r-lg:20px; --r-xl:26px; --r-full:999px;
+
+/* Elevation. A shadow alone disappears on a dark theme, so every raised
+   surface also carries a hairline. --edge is that hairline. */
+--edge:color-mix(in srgb, var(--tx) 8%, transparent);
+--e1:0 1px 2px color-mix(in srgb, var(--shadow) 14%, transparent);
+--e2:0 6px 16px -10px color-mix(in srgb, var(--shadow) 55%, transparent);
+--e3:0 18px 40px -22px color-mix(in srgb, var(--shadow) 70%, transparent);
+
+/* Motion. One duration scale, one curve -- the iOS decelerate, which is
+   what makes a tap feel answered rather than animated. */
+--mo-1:120ms; --mo-2:200ms; --mo-3:320ms; --mo-4:460ms;
+--ease:cubic-bezier(.32,.72,0,1);
+--ease-out:cubic-bezier(.16,1,.3,1);
 }
 
 /* ---------- Cloud / account ---------- */
@@ -379,8 +426,11 @@ body{
   background:var(--bg); color:var(--tx);
   background-image:radial-gradient(125% 62% at 50% -4%,var(--sky) 0%,transparent 64%);
   background-attachment:fixed;
-  font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",
-       "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font:var(--fs-md)/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI Variable Text",
+       "Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1,"cv01" 1;
   padding:env(safe-area-inset-top) 0 calc(104px + env(safe-area-inset-bottom));
   min-height:100vh; overscroll-behavior-y:contain;
 }
@@ -784,8 +834,19 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac)}
 .helpbtn{left:92px}
 .cloudbtn{left:138px}
 
+/* ============================================================
+    Pocket: the campus home and everything that opens from it.
+
+    Two rules run through all of it. Raised surfaces carry a hairline as
+    well as a shadow, because a shadow alone vanishes on the dark theme.
+    And numbers are set in --mono with tabular figures -- a campus runs on
+    issued numbers, and lining them up is what makes a list of grades or
+    ringgit read as a record rather than as text.
+   ============================================================ */
 #pocketHome{
-  display:none;min-height:100dvh;padding:calc(16px + env(safe-area-inset-top)) 18px 36px;
+  display:none;min-height:100dvh;
+  padding:calc(var(--sp-4) + env(safe-area-inset-top)) var(--sp-5)
+          calc(var(--sp-10) + env(safe-area-inset-bottom));
   box-sizing:border-box;
   background:
     radial-gradient(120% 70% at 50% -10%, color-mix(in srgb, var(--ac) 28%, #fff), transparent 62%),
@@ -796,60 +857,83 @@ body.at-home .wrap,
 body.at-home .actionbar{display:none !important}
 
 .homeTop{display:flex;justify-content:flex-end}
-.homeLang{padding:6px 12px;border-radius:99px;border:0;
-  background:color-mix(in srgb, #fff 55%, transparent);color:var(--tx);
-  font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.homeLang:active{opacity:.7}
+.homeLang{padding:6px 13px;border-radius:var(--r-full);border:1px solid var(--edge);
+  background:color-mix(in srgb, var(--card) 62%, transparent);color:var(--tx);
+  font-size:var(--fs-sm);font-weight:700;font-family:inherit;cursor:pointer;
+  backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);
+  transition:transform var(--mo-1) var(--ease),opacity var(--mo-1) linear}
+.homeLang:active{transform:scale(.94);opacity:.75}
 
-.homeLid{text-align:center;margin:8px 0 26px}
+/* ---------- The lockup: crest, name, campus ---------- */
+.homeLid{text-align:center;margin:var(--sp-2) 0 var(--sp-6)}
 .homeMark{
-  display:inline-flex;align-items:center;gap:8px;margin:0 0 12px;padding:5px 12px 5px 5px;
-  border-radius:999px;border:1px solid color-mix(in srgb, #d4a017 55%, transparent);
+  display:inline-flex;align-items:center;gap:var(--sp-2);margin:0 0 var(--sp-3);
+  padding:5px 13px 5px 5px;
+  border-radius:var(--r-full);border:1px solid color-mix(in srgb, #d4a017 55%, transparent);
   background:linear-gradient(180deg,#163a86,#0b255f);color:#f3d06a;
-  box-shadow:0 10px 22px -14px #0b255f;vertical-align:top}
+  box-shadow:0 10px 22px -14px #0b255f, inset 0 1px 0 color-mix(in srgb,#f3d06a 30%,transparent);
+  vertical-align:top}
 .homeMark svg{width:22px;height:22px;display:block;flex:none}
-.homeMark b{font-size:12px;font-weight:800;letter-spacing:.16em}
-.homeEye{margin:0;font-size:17px;font-weight:800;letter-spacing:-.02em;color:var(--tx)}
+.homeMark b{font-size:var(--fs-xs);font-weight:800;letter-spacing:.18em}
+.homeEye{margin:0;font-size:var(--fs-2xl);font-weight:800;letter-spacing:-.035em;
+  line-height:1.05;color:var(--tx)}
 .homeCampus{
-  appearance:none;margin:8px 0 0;padding:4px 10px;border:0;border-radius:99px;
-  background:color-mix(in srgb, #0b255f 10%, transparent);color:var(--tx2);
-  font:inherit;font-size:12px;font-weight:700;cursor:pointer}
-.homeCampus:active{opacity:.7}
-.homeNow{
-  display:none;width:100%;max-width:400px;margin:0 auto 18px;padding:12px 14px;
-  border:0;border-radius:16px;background:var(--card);color:var(--tx);
-  text-align:left;font:inherit;cursor:pointer;
-  box-shadow:0 8px 24px -18px var(--shadow)}
-.homeNow.on{display:block}
-.homeNow .k{font-size:11px;font-weight:700;color:var(--tx3);margin:0 0 2px}
-.homeNow .t{font-size:16px;font-weight:800;margin:0}
-.homeNow .s{font-size:13px;color:var(--tx2);margin:4px 0 0}
-.homeNow:active{opacity:.7}
+  appearance:none;margin:var(--sp-2) 0 0;padding:5px 12px;border:1px solid var(--edge);
+  border-radius:var(--r-full);
+  background:color-mix(in srgb, var(--card) 55%, transparent);color:var(--tx2);
+  font:inherit;font-size:var(--fs-sm);font-weight:600;cursor:pointer;
+  transition:transform var(--mo-1) var(--ease)}
+.homeCampus:active{transform:scale(.95)}
 
+/* The strip that says what is on now or next. It is the one thing on the
+   home screen that changes by itself, so it gets the accent edge. */
+.homeNow{
+  display:none;width:100%;max-width:400px;margin:0 auto var(--sp-5);
+  padding:var(--sp-3) var(--sp-4);
+  border:1px solid var(--edge);border-left:3px solid var(--ac);
+  border-radius:var(--r-md);background:var(--card);color:var(--tx);
+  text-align:left;font:inherit;cursor:pointer;box-shadow:var(--e2);
+  transition:transform var(--mo-1) var(--ease)}
+.homeNow.on{display:block;animation:riseIn var(--mo-4) var(--ease-out) both}
+.homeNow .k{font-size:var(--fs-2xs);font-weight:800;color:var(--ac);margin:0 0 3px;
+  letter-spacing:.1em;text-transform:uppercase}
+.homeNow .t{font-size:var(--fs-lg);font-weight:700;margin:0;letter-spacing:-.02em}
+.homeNow .s{font-size:var(--fs-sm);color:var(--tx2);margin:3px 0 0;font-family:var(--mono)}
+.homeNow:active{transform:scale(.985)}
+
+/* ---------- The grid ---------- */
 .homeGrid{
   display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));
-  gap:22px 6px;max-width:360px;margin:0 auto;justify-items:center;
+  gap:var(--sp-5) var(--sp-2);max-width:364px;margin:0 auto;justify-items:center;
 }
 .homeTile{
   appearance:none;width:100%;max-width:84px;padding:0;
   border:0;background:transparent;color:var(--tx);
   font-family:inherit;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;gap:7px;
+  display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);
+  animation:tileIn var(--mo-4) var(--ease-out) both;
 }
 .homeTile .icon{
-  width:60px;height:60px;border-radius:13.4px;display:grid;place-items:center;
+  width:60px;height:60px;border-radius:15px;display:grid;place-items:center;
   color:#fff;flex:none;
-  box-shadow:0 10px 18px -12px rgba(20,70,110,.55);
-  transition:transform .12s ease;
+  box-shadow:0 8px 16px -10px rgba(12,40,70,.6),
+             inset 0 1px 0 rgba(255,255,255,.34),
+             inset 0 -1px 0 rgba(0,0,0,.14);
+  transition:transform var(--mo-2) var(--ease);
 }
-.homeTile .icon svg{width:30px;height:30px;display:block}
-.homeTile:active .icon{transform:scale(.88)}
+.homeTile .icon svg{width:29px;height:29px;display:block;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
+.homeTile:active .icon{transform:scale(.9)}
 .homeTile .name{
-  margin:0;width:76px;font-size:11px;font-weight:600;line-height:1.2;
-  letter-spacing:-.01em;text-align:center;
+  margin:0;width:78px;font-size:var(--fs-xs);font-weight:600;line-height:1.25;
+  letter-spacing:-.005em;text-align:center;color:var(--tx);
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
 }
+/* A shell with nothing behind it yet wears a dot, so the home screen never
+   pretends every icon is finished. */
+.homeTile[data-shell] .icon::after{
+  content:"";position:absolute;margin:38px 0 0 38px;width:7px;height:7px;
+  border-radius:50%;background:var(--bell);box-shadow:0 0 0 2px var(--bg)}
 .homeTile[data-id="today"] .icon{background:linear-gradient(180deg,#7aa0ff,#3d6dff)}
 .homeTile[data-id="tt"] .icon{background:linear-gradient(180deg,#5bb4ee,var(--ac))}
 .homeTile[data-id="att"] .icon{background:linear-gradient(180deg,#46d39a,#1fa971)}
@@ -865,54 +949,272 @@ body.at-home .actionbar{display:none !important}
 .homeTile[data-id="food"] .icon{background:linear-gradient(180deg,#ff9a62,#e25a28)}
 .homeTile[data-id="ride"] .icon{background:linear-gradient(180deg,#7fd4ea,#2a9fc4)}
 .homeTile[data-id="wall"] .icon{background:linear-gradient(180deg,#f08cc4,#d45a9a)}
+.homeTile[data-id="chat"] .icon{background:linear-gradient(180deg,#8ab4ff,#4f46e5)}
 
+@keyframes tileIn{from{opacity:0;transform:translateY(10px) scale(.94)}}
+@keyframes riseIn{from{opacity:0;transform:translateY(8px)}}
+@keyframes stageIn{from{opacity:0;transform:translateX(18px)}}
+@keyframes rowIn{from{opacity:0;transform:translateY(7px)}}
+
+/* ---------- An app, opened ---------- */
 #homeStub{display:none;max-width:400px;margin:0 auto;text-align:left}
 #homeStub.on{display:block}
 #pocketHome.in-app .homeLid,#pocketHome.in-app .homeGrid,#pocketHome.in-app .homeNow{display:none}
-.stubBar{display:flex;align-items:center;gap:10px;margin:0 0 12px}
-#stubBack{flex:none;padding:8px 14px;border:0;border-radius:99px;background:var(--card);
-  color:var(--tx);font:inherit;font-weight:800;cursor:pointer;box-shadow:0 1px 0 var(--line)}
-#stubTitle{margin:0;font-size:20px;font-weight:800;letter-spacing:-.03em}
-.previewBar{margin:0 0 12px;font-size:11px;font-weight:700;letter-spacing:.04em;
-  text-transform:uppercase;color:var(--tx3)}
-.shellRow,.idCard{background:var(--card);border-radius:16px;padding:12px 14px;margin:0 0 8px;
-  box-shadow:0 8px 24px -18px var(--shadow)}
-.shellK{font-size:11px;font-weight:700;color:var(--tx3);margin:0 0 2px}
-.shellT{font-size:16px;font-weight:800;margin:0}
-.shellS{font-size:13px;color:var(--tx2);margin:4px 0 0}
-.shellRow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stubBar{display:flex;align-items:center;gap:var(--sp-3);margin:0 0 var(--sp-2)}
+#stubBack{flex:none;width:36px;height:36px;padding:0;border:1px solid var(--edge);
+  border-radius:var(--r-full);background:var(--card);
+  color:var(--tx);font:inherit;font-size:var(--fs-lg);font-weight:700;cursor:pointer;
+  box-shadow:var(--e1);display:grid;place-items:center;line-height:1;
+  transition:transform var(--mo-1) var(--ease)}
+#stubBack:active{transform:scale(.9)}
+#stubTitle{margin:0;font-size:var(--fs-2xl);font-weight:800;letter-spacing:-.035em}
+#stubStage{animation:stageIn var(--mo-3) var(--ease-out) both}
+
+/* The honesty line. A quiet chip, not a shouted caption -- it has to be
+   readable without competing with the screen it is labelling. */
+.previewBar{
+  display:inline-block;margin:0 0 var(--sp-4);padding:4px 10px;
+  border-radius:var(--r-full);border:1px solid var(--edge);
+  background:color-mix(in srgb, var(--card) 70%, transparent);
+  font-size:var(--fs-2xs);font-weight:700;letter-spacing:.02em;color:var(--tx2)}
+
+/* ---------- Rows: the workhorse of every app ---------- */
+.shellRow,.idCard,.gpaHead,.feedCard,.statBox{
+  background:var(--card);border:1px solid var(--edge);border-radius:var(--r-md);
+  padding:var(--sp-3) var(--sp-4);margin:0 0 var(--sp-2);box-shadow:var(--e1);
+  animation:rowIn var(--mo-3) var(--ease-out) both}
+.shellK{font-size:var(--fs-2xs);font-weight:700;color:var(--tx3);margin:0 0 3px;
+  letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono)}
+.shellT{font-size:var(--fs-md);font-weight:650;margin:0;letter-spacing:-.012em}
+.shellS{font-size:var(--fs-sm);color:var(--tx2);margin:4px 0 0;line-height:1.45}
+.shellRow{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3)}
 .shellMain{min-width:0;flex:1}
 .shellBtns{display:flex;flex-wrap:wrap;gap:6px;flex:none}
-#stubStage > .shellBtns{margin:0 0 10px}
+#stubStage > .shellBtns{margin:0 0 var(--sp-3)}
 .shellBtns button,.shellFab{
-  appearance:none;border:0;border-radius:99px;padding:7px 11px;font:inherit;
-  font-size:12px;font-weight:800;cursor:pointer;background:var(--bg);color:var(--tx)}
-.shellBtns button.on{background:var(--ac);color:var(--onac)}
-.shellFab{width:100%;margin:10px 0 0;padding:12px;background:var(--ac);color:var(--onac)}
-.shellFab.ghost{background:var(--card);color:var(--tx);box-shadow:0 1px 0 var(--line)}
+  appearance:none;border:1px solid var(--edge);border-radius:var(--r-full);
+  padding:7px 12px;font:inherit;font-size:var(--fs-sm);font-weight:650;cursor:pointer;
+  background:var(--card2);color:var(--tx);
+  transition:transform var(--mo-1) var(--ease),background var(--mo-1) linear}
+.shellBtns button:active,.shellFab:active{transform:scale(.94)}
+.shellBtns button.on{background:var(--ac);border-color:transparent;color:var(--onac);
+  font-family:var(--mono);font-weight:700}
+.shellFab{width:100%;margin:var(--sp-3) 0 0;padding:13px;background:var(--ac);
+  border-color:transparent;color:var(--onac);font-size:var(--fs-md);font-weight:700;
+  box-shadow:var(--e2)}
+.shellFab:active{transform:scale(.985)}
+.shellFab.ghost{background:var(--card);border-color:var(--edge);color:var(--tx);
+  box-shadow:var(--e1)}
+.shellFab.danger{background:var(--bad)}
+
+/* Anything that is a number gets the mono treatment. */
+.num,.shellNum{font-family:var(--mono);font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em}
+
+/* ---------- Forms ---------- */
+.dueForm{display:grid;gap:var(--sp-2);margin:var(--sp-4) 0 0}
+.dueForm input,.dueForm select,.dueForm textarea{
+  appearance:none;width:100%;box-sizing:border-box;padding:11px 13px;
+  border:1px solid var(--edge);border-radius:var(--r-sm);
+  background:var(--card);color:var(--tx);font:inherit;font-size:var(--fs-md);
+  transition:border-color var(--mo-1) linear,box-shadow var(--mo-1) linear}
+.dueForm textarea{min-height:84px;resize:vertical;line-height:1.5}
+.dueForm input:focus,.dueForm select:focus,.dueForm textarea:focus{
+  outline:none;border-color:var(--ac);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--ac) 22%, transparent)}
+.dueFormRow{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2)}
 .dueDone{opacity:.45}
-.dueForm{display:grid;gap:8px;margin:12px 0 0}
-.dueForm input{
-  appearance:none;width:100%;box-sizing:border-box;padding:10px 12px;border:0;
-  border-radius:12px;background:var(--card);color:var(--tx);font:inherit}
-.dueFormRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.gpaHead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
-  background:var(--card);border-radius:16px;padding:14px;margin:0 0 8px;
-  box-shadow:0 8px 24px -18px var(--shadow)}
-.gpaHead .n{font-size:30px;font-weight:800;letter-spacing:-.03em}
-.gpaFormRow{display:grid;grid-template-columns:1fr auto;gap:8px}
+
+/* ---------- GPA ---------- */
+.gpaHead{display:grid;grid-template-columns:1fr auto;align-items:end;
+  gap:var(--sp-1) var(--sp-3);padding:var(--sp-4) var(--sp-4) var(--sp-4)}
+.gpaHead .n{grid-column:1;font-family:var(--mono);font-size:var(--fs-3xl);font-weight:700;
+  letter-spacing:-.05em;line-height:1;margin:2px 0 0}
+.gpaHead .shellK{grid-column:1;grid-row:1;margin:0}
+.gpaHead .shellS{grid-column:2;grid-row:2;margin:0;text-align:right;
+  font-family:var(--mono);font-size:var(--fs-sm)}
+.gpaFormRow{display:grid;grid-template-columns:1fr auto;gap:var(--sp-2)}
+
+/* ---------- Hotline ---------- */
 a.shellCall{
-  flex:none;display:inline-block;padding:7px 14px;border-radius:99px;
-  background:#dc2626;color:#fff;font-size:12px;font-weight:800;text-decoration:none}
-a.shellCall:active{opacity:.8}
-.idCard{text-align:center;padding:22px 16px;background:linear-gradient(165deg,#1e3a5f,#0f2744);color:#fff}
-.idCard .idNo{font-size:22px;font-weight:800;letter-spacing:.12em;margin:8px 0 4px}
-.idCard .idName{font-size:15px;opacity:.9}
+  flex:none;display:inline-block;padding:8px 15px;border-radius:var(--r-full);
+  background:var(--bad);color:#fff;font-size:var(--fs-sm);font-weight:700;
+  text-decoration:none;box-shadow:var(--e2);
+  transition:transform var(--mo-1) var(--ease)}
+a.shellCall:active{transform:scale(.94)}
+.shellRow .num.tel{font-size:var(--fs-sm);color:var(--tx2)}
+
+/* ---------- Student ID ---------- */
+.idCard{
+  position:relative;overflow:hidden;text-align:left;padding:var(--sp-5);
+  border:0;color:#fff;box-shadow:var(--e3);
+  background:linear-gradient(150deg,#1c3f8f 0%,#0e2456 58%,#0a1c44 100%)}
+/* The guilloche wash real cards use, faked with two conic gradients. */
+.idCard::before{
+  content:"";position:absolute;inset:-40% -10% auto auto;width:260px;height:260px;
+  background:conic-gradient(from 210deg, transparent 0 42%, rgba(243,208,106,.16) 50%, transparent 58% 100%);
+  border-radius:50%}
+.idCard .idHead{display:flex;align-items:center;gap:var(--sp-2);
+  font-size:var(--fs-2xs);font-weight:800;letter-spacing:.14em;color:#f3d06a;
+  text-transform:uppercase;position:relative}
+.idCard .idBody{display:flex;align-items:center;gap:var(--sp-4);
+  margin:var(--sp-4) 0 0;position:relative}
+.idCard .idPic{flex:none;width:66px;height:82px;border-radius:var(--r-xs);
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));
+  border:1px solid rgba(243,208,106,.45);display:grid;place-items:center;
+  font-size:var(--fs-2xl);font-weight:700;color:#f3d06a;letter-spacing:-.02em}
+.idCard .idName{margin:0;font-size:var(--fs-xl);font-weight:700;letter-spacing:-.02em}
+.idCard .idFac{margin:3px 0 0;font-size:var(--fs-sm);color:rgba(255,255,255,.72)}
+.idCard .idNo{margin:var(--sp-2) 0 0;font-family:var(--mono);font-size:var(--fs-lg);
+  font-weight:700;letter-spacing:.14em;color:#f3d06a}
+/* The barcode is drawn, not an image -- it is decoration, and it says so. */
+.idBar{display:flex;gap:2px;align-items:flex-end;height:34px;margin:var(--sp-4) 0 0;
+  position:relative;opacity:.9}
+.idBar i{display:block;flex:1;background:#fff;border-radius:1px}
+.idFoot{margin:var(--sp-2) 0 0;font-size:var(--fs-2xs);color:rgba(255,255,255,.55);
+  letter-spacing:.06em;position:relative}
+
+/* ---------- Segmented control ---------- */
+.seg{display:flex;gap:3px;padding:3px;margin:0 0 var(--sp-3);
+  background:var(--card2);border:1px solid var(--edge);border-radius:var(--r-full)}
+.seg button{flex:1;appearance:none;border:0;border-radius:var(--r-full);padding:8px 6px;
+  background:transparent;color:var(--tx2);font:inherit;font-size:var(--fs-sm);
+  font-weight:650;cursor:pointer;transition:background var(--mo-2) var(--ease),color var(--mo-2) linear}
+.seg button.on{background:var(--card);color:var(--tx);box-shadow:var(--e1)}
+
+/* ---------- Stat tiles ---------- */
+.statRow{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin:0 0 var(--sp-2)}
+.statBox{margin:0;padding:var(--sp-3);text-align:left}
+.statBox .n{font-family:var(--mono);font-size:var(--fs-xl);font-weight:700;
+  letter-spacing:-.04em;margin:0;line-height:1.1}
+.statBox .k{font-size:var(--fs-2xs);color:var(--tx3);margin:3px 0 0;font-weight:600}
+.statBox .n{font-size:var(--fs-lg)}
+.shellRow .money{margin-right:var(--sp-2);white-space:nowrap}
+
+/* ---------- Wallet ---------- */
+.walletCard{
+  border-radius:var(--r-lg);padding:var(--sp-5);margin:0 0 var(--sp-3);color:#fff;
+  background:linear-gradient(150deg,var(--ac),var(--ac2));box-shadow:var(--e3);
+  animation:rowIn var(--mo-3) var(--ease-out) both}
+.walletCard .k{margin:0;font-size:var(--fs-2xs);font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;opacity:.78}
+.walletCard .n{margin:var(--sp-2) 0 0;font-family:var(--mono);font-size:var(--fs-3xl);
+  font-weight:700;letter-spacing:-.045em;line-height:1}
+.walletCard .s{margin:var(--sp-3) 0 0;font-size:var(--fs-sm);opacity:.8;
+  font-family:var(--mono);letter-spacing:.06em}
+.money{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:650}
+.money.out{color:var(--bad)}
+.money.in{color:var(--ok)}
+
+/* ---------- Feed: events, wall, food, ride ---------- */
+.feedCard{padding:var(--sp-4)}
+.feedTop{display:flex;align-items:center;gap:var(--sp-3);margin:0 0 var(--sp-3)}
+.av{flex:none;width:36px;height:36px;border-radius:var(--r-full);display:grid;
+  place-items:center;font-size:var(--fs-sm);font-weight:700;color:#fff;
+  background:linear-gradient(180deg,var(--ac),var(--ac2))}
+.av.anon{background:linear-gradient(180deg,#8f9bb3,#5b6478)}
+.feedWho{min-width:0;flex:1}
+.feedWho b{display:block;font-size:var(--fs-sm);font-weight:700;letter-spacing:-.01em}
+.feedWho span{display:block;font-size:var(--fs-2xs);color:var(--tx3);font-family:var(--mono)}
+.feedBody{margin:0;font-size:var(--fs-md);line-height:1.55}
+.feedTags{display:flex;flex-wrap:wrap;gap:6px;margin:var(--sp-3) 0 0}
+.tag{padding:3px 9px;border-radius:var(--r-full);background:var(--card2);
+  border:1px solid var(--edge);font-size:var(--fs-2xs);font-weight:650;color:var(--tx2)}
+.tag.hot{background:color-mix(in srgb,var(--bad) 14%,transparent);
+  border-color:color-mix(in srgb,var(--bad) 30%,transparent);color:var(--bad)}
+.tag.ok{background:color-mix(in srgb,var(--ok) 14%,transparent);
+  border-color:color-mix(in srgb,var(--ok) 30%,transparent);color:var(--ok)}
+.feedActs{display:flex;gap:var(--sp-1);margin:var(--sp-3) 0 0;
+  padding:var(--sp-3) 0 0;border-top:1px solid var(--edge)}
+.feedActs button{
+  appearance:none;flex:1;border:0;border-radius:var(--r-sm);padding:8px 4px;
+  background:transparent;color:var(--tx2);font:inherit;font-size:var(--fs-sm);
+  font-weight:650;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  gap:5px;transition:background var(--mo-1) linear,transform var(--mo-1) var(--ease)}
+.feedActs button:active{transform:scale(.94)}
+.feedActs button.on{color:var(--ac)}
+.feedActs button.on.heart{color:var(--bad)}
+.feedActs .c{font-family:var(--mono);font-size:var(--fs-xs)}
+
+/* Comments hang off a post, indented under a rule so the thread reads as
+   a thread rather than as more posts. */
+.cmts{margin:var(--sp-3) 0 0;padding:0 0 0 var(--sp-3);
+  border-left:2px solid var(--edge);display:grid;gap:var(--sp-2)}
+.cmt{font-size:var(--fs-sm);line-height:1.5;margin:0}
+.cmt b{font-weight:700}
+.cmt span{color:var(--tx2)}
+
+/* ---------- Chat ---------- */
+.chatList{display:grid;gap:var(--sp-2)}
+.chatRow{display:flex;align-items:center;gap:var(--sp-3);width:100%;text-align:left;
+  appearance:none;border:1px solid var(--edge);border-radius:var(--r-md);
+  background:var(--card);color:var(--tx);padding:var(--sp-3);font:inherit;cursor:pointer;
+  box-shadow:var(--e1);transition:transform var(--mo-1) var(--ease)}
+.chatRow:active{transform:scale(.985)}
+.chatRow .t{min-width:0;flex:1}
+.chatRow .t b{display:block;font-size:var(--fs-md);font-weight:650;letter-spacing:-.01em}
+.chatRow .t span{display:block;font-size:var(--fs-sm);color:var(--tx2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chatRow .when{flex:none;font-family:var(--mono);font-size:var(--fs-2xs);color:var(--tx3)}
+.unread{flex:none;min-width:20px;height:20px;padding:0 6px;border-radius:var(--r-full);
+  background:var(--ac);color:var(--onac);font-family:var(--mono);font-size:var(--fs-2xs);
+  font-weight:700;display:grid;place-items:center}
+.thread{display:grid;gap:var(--sp-2);margin:0 0 var(--sp-3)}
+.bub{max-width:78%;padding:9px 13px;border-radius:var(--r-lg);font-size:var(--fs-md);
+  line-height:1.45;animation:rowIn var(--mo-2) var(--ease-out) both}
+.bub.them{justify-self:start;background:var(--card);border:1px solid var(--edge);
+  border-bottom-left-radius:6px;color:var(--tx)}
+.bub.me{justify-self:end;background:var(--ac);color:var(--onac);
+  border-bottom-right-radius:6px}
+.bubWhen{font-family:var(--mono);font-size:var(--fs-2xs);color:var(--tx3);
+  margin:2px 0 0;display:block}
+
+/* ---------- Shuttle ---------- */
+.busNext{display:flex;align-items:baseline;gap:var(--sp-2)}
+.busNext .n{font-family:var(--mono);font-size:var(--fs-2xl);font-weight:700;
+  letter-spacing:-.04em;color:var(--ac)}
+.busNext .u{font-size:var(--fs-sm);color:var(--tx2)}
+
+/* ---------- Map ---------- */
+.mapWrap{position:relative;border:1px solid var(--edge);border-radius:var(--r-md);
+  overflow:hidden;background:var(--card2);margin:0 0 var(--sp-3);box-shadow:var(--e1)}
+.mapWrap svg{display:block;width:100%;height:auto}
+.mapWrap .blk{cursor:pointer;transition:opacity var(--mo-1) linear}
+.mapWrap .blk:active{opacity:.7}
+
+/* ---------- Hostel ---------- */
+.bar{height:7px;border-radius:var(--r-full);background:var(--card2);
+  border:1px solid var(--edge);overflow:hidden;margin:var(--sp-2) 0 0}
+.bar i{display:block;height:100%;background:var(--ac);
+  transition:width var(--mo-4) var(--ease-out)}
+
+.homeFoot{margin:var(--sp-8) 0 0;text-align:center;font-size:var(--fs-2xs);
+  color:var(--tx3);letter-spacing:.02em}
+#pocketHome.in-app .homeFoot{display:none}
+.sectionK{margin:var(--sp-6) 0 var(--sp-2);font-size:var(--fs-2xs);font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);font-family:var(--mono)}
+.compose{margin:0 0 var(--sp-5);gap:var(--sp-2)}
+.compose .shellFab{margin:0}
+
+/* ---------- Empty states ---------- */
+.emptyBox{text-align:center;padding:var(--sp-8) var(--sp-4);color:var(--tx2)}
+.emptyBox b{display:block;font-size:var(--fs-lg);font-weight:700;color:var(--tx);
+  margin:0 0 var(--sp-2);letter-spacing:-.02em}
+.emptyBox p{margin:0;font-size:var(--fs-sm);line-height:1.5}
+
+/* ---------- The quality floor ---------- */
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){
+  .homeTile,.homeNow.on,#stubStage,.shellRow,.idCard,.gpaHead,.feedCard,.statBox,
+  .walletCard,.bub{animation:none !important}
+  *{transition-duration:1ms !important}
+}
 @media (min-width:768px){
-  .homeGrid{grid-template-columns:repeat(5, minmax(0, 1fr));gap:28px 12px;max-width:560px}
-  .homeTile .icon{width:72px;height:72px;border-radius:16.1px}
-  .homeTile .icon svg{width:36px;height:36px}
-  .homeTile .name{width:88px;font-size:12px}
+  .homeGrid{grid-template-columns:repeat(5, minmax(0, 1fr));gap:var(--sp-6) var(--sp-3);max-width:560px}
+  .homeTile .icon{width:72px;height:72px;border-radius:18px}
+  .homeTile .icon svg{width:35px;height:35px}
+  .homeTile .name{width:88px;font-size:var(--fs-sm)}
+  #homeStub{max-width:520px}
 }
 @media (min-width:1024px){
   .homeGrid{grid-template-columns:repeat(6, minmax(0, 1fr));max-width:720px}
@@ -946,6 +1248,7 @@ if ("serviceWorker" in navigator)
   </header>
   <button type="button" class="homeNow" id="homeNow"></button>
   <div class="homeGrid" id="homeGrid"></div>
+    <p class="homeFoot" id="homeFoot"></p>
   <div id="homeStub">
     <div class="stubBar">
       <button type="button" id="stubBack"></button>
@@ -1659,6 +1962,7 @@ zh: {
   homeTitle  :"今天要用哪一个？",
   homeSub    :"课表已经能用。其它格子先占位子——空着比假装做好了更诚实。",
   homeBack   :"百宝箱",
+  homeFoot   : function(n){ return n + " 个小工具 · 全在这台手机，没有服务器"; },
   tileTt     :"课表",
   tileTtSub  :"闹钟 · 学期 · 假期",
   tileAtt    :"出勤",
@@ -1680,9 +1984,10 @@ zh: {
   tileDorm   :"宿舍",
   tileCash   :"记账",
   tileSos    :"热线",
+  tileChat   :"聊天",
   tileSoon   :"还没做",
   stubLead   :"这一格还是空的。做好了会从这里进去，不会再开一个 app。",
-  stubBack   :"‹ 首页",
+  stubBack   :"回到首页",
   shellPreview:"预览 · 按钮能点，不会真的存",
   shellToast :"预览而已，还没接上",
   sosHint    :"官方号码 · 点了会真的打出去",
@@ -1722,6 +2027,100 @@ zh: {
   gpaCr      : function(n){ return n + " 学分"; },
   gpaTotal   : function(n){ return "共 " + n + " 学分"; },
   gpaScale   :"UTAR 等级 · A 4.00 到 F 0.00",
+  demoNote   :"只是界面 · 这里的东西不会发出去",
+  idHint     :"填一次 · 存在这台手机",
+  idFoot     :"不能代替真的校园卡",
+  idNamePh   :"全名",
+  idNoPh     :"学号",
+  idFacPh    :"院系",
+  idSave     :"存起来",
+  idSaved    :"卡已存在这台手机",
+  cashHint   :"自己记的账 · 没有连银行",
+  cashBal    :"卡内余额",
+  cashCard   :"UTAR · •••• 4417",
+  cashToday  :"今天",
+  cashWeek   :"本周",
+  cashN      :"笔数",
+  cashWhatPh :"花在什么",
+  cashHowPh  :"金额",
+  cashAdd    :"记一笔",
+  cashYest   :"昨天",
+  cashDaysAgo: function(n){ return n + " 天前"; },
+  cashNeed   :"先填名目和金额",
+  evHint     :"示例活动 · 报名只存在这台手机",
+  evAll      :"全部",
+  evMine     :"我要去",
+  evGo       :"我要去",
+  evGoing    :"会去",
+  evShare    :"分享",
+  evSoon     :"快截止",
+  evOpen     :"报名中",
+  evNoneT    :"还没选活动",
+  evNoneS    :"在活动上点「我要去」，就会出现在这里。",
+  wallHint   :"匿名墙 · 发的内容只存在这台手机",
+  wallPh     :"想说就说。没人会看到你的名字。",
+  wallPost   :"匿名发出",
+  wallAnon   :"不带名字，也不会离开这台手机。",
+  wallWho    :"匿名",
+  wallReply  :"回复",
+  wallReplyPh:"写一句",
+  wallSend   :"发出回复",
+  wallNeed   :"先写点什么",
+  wallNow    :"刚刚",
+  chatHint   :"示例对话 · 回复只存在这台手机",
+  chatPh     :"说点什么",
+  chatSend   :"发送",
+  chatBack   :"所有对话",
+  chatYou    :"你：",
+  foodHint   :"示例摄位 · 不会真的通知别人",
+  foodNow    :"现在开",
+  foodIn     :"我去",
+  foodOut    :"不去了",
+  foodJoin   :"我去",
+  foodMin    :"分钟等",
+  foodQueue  :"人排队",
+  foodNoneT  :"还没选摄位",
+  foodNoneS  :"在摄位上点「我去」，就会出现在这里。",
+  rideHint   :"示例拼车 · 不会真的占位",
+  rideFull   :"满了",
+  rideLeft   : function(n){ return "还有 " + n + " 个位"; },
+  rideSeats  :"已上车",
+  rideJoin   :"想上车",
+  rideIn     :"已举手",
+  rideMsg    :"私聊",
+  rideOffer  :"＋ 发一趟",
+  busHint    :"示例时刻表 · 倒数用你手机的时间",
+  busKb      :"去宿舍",
+  busHb      :"去校园",
+  busTn      :"去镇上",
+  busNext    :"下一班校巴",
+  busMin     :"分钟",
+  busSoon    :"下一班",
+  busThen    :"再下一班",
+  busInMin   : function(n){ return n + " 分钟后"; },
+  busSpan    : function(a, b){ return "首班 " + a + " · 末班 " + b; },
+  mapHint    :"校园示意图 · 不按比例",
+  mapAria    :"校园示意图",
+  mapWalk    : function(n){ return "走路 " + n + " 分钟"; },
+  mapHere    :"已标出",
+  mapShow    :"标出来",
+  dormHint   :"示例宿舍 · 不会报给宿舍处",
+  dormRoom   :"你的房间",
+  dormMate   :"合住 · 2 人",
+  dormWash   :"洗衣",
+  dormFree   :"现在空着",
+  dormBusy   : function(n){ return "还有 " + n + " 分钟"; },
+  dormStart  :"开始",
+  dormWait   :"使用中",
+  dormBills  :"费用",
+  dormDue    : function(d){ return d + " 到期"; },
+  dormPaid   :"已付",
+  dormMark   :"标为已付",
+  dormFix    :"报修",
+  dormSent   :"已送出",
+  dormNoFix  :"还没报过修。",
+  dormFixPh  :"哪里坏了",
+  dormSendFix:"报上去",
   sos999     :"全国急救",
   sosDss     :"安全处 DSS",
   sosDsa     :"学生事务 DSA",
@@ -2208,6 +2607,7 @@ en: {
   homeTitle  :"What do you need?",
   homeSub    :"Timetable works. The other slots are saved for later — empty is better than fake.",
   homeBack   :"Pocket",
+  homeFoot   : function(n){ return n + " apps · built on this phone, no server"; },
   tileTt     :"Timetable",
   tileTtSub  :"Alarms · term · holidays",
   tileAtt    :"Attendance",
@@ -2229,9 +2629,10 @@ en: {
   tileDorm   :"Hostel",
   tileCash   :"Wallet",
   tileSos    :"Hotline",
+  tileChat   :"Chat",
   tileSoon   :"Not yet",
   stubLead   :"This slot is empty on purpose. When it exists, it opens from here — not a second app.",
-  stubBack   :"‹ Home",
+  stubBack   :"Back to home",
   shellPreview:"Preview · taps work, nothing is saved",
   shellToast :"Preview only — not wired up yet",
   sosHint    :"Official numbers · tap to call for real",
@@ -2271,6 +2672,100 @@ en: {
   gpaCr      : function(n){ return n + " cr"; },
   gpaTotal   : function(n){ return n + " credits total"; },
   gpaScale   :"UTAR scale · A 4.00 down to F 0.00",
+  demoNote   :"Interface only · nothing here is sent anywhere",
+  idHint     :"Typed once, kept on this phone",
+  idFoot     :"Not a replacement for your real card",
+  idNamePh   :"Full name",
+  idNoPh     :"Matric number",
+  idFacPh    :"Faculty",
+  idSave     :"Save card",
+  idSaved    :"Card saved on this phone",
+  cashHint   :"Spending you type in · not linked to a bank",
+  cashBal    :"Card balance",
+  cashCard   :"UTAR · •••• 4417",
+  cashToday  :"Today",
+  cashWeek   :"This week",
+  cashN      :"Entries",
+  cashWhatPh :"What was it for",
+  cashHowPh  :"Amount",
+  cashAdd    :"Add",
+  cashYest   :"Yesterday",
+  cashDaysAgo: function(n){ return n + " days ago"; },
+  cashNeed   :"Need a description and an amount",
+  evHint     :"Sample campus events · going is saved on this phone",
+  evAll      :"All",
+  evMine     :"Going",
+  evGo       :"Going",
+  evGoing    :"Going",
+  evShare    :"Share",
+  evSoon     :"Closing",
+  evOpen     :"Open",
+  evNoneT    :"Nothing marked yet",
+  evNoneS    :"Tap Going on an event and it shows up here.",
+  wallHint   :"Anonymous board · posts stay on this phone",
+  wallPh     :"Say it. Nobody sees your name.",
+  wallPost   :"Post anonymously",
+  wallAnon   :"No name is attached, and nothing leaves this phone.",
+  wallWho    :"Anonymous",
+  wallReply  :"Reply",
+  wallReplyPh:"Write a reply",
+  wallSend   :"Add reply",
+  wallNeed   :"Write something first",
+  wallNow    :"Just now",
+  chatHint   :"Sample threads · replies stay on this phone",
+  chatPh     :"Message",
+  chatSend   :"Send",
+  chatBack   :"All chats",
+  chatYou    :"You:",
+  foodHint   :"Sample stalls · nobody is told you are coming",
+  foodNow    :"Open now",
+  foodIn     :"I'm in",
+  foodOut    :"Leave",
+  foodJoin   :"I'm in",
+  foodMin    :"min wait",
+  foodQueue  :"in queue",
+  foodNoneT  :"No stalls joined",
+  foodNoneS  :"Tap “I’m in” on a stall and it shows up here.",
+  rideHint   :"Sample rides · no seat is actually booked",
+  rideFull   :"Full",
+  rideLeft   : function(n){ return n + (n === 1 ? " seat left" : " seats left"); },
+  rideSeats  :"taken",
+  rideJoin   :"Ask for a seat",
+  rideIn     :"You asked",
+  rideMsg    :"Message",
+  rideOffer  :"+ Offer a ride",
+  busHint    :"Sample timetable · the countdown uses your clock",
+  busKb      :"To hostel",
+  busHb      :"To campus",
+  busTn      :"To town",
+  busNext    :"Next shuttle",
+  busMin     :"min",
+  busSoon    :"Next",
+  busThen    :"Then",
+  busInMin   : function(n){ return "in " + n + " min"; },
+  busSpan    : function(a, b){ return "First " + a + " · last " + b; },
+  mapHint    :"Sketch of the campus · not to scale",
+  mapAria    :"Campus sketch map",
+  mapWalk    : function(n){ return n + " min walk"; },
+  mapHere    :"Shown",
+  mapShow    :"Show",
+  dormHint   :"Sample block · nothing is reported to the office",
+  dormRoom   :"Your room",
+  dormMate   :"Shared · 2 people",
+  dormWash   :"Laundry",
+  dormFree   :"Free now",
+  dormBusy   : function(n){ return n + " min left"; },
+  dormStart  :"Start",
+  dormWait   :"Busy",
+  dormBills  :"Bills",
+  dormDue    : function(d){ return "Due " + d; },
+  dormPaid   :"Paid",
+  dormMark   :"Mark paid",
+  dormFix    :"Maintenance",
+  dormSent   :"Sent",
+  dormNoFix  :"Nothing reported.",
+  dormFixPh  :"What needs fixing",
+  dormSendFix:"Report it",
   sos999     :"National emergency",
   sosDss     :"Safety & Security (DSS)",
   sosDsa     :"Student Affairs (DSA)",
@@ -2549,16 +3044,17 @@ var MICROS = [
   { id:"tt",    live:true,  t:"tileTt" },
   { id:"att",   live:true,  t:"tileAtt" },
   { id:"due",   live:true,  t:"tileDue" },
-  { id:"ev",    live:false, t:"tileEv" },
+  { id:"ev",    live:true,  t:"tileEv" },
   { id:"gpa",   live:true,  t:"tileGpa" },
-  { id:"id",    live:false, t:"tileId" },
-  { id:"cash",  live:false, t:"tileCash" },
-  { id:"bus",   live:false, t:"tileBus" },
-  { id:"map",   live:false, t:"tileMap" },
-  { id:"dorm",  live:false, t:"tileDorm" },
-  { id:"food",  live:false, t:"tileFood" },
-  { id:"ride",  live:false, t:"tileRide" },
-  { id:"wall",  live:false, t:"tileWall" }
+  { id:"id",    live:true,  t:"tileId" },
+  { id:"cash",  live:true,  t:"tileCash" },
+  { id:"chat",  live:true,  t:"tileChat" },
+  { id:"bus",   live:true,  t:"tileBus" },
+  { id:"map",   live:true,  t:"tileMap" },
+  { id:"dorm",  live:true,  t:"tileDorm" },
+  { id:"food",  live:true,  t:"tileFood" },
+  { id:"ride",  live:true,  t:"tileRide" },
+  { id:"wall",  live:true,  t:"tileWall" }
 ];
 
 function tileGlyph(id){
@@ -2579,6 +3075,8 @@ function tileGlyph(id){
     food:'<path d="M5 11h14v2.1c0 3.6-2.8 6.4-7 6.4s-7-2.8-7-6.4z"/><path d="M8 11V6.4M12 11V5M16 11V6.4"/>',
     ride:'<path d="M4 13.8h16v3.3a1.5 1.5 0 0 1-1.5 1.5"/><path d="M4 13.8 6.2 8.6A2 2 0 0 1 8 7.4h8a2 2 0 0 1 1.8 1.2L20 13.8"/><circle cx="7.2" cy="17.5" r="1.55"/><circle cx="16.8" cy="17.5" r="1.55"/>',
     wall:'<path d="M4.2 15.2 3.7 19l3.6-.7c.4.2.9.3 1.5.3 2.8 0 5-1.8 5-4.1S11.6 10.4 8.8 10.4c-2.6 0-4.7 1.6-4.7 3.7 0 .4.2.8.4 1.1z"/><path d="M10.6 9.2c.5-2.2 2.7-3.9 5.4-3.9 3 0 5.4 1.9 5.4 4.3 0 2.3-2.1 4.2-5 4.4L14 16.3l.4-2.2c-.3-.3-.5-.7-.5-1.1"/>'
+,
+    chat:'<path d="M20.5 12.4c0 3.7-3.6 6.7-8 6.7-1 0-2-.2-2.9-.5l-4.6 1.3 1.4-3.9c-1.2-1-1.9-2.3-1.9-3.6 0-3.7 3.6-6.7 8-6.7s8 3 8 6.7z"/><path d="M9 12.2h.01M12.5 12.2h.01M16 12.2h.01"/>'
   };
   return '<svg '+s+' aria-hidden="true">'+(d[id] || "")+"</svg>";
 }
@@ -2947,6 +3445,520 @@ function gpaHtml(){
   return html;
 }
 
+// ============================================================
+//  The rest of the campus apps.
+//
+//  These are interface, not service. There is no server on this branch, so
+//  a post is not sent, a seat is not booked and a stall is not told you are
+//  coming -- but everything you do here is remembered on this phone, so the
+//  screens behave like the real thing while the shape of each app is still
+//  being argued about. Every one of them says so on the screen.
+//
+//  All of it lives under one key, clockPocket, so wiping the demo is one
+//  line and adding an app is one more entry in SEED.
+// ============================================================
+var PK = {};
+try {
+  var pkRaw = JSON.parse(localStorage.getItem("clockPocket") || "{}");
+  if (pkRaw && typeof pkRaw === "object" && !Array.isArray(pkRaw)) PK = pkRaw;
+} catch(e){}
+function pkSave(){
+  try { localStorage.setItem("clockPocket", JSON.stringify(PK)); } catch(e){}
+}
+// Read a slot, filling in the starting value the first time it is asked for.
+function pk(k, dflt){
+  if(PK[k] === undefined){ PK[k] = dflt; pkSave(); }
+  return PK[k];
+}
+function pkSet(k, v){ PK[k] = v; pkSave(); }
+
+// Where the app is inside a micro-app: which tab, which thread, which stall.
+// Not saved -- reopening an app should start at its front door.
+var UI = { tab:{}, open:{} };
+function tab(app, dflt){ return UI.tab[app] || dflt; }
+
+function initials(name){
+  var parts = String(name || "").trim().split(/\s+/), s = "";
+  for(var i = 0; i < parts.length && s.length < 2; i++) if(parts[i]) s += parts[i].charAt(0);
+  return (s || "U").toUpperCase();
+}
+function plural(n, one, many){ return n === 1 ? one : many; }
+function seg(app, items, cur){
+  var html = '<div class="seg">';
+  for(var i = 0; i < items.length; i++){
+    html += '<button type="button" data-act="tab" data-app="'+app+'" data-tab="'+items[i][0]+'"'+
+      (items[i][0] === cur ? ' class="on"' : "")+">"+items[i][1]+"</button>";
+  }
+  return html + "</div>";
+}
+function emptyBox(title, line){
+  return '<div class="emptyBox"><b>'+title+"</b><p>"+line+"</p></div>";
+}
+function demoNote(){
+  return '<p class="shellS" style="margin-top:14px;text-align:center;color:var(--tx3)">'+
+    t("demoNote")+"</p>";
+}
+
+// ---------- ID ----------
+// A student card is the one thing in Pocket that is looked at by someone
+// else, so it is the one screen designed to be held up: big name, gold
+// matric number, and the guilloche wash a printed card has.
+function idCardHtml(){
+  var me = pk("me", { name:"", no:"", fac:"" });
+  var name = me.name || (lang === "zh" ? "你的名字" : "Your name");
+  var no = me.no || "24ABC00000";
+  var fac = me.fac || (lang === "zh" ? "资讯及通讯科技学院" : "Faculty of Information and Communication Technology");
+  var bars = "", i;
+  // Drawn from the matric number so it is stable between paints, and
+  // obviously decorative -- it is not a scannable code and does not claim to be.
+  for(i = 0; i < 42; i++){
+    var h = 40 + ((no.charCodeAt(i % no.length) * (i + 3)) % 61);
+    bars += '<i style="height:'+h+'%"></i>';
+  }
+  return '<div class="idCard">'+
+    '<div class="idHead"><span>Universiti Tunku Abdul Rahman</span></div>'+
+    '<div class="idBody">'+
+      '<div class="idPic">'+esc(initials(me.name))+"</div>"+
+      '<div style="min-width:0">'+
+        '<p class="idName">'+esc(name)+"</p>"+
+        '<p class="idFac">'+esc(fac)+"</p>"+
+        '<p class="idNo">'+esc(no)+"</p>"+
+      "</div>"+
+    "</div>"+
+    '<div class="idBar">'+bars+"</div>"+
+    '<p class="idFoot">'+t("idFoot")+"</p>"+
+  "</div>";
+}
+function idHtml(){
+  var me = pk("me", { name:"", no:"", fac:"" });
+  return idCardHtml()+
+    '<div class="dueForm">'+
+      '<input id="idName" maxlength="40" placeholder="'+esc(t("idNamePh"))+'" value="'+esc(me.name || "")+'">'+
+      '<input id="idNo" maxlength="16" placeholder="'+esc(t("idNoPh"))+'" value="'+esc(me.no || "")+'">'+
+      '<input id="idFac" maxlength="60" placeholder="'+esc(t("idFacPh"))+'" value="'+esc(me.fac || "")+'">'+
+    "</div>"+
+    '<button type="button" class="shellFab" data-act="idSave">'+t("idSave")+"</button>";
+}
+
+// ---------- Wallet ----------
+function cashSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"c1", d:0, t:zh?"食堂 · 鸡饭":"Canteen · chicken rice", a:-8.50 },
+    { id:"c2", d:0, t:zh?"图书馆打印":"Library printing", a:-1.20 },
+    { id:"c3", d:1, t:zh?"校巴":"Shuttle", a:-2.00 },
+    { id:"c4", d:2, t:zh?"充值":"Top up", a:50.00 },
+    { id:"c5", d:3, t:zh?"合作社 · 咖啡":"Co-op · coffee", a:-4.80 },
+    { id:"c6", d:5, t:zh?"打印讲义":"Printed notes", a:-3.00 }
+  ];
+}
+function cashList(){
+  var mine = pk("cash", []), seedRows = cashSeed(), out = [], i;
+  for(i = 0; i < mine.length; i++) out.push(mine[i]);
+  for(i = 0; i < seedRows.length; i++) out.push(seedRows[i]);
+  out.sort(function(a, b){ return (a.d || 0) - (b.d || 0); });
+  return out;
+}
+function cashSum(list, days){
+  var v = 0;
+  for(var i = 0; i < list.length; i++) if((list[i].d || 0) < days && list[i].a < 0) v -= list[i].a;
+  return v;
+}
+function rm(n){ return "RM " + Math.abs(n).toFixed(2); }
+function cashHtml(){
+  var list = cashList(), bal = 0, i, x, html;
+  for(i = 0; i < list.length; i++) bal += list[i].a;
+  bal += 120;   // what was in the card before this demo week started
+  html = '<div class="walletCard"><p class="k">'+t("cashBal")+'</p>'+
+    '<p class="n">'+rm(bal)+"</p>"+
+    '<p class="s">'+t("cashCard")+"</p></div>"+
+    '<div class="statRow">'+
+      '<div class="statBox"><p class="n">'+cashSum(list, 1).toFixed(2)+'</p><p class="k">RM · '+t("cashToday")+"</p></div>"+
+      '<div class="statBox"><p class="n">'+cashSum(list, 7).toFixed(2)+'</p><p class="k">RM · '+t("cashWeek")+"</p></div>"+
+      '<div class="statBox"><p class="n">'+list.length+'</p><p class="k">'+t("cashN")+"</p></div>"+
+    "</div>";
+  for(i = 0; i < list.length && i < 12; i++){
+    x = list[i];
+    html += shellRow(dayAgo(x.d || 0), esc(x.t), "",
+      '<span class="money '+(x.a < 0 ? "out" : "in")+'">'+(x.a < 0 ? "-" : "+")+rm(x.a)+"</span>");
+  }
+  html += '<div class="dueForm">'+
+      '<input id="cashT" maxlength="40" placeholder="'+esc(t("cashWhatPh"))+'">'+
+      '<div class="gpaFormRow">'+
+        '<input id="cashA" type="number" min="0" step="0.10" placeholder="'+esc(t("cashHowPh"))+'">'+
+        '<div class="shellBtns"><button type="button" class="on" data-act="cashAdd">'+t("cashAdd")+"</button></div>"+
+      "</div></div>" + demoNote();
+  return html;
+}
+function dayAgo(d){
+  if(d === 0) return t("dueToday");
+  if(d === 1) return t("cashYest");
+  return t("cashDaysAgo", d);
+}
+
+// ---------- Events ----------
+function evSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"e1", who:"FICT", when:zh?"周三 19:00 · 大礼堂":"Wed 19:00 · Main Hall",
+      title:zh?"AI 在马来西亚：产业分享会":"AI in Malaysia: an industry night", n:84, tag:"" },
+    { id:"e2", who:zh?"篮球学会":"Basketball Club", when:zh?"周五 16:00 · 球场 B":"Fri 16:00 · Court B",
+      title:zh?"友谊赛 · 欢迎新人":"Friendly match, newcomers welcome", n:23, tag:"" },
+    { id:"e3", who:"DSA", when:zh?"周六 09:00 · 停车场 A":"Sat 09:00 · Car park A",
+      title:zh?"献血运动":"Blood donation drive", n:141, tag:"ok" },
+    { id:"e4", who:zh?"华文学会":"Chinese Society", when:zh?"下周一 18:30 · KB 讲堂":"Mon 18:30 · KB Hall",
+      title:zh?"中秋灯笼之夜":"Mid-autumn lantern night", n:57, tag:"" },
+    { id:"e5", who:zh?"考试局":"Exams Unit", when:zh?"9 月 30 日 · 截止":"30 Sep · deadline",
+      title:zh?"补考报名截止":"Resit registration closes", n:9, tag:"hot" }
+  ];
+}
+function evHtml(){
+  var going = pk("evGoing", {}), list = evSeed(), which = tab("ev", "all"), i, x, on, shown = 0, html;
+  html = seg("ev", [["all", t("evAll")], ["mine", t("evMine")]], which);
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    on = !!going[x.id];
+    if(which === "mine" && !on) continue;
+    shown++;
+    html += '<div class="feedCard">'+
+      '<div class="feedTop"><div class="av">'+esc(initials(x.who))+"</div>"+
+      '<div class="feedWho"><b>'+esc(x.who)+"</b><span>"+esc(x.when)+"</span></div>"+
+      (x.tag ? '<span class="tag '+x.tag+'">'+(x.tag === "hot" ? t("evSoon") : t("evOpen"))+"</span>" : "")+
+      "</div>"+
+      '<p class="feedBody">'+esc(x.title)+"</p>"+
+      '<div class="feedActs">'+
+        '<button type="button" data-act="evGo" data-id="'+x.id+'"'+(on ? ' class="on"' : "")+">"+
+          (on ? "✓ " + t("evGoing") : t("evGo"))+
+          ' <span class="c">'+(x.n + (on ? 1 : 0))+"</span></button>"+
+        '<button type="button" data-act="demo">'+t("evShare")+"</button>"+
+      "</div></div>";
+  }
+  if(!shown) html += emptyBox(t("evNoneT"), t("evNoneS"));
+  return html + demoNote();
+}
+
+// ---------- Wall (anonymous) ----------
+function wallSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"w1", ago:zh?"12 分钟前":"12 min ago", n:34, c:[
+        { who:zh?"匿名":"Anon", tx:zh?"在 KB 一楼失物招领处":"Lost and found, KB ground floor" }
+      ],
+      tx:zh?"有人在图书馆三楼捡到一张校园卡，名字开头是 W。":
+             "Someone left a campus card on Library level 3. Name starts with W." },
+    { id:"w2", ago:zh?"1 小时前":"1 hr ago", n:112, c:[
+        { who:zh?"匿名":"Anon", tx:zh?"整层楼都听到了":"The whole floor heard it" },
+        { who:zh?"匿名":"Anon", tx:zh?"那是消防演习啦":"That was the fire drill" }
+      ],
+      tx:zh?"凌晨三点宿舍楼下有人弹吉他，兄弟，我明天有 quiz。":
+             "Someone playing guitar under the block at 3am. Bro, I have a quiz." },
+    { id:"w3", ago:zh?"3 小时前":"3 hr ago", n:76, c:[],
+      tx:zh?"食堂的鸡饭涨了五毛，但阿姨多给了我一块鸡。扯平了。":
+             "Chicken rice went up 50 sen but auntie gave me extra chicken. We are even." },
+    { id:"w4", ago:zh?"昨天":"Yesterday", n:203, c:[
+        { who:zh?"匿名":"Anon", tx:zh?"这才是真正的校园之光":"This is the real campus hero" }
+      ],
+      tx:zh?"感谢那位在雨里把伞借给我的同学，我们连名字都没交换。":
+             "To whoever lent me an umbrella in the rain, we never swapped names. Thank you." }
+  ];
+}
+function wallHtml(){
+  var mine = pk("wallMine", []), liked = pk("wallLiked", {}), added = pk("wallCmt", {});
+  var list = mine.concat(wallSeed()), i, j, x, on, cmts, html = "";
+  html += '<div class="dueForm compose">'+
+    '<textarea id="wallTx" maxlength="280" rows="2" placeholder="'+esc(t("wallPh"))+'"></textarea>'+
+    '<button type="button" class="shellFab ghost" data-act="wallPost">'+t("wallPost")+"</button>"+
+    "</div>";
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    on = !!liked[x.id];
+    cmts = (x.c || []).concat(added[x.id] || []);
+    html += '<div class="feedCard">'+
+      '<div class="feedTop"><div class="av anon">?</div>'+
+      '<div class="feedWho"><b>'+t("wallWho")+"</b><span>"+esc(x.ago)+"</span></div></div>"+
+      '<p class="feedBody">'+esc(x.tx)+"</p>";
+    if(cmts.length){
+      html += '<div class="cmts">';
+      for(j = 0; j < cmts.length; j++){
+        html += '<p class="cmt"><b>'+esc(cmts[j].who)+"</b> <span>"+esc(cmts[j].tx)+"</span></p>";
+      }
+      html += "</div>";
+    }
+    html += '<div class="feedActs">'+
+      '<button type="button" class="heart'+(on ? " on" : "")+'" data-act="wallLike" data-id="'+esc(x.id)+'">'+
+        (on ? "♥" : "♡")+' <span class="c">'+(x.n + (on ? 1 : 0))+"</span></button>"+
+      '<button type="button" data-act="wallCmt" data-id="'+esc(x.id)+'">'+t("wallReply")+
+        ' <span class="c">'+cmts.length+"</span></button>"+
+      "</div>";
+    if(UI.open.wall === x.id){
+      html += '<div class="dueForm" style="margin-top:10px">'+
+        '<input id="wallC" maxlength="140" placeholder="'+esc(t("wallReplyPh"))+'">'+
+        "</div>"+
+        '<button type="button" class="shellFab ghost" data-act="wallCmtSend" data-id="'+esc(x.id)+'">'+
+          t("wallSend")+"</button>";
+    }
+    html += "</div>";
+  }
+  return html + demoNote();
+}
+
+// ---------- Chat ----------
+function chatSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"t1", who:zh?"软工小组":"Software Eng group", n:3, when:"09:42", ms:[
+        { me:false, who:"Aisyah", tx:zh?"幻灯片我做到第 7 页了":"I'm up to slide 7", w:"09:31" },
+        { me:false, who:"Wei Ming", tx:zh?"图表交给我":"Leave the charts to me", w:"09:38" },
+        { me:false, who:"Aisyah", tx:zh?"今晚八点对一次？":"Run through it at 8 tonight?", w:"09:42" }
+      ] },
+    { id:"t2", who:zh?"周五拼车 · KL":"Friday carpool · KL", n:0, when:zh?"昨天":"Yest", ms:[
+        { me:false, who:"Hafiz", tx:zh?"17:30 在 A 停车场集合":"Meet 17:30, car park A", w:"18:02" },
+        { me:true,  who:"", tx:zh?"收到，我带现金":"Got it, bringing cash", w:"18:05" }
+      ] },
+    { id:"t3", who:zh?"陈同学":"Sharon Tan", n:1, when:zh?"周一":"Mon", ms:[
+        { me:true,  who:"", tx:zh?"微积分笔记借我一下":"Can I borrow your calculus notes", w:"14:20" },
+        { me:false, who:"Sharon", tx:zh?"明天上课给你":"Bring them to class tomorrow", w:"14:44" }
+      ] }
+  ];
+}
+function chatThreads(){
+  var extra = pk("chatMs", {}), list = chatSeed(), i;
+  for(i = 0; i < list.length; i++){
+    list[i].ms = list[i].ms.concat(extra[list[i].id] || []);
+  }
+  return list;
+}
+function chatHtml(){
+  var list = chatThreads(), open = UI.open.chat, i, x, last, html;
+  if(open){
+    for(i = 0; i < list.length; i++) if(list[i].id === open) x = list[i];
+    if(!x) { UI.open.chat = null; return chatHtml(); }
+    html = '<div class="thread">';
+    for(i = 0; i < x.ms.length; i++){
+      html += '<div class="bub '+(x.ms[i].me ? "me" : "them")+'">'+
+        (x.ms[i].me ? "" : "<b style=\"font-size:var(--fs-2xs);opacity:.7;display:block\">"+esc(x.ms[i].who)+"</b>")+
+        esc(x.ms[i].tx)+
+        '<span class="bubWhen">'+esc(x.ms[i].w)+"</span></div>";
+    }
+    html += "</div>"+
+      '<div class="dueForm"><input id="chatIn" maxlength="200" placeholder="'+esc(t("chatPh"))+'"></div>'+
+      '<button type="button" class="shellFab" data-act="chatSend" data-id="'+esc(x.id)+'">'+t("chatSend")+"</button>"+
+      '<button type="button" class="shellFab ghost" data-act="chatBack">'+t("chatBack")+"</button>";
+    return html + demoNote();
+  }
+  html = '<div class="chatList">';
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    last = x.ms[x.ms.length - 1] || { tx:"" };
+    html += '<button type="button" class="chatRow" data-act="chatOpen" data-id="'+esc(x.id)+'">'+
+      '<span class="av">'+esc(initials(x.who))+"</span>"+
+      '<span class="t"><b>'+esc(x.who)+"</b><span>"+
+        (last.me ? t("chatYou") + " " : "")+esc(last.tx)+"</span></span>"+
+      '<span class="when">'+esc(x.when)+"</span>"+
+      (x.n ? '<span class="unread">'+x.n+"</span>" : "")+
+      "</button>";
+  }
+  return html + "</div>" + demoNote();
+}
+
+// ---------- Food ----------
+function foodSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"f1", n:zh?"A 档 · 鸡饭":"Stall A · Chicken rice", w:4, p:"RM 6.50", q:12, tag:"ok" },
+    { id:"f2", n:zh?"B 档 · 经济米粉":"Stall B · Economy noodles", w:9, p:"RM 5.00", q:28, tag:"" },
+    { id:"f3", n:zh?"C 档 · 印度煎饼":"Stall C · Roti canai", w:2, p:"RM 3.20", q:5, tag:"ok" },
+    { id:"f4", n:zh?"合作社 · 咖啡":"Co-op · Coffee", w:6, p:"RM 4.80", q:17, tag:"" },
+    { id:"f5", n:zh?"夜宵 · 麻辣烫":"Late night · Mala", w:15, p:"RM 12.00", q:41, tag:"hot" }
+  ];
+}
+function foodHtml(){
+  var joined = pk("foodIn", {}), list = foodSeed(), which = tab("food", "now"), i, x, on, html;
+  html = seg("food", [["now", t("foodNow")], ["in", t("foodIn")]], which);
+  var shown = 0;
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    on = !!joined[x.id];
+    if(which === "in" && !on) continue;
+    shown++;
+    html += shellRow(
+      '<span class="num">'+x.w+"</span> "+t("foodMin")+" · "+
+        '<span class="num">'+(x.q + (on ? 1 : 0))+"</span> "+t("foodQueue"),
+      esc(x.n),
+      '<span class="money">'+esc(x.p)+"</span>",
+      '<div class="shellBtns"><button type="button" data-act="foodJoin" data-id="'+x.id+'"'+
+        (on ? ' class="on"' : "")+">"+(on ? t("foodOut") : t("foodJoin"))+"</button></div>"
+    );
+  }
+  if(!shown) html += emptyBox(t("foodNoneT"), t("foodNoneS"));
+  return html + demoNote();
+}
+
+// ---------- Ride ----------
+function rideSeed(){
+  var zh = lang === "zh";
+  return [
+    { id:"r1", when:zh?"周五 17:30":"Fri 17:30", from:zh?"校园":"Campus", to:"KL Sentral", seats:4, taken:2, fee:"RM 25" },
+    { id:"r2", when:zh?"周五 18:00":"Fri 18:00", from:zh?"校园":"Campus", to:"Ipoh", seats:3, taken:3, fee:"RM 15" },
+    { id:"r3", when:zh?"周日 20:00":"Sun 20:00", from:"KL Sentral", to:zh?"校园":"Campus", seats:4, taken:1, fee:"RM 25" },
+    { id:"r4", when:zh?"周六 08:30":"Sat 08:30", from:zh?"宿舍":"Hostel", to:zh?"金宝夜市":"Kampar night market", seats:5, taken:2, fee:zh?"分摊油钱":"Split petrol" }
+  ];
+}
+function rideHtml(){
+  var joined = pk("rideIn", {}), list = rideSeed(), i, x, on, left, html = "";
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    on = !!joined[x.id];
+    left = x.seats - x.taken - (on ? 1 : 0);
+    html += '<div class="feedCard">'+
+      '<div class="feedTop"><div class="av">'+esc(initials(x.to))+"</div>"+
+      '<div class="feedWho"><b>'+esc(x.from)+" → "+esc(x.to)+"</b><span>"+esc(x.when)+"</span></div>"+
+      '<span class="tag'+(left <= 0 ? "" : " ok")+'">'+
+        (left <= 0 ? t("rideFull") : t("rideLeft", left))+"</span>"+
+      "</div>"+
+      '<p class="feedBody"><span class="money">'+esc(x.fee)+'</span> · <span class="num">'+
+        (x.taken + (on ? 1 : 0))+"/"+x.seats+"</span> "+t("rideSeats")+"</p>"+
+      '<div class="feedActs">'+
+        '<button type="button" data-act="rideJoin" data-id="'+x.id+'"'+
+          (on ? ' class="on"' : "")+(left <= 0 && !on ? " disabled" : "")+">"+
+          (on ? "✓ " + t("rideIn") : t("rideJoin"))+"</button>"+
+        '<button type="button" data-act="chatOpenFrom">'+t("rideMsg")+"</button>"+
+      "</div></div>";
+  }
+  html += '<button type="button" class="shellFab" data-act="demo">'+t("rideOffer")+"</button>";
+  return html + demoNote();
+}
+
+// ---------- Shuttle ----------
+// The only demo app with a live number on it: the countdown is worked out
+// from the device clock, so it moves while you watch it.
+var BUS = {
+  kb:{ name:{ en:"Campus → Hostel", zh:"校园 → 宿舍" },
+       mins:[10, 40], first:"07:10", last:"22:40" },
+  hb:{ name:{ en:"Hostel → Campus", zh:"宿舍 → 校园" },
+       mins:[0, 30], first:"07:00", last:"22:30" },
+  tn:{ name:{ en:"Campus → Town", zh:"校园 → 镇上" },
+       mins:[20], first:"09:20", last:"21:20" }
+};
+// Minutes from now until this route's next departure. Counted forward in
+// whole hours so a route whose last slot has passed rolls into the next
+// hour rather than returning a negative wait.
+function busSlots(route, howMany){
+  var n = nowDev(), m = n.getHours() * 60 + n.getMinutes(), out = [], h, i, at;
+  // Search far enough ahead that a route running once an hour still fills
+  // the list when this hour's departure has already gone.
+  for(h = 0; h <= howMany + 1 && out.length < howMany; h++){
+    for(i = 0; i < route.mins.length; i++){
+      at = (n.getHours() + h) * 60 + route.mins[i];
+      if(at >= m) out.push(at);
+    }
+  }
+  out.sort(function(a, b){ return a - b; });
+  return { now:m, slots:out.slice(0, howMany) };
+}
+function busHtml(){
+  var which = tab("bus", "kb"), r = BUS[which], got = busSlots(r, 6), i, html, hh, mm;
+  var wait = got.slots.length ? got.slots[0] - got.now : null;
+  html = seg("bus", [["kb", t("busKb")], ["hb", t("busHb")], ["tn", t("busTn")]], which);
+  html += '<div class="shellRow"><div class="shellMain">'+
+    '<p class="shellK">'+t("busNext")+"</p>"+
+    '<div class="busNext"><span class="n">'+(wait === null ? "—" : wait)+
+      '</span><span class="u">'+t("busMin")+"</span></div>"+
+    '<p class="shellS">'+esc(r.name[lang === "zh" ? "zh" : "en"])+"</p></div></div>";
+  for(i = 0; i < got.slots.length; i++){
+    hh = Math.floor(got.slots[i] / 60) % 24; mm = got.slots[i] % 60;
+    html += shellRow(i === 0 ? t("busSoon") : t("busThen"),
+      '<span class="num">'+pad(hh)+":"+pad(mm)+"</span>",
+      i === 0 ? t("busInMin", got.slots[i] - got.now) : "");
+  }
+  html += '<p class="shellS" style="margin-top:12px">'+t("busSpan", r.first, r.last)+"</p>";
+  return html + demoNote();
+}
+
+// ---------- Map ----------
+var PLACES = [
+  { id:"kb", x:14, y:16, w:30, h:22, n:{ en:"KB · Lecture halls", zh:"KB · 讲堂" }, walk:3 },
+  { id:"lib", x:52, y:12, w:34, h:26, n:{ en:"Library", zh:"图书馆" }, walk:5 },
+  { id:"can", x:16, y:48, w:28, h:20, n:{ en:"Canteen", zh:"食堂" }, walk:2 },
+  { id:"lab", x:52, y:46, w:22, h:22, n:{ en:"FICT labs", zh:"电脑实验室" }, walk:6 },
+  { id:"spo", x:80, y:46, w:14, h:34, n:{ en:"Sports complex", zh:"体育馆" }, walk:9 },
+  { id:"car", x:16, y:76, w:58, h:14, n:{ en:"Car park A", zh:"A 停车场" }, walk:4 }
+];
+function mapHtml(){
+  var sel = UI.open.map || "kb", i, p2, html, on;
+  html = '<div class="mapWrap"><svg viewBox="0 0 100 100" role="img" aria-label="'+esc(t("mapAria"))+'">'+
+    '<rect width="100" height="100" fill="var(--card2)"/>'+
+    '<path d="M0 42h100M48 0v100" stroke="var(--edge)" stroke-width="5" fill="none"/>';
+  for(i = 0; i < PLACES.length; i++){
+    p2 = PLACES[i];
+    on = p2.id === sel;
+    html += '<rect class="blk" data-act="mapPick" data-id="'+p2.id+'" x="'+p2.x+'" y="'+p2.y+
+      '" width="'+p2.w+'" height="'+p2.h+'" rx="3" fill="'+(on ? "var(--ac)" : "var(--card)")+
+      '" stroke="var(--edge)" stroke-width="0.8"/>'+
+      '<text x="'+(p2.x + p2.w / 2)+'" y="'+(p2.y + p2.h / 2 + 1.6)+
+      '" text-anchor="middle" font-size="4.4" font-weight="700" fill="'+
+      (on ? "var(--onac)" : "var(--tx2)")+'">'+esc(p2.id.toUpperCase())+"</text>";
+  }
+  html += "</svg></div>";
+  for(i = 0; i < PLACES.length; i++){
+    p2 = PLACES[i];
+    html += shellRow(p2.id.toUpperCase(), esc(p2.n[lang === "zh" ? "zh" : "en"]),
+      t("mapWalk", p2.walk),
+      '<div class="shellBtns"><button type="button" data-act="mapPick" data-id="'+p2.id+'"'+
+      (p2.id === sel ? ' class="on"' : "")+">"+(p2.id === sel ? t("mapHere") : t("mapShow"))+"</button></div>");
+  }
+  return html + demoNote();
+}
+
+// ---------- Hostel ----------
+function dormHtml(){
+  var done = pk("dormDone", {}), reqs = pk("dormReq", []), i, html;
+  var wash = [
+    { id:"m1", n:{ en:"Washer 1", zh:"洗衣机 1" }, left:12, of:35 },
+    { id:"m2", n:{ en:"Washer 2", zh:"洗衣机 2" }, left:0,  of:35 },
+    { id:"m3", n:{ en:"Dryer 1",  zh:"烘干机 1" }, left:26, of:45 }
+  ];
+  var bills = [
+    { id:"b1", n:{ en:"Room rent", zh:"房租" }, due:"1 Sep", a:"RM 420.00" },
+    { id:"b2", n:{ en:"Electricity", zh:"电费" }, due:"12 Sep", a:"RM 38.60" },
+    { id:"b3", n:{ en:"Water", zh:"水费" }, due:"12 Sep", a:"RM 9.20" }
+  ];
+  html = '<div class="shellRow"><div class="shellMain">'+
+    '<p class="shellK">'+t("dormRoom")+"</p>"+
+    '<p class="shellT"><span class="num">Block C · C-3-14</span></p>'+
+    '<p class="shellS">'+t("dormMate")+"</p></div></div>";
+
+  html += '<p class="sectionK">'+t("dormWash")+"</p>";
+  for(i = 0; i < wash.length; i++){
+    var w = wash[i], free = w.left === 0;
+    html += '<div class="shellRow"><div class="shellMain">'+
+      '<p class="shellT">'+esc(w.n[lang === "zh" ? "zh" : "en"])+"</p>"+
+      '<p class="shellS">'+(free ? t("dormFree") : t("dormBusy", w.left))+"</p>"+
+      '<div class="bar"><i style="width:'+(free ? 0 : Math.round((1 - w.left / w.of) * 100))+'%"></i></div>'+
+      "</div>"+
+      '<div class="shellBtns"><button type="button" data-act="demo"'+(free ? ' class="on"' : "")+">"+
+        (free ? t("dormStart") : t("dormWait"))+"</button></div></div>";
+  }
+
+  html += '<p class="sectionK">'+t("dormBills")+"</p>";
+  for(i = 0; i < bills.length; i++){
+    var b = bills[i], paid = !!done[b.id];
+    html += shellRow(t("dormDue", b.due), esc(b.n[lang === "zh" ? "zh" : "en"]), "",
+      '<span class="money" style="margin-right:8px">'+b.a+"</span>"+
+      '<div class="shellBtns"><button type="button" data-act="dormPaid" data-id="'+b.id+'"'+
+      (paid ? ' class="on"' : "")+">"+(paid ? t("dormPaid") : t("dormMark"))+"</button></div>");
+  }
+
+  html += '<p class="sectionK">'+t("dormFix")+"</p>";
+  for(i = 0; i < reqs.length; i++){
+    html += shellRow(t("dormSent"), esc(reqs[i].tx), esc(reqs[i].when));
+  }
+  if(!reqs.length) html += '<p class="shellS" style="margin:0 0 8px">'+t("dormNoFix")+"</p>";
+  html += '<div class="dueForm"><input id="dormTx" maxlength="90" placeholder="'+esc(t("dormFixPh"))+'"></div>'+
+    '<button type="button" class="shellFab ghost" data-act="dormReq">'+t("dormSendFix")+"</button>";
+  return html + demoNote();
+}
+
 function shellHtml(id){
   var zh = lang === "zh";
   if(id === "sos"){
@@ -2981,59 +3993,17 @@ function shellHtml(id){
   if(id === "today") return todayHtml();
   if(id === "att") return attHtml();
   if(id === "due") return dueHtml();
-  if(id === "ev") return (
-    shellRow("Wed 19:00", zh?"AI 讲座 · 大礼堂":"AI talk · Hall", "", shellBtns("demo", [zh?"加入":"Add"], -1)) +
-    shellRow("Fri 16:00", zh?"篮球友谊赛":"Friendly basketball", "", shellBtns("demo", [zh?"加入":"Add"], -1)) +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"＋ 自己加一场":"+ My event")+"</button>"
-  );
+  if(id === "ev") return evHtml();
   if(id === "gpa") return gpaHtml();
-  if(id === "id") return (
-    '<div class="idCard"><p class="shellK">Universiti Tunku Abdul Rahman</p><p class="idNo">240XXXX</p><p class="idName">'+
-    (zh?"预览姓名":"Preview name")+'</p><p class="shellS">'+
-    (zh?"只存在这台手机":"Stays on this phone")+"</p></div>" +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"换照片 / 改资料":"Photo / edit")+"</button>"
-  );
-  if(id === "cash") return (
-    shellRow(zh?"今天":"Today", "RM 8.50", zh?"食堂":"Canteen") +
-    shellRow(zh?"昨天":"Yesterday", "RM 2.00", zh?"校巴":"Shuttle") +
-    shellRow(zh?"本周":"This week", "RM 46.80", "") +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"＋ 记一笔":"+ Add spend")+"</button>"
-  );
-  if(id === "bus") return (
-    shellRow(zh?"下一班":"Next", zh?"校园 → 宿舍  6 分钟":"Campus → hostel  6 min") +
-    shellRow("08:40", zh?"校园 → 镇":"Campus → town") +
-    shellRow("09:10", zh?"宿舍 → 校园":"Hostel → campus") +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"看完整时刻表":"Full timetable")+"</button>"
-  );
-  if(id === "map") return (
-    shellRow("KB", zh?"讲堂 · 你下一堂":"Lecture hall · next class", "", shellBtns("demo", [zh?"钉":"Pin"], -1)) +
-    shellRow("PA", zh?"食堂":"Canteen", "", shellBtns("demo", [zh?"钉":"Pin"], -1)) +
-    shellRow("Lib", zh?"图书馆":"Library", "", shellBtns("demo", [zh?"钉":"Pin"], -1))
-  );
-  if(id === "dorm") return (
-    shellRow(zh?"洗衣":"Laundry", zh?"40 分钟":"40 min", "", shellBtns("demo", [zh?"开始":"Start"], -1)) +
-    shellRow(zh?"电费":"Electric", "12/9", "", shellBtns("check", ["✓"], -1)) +
-    shellRow(zh?"租金":"Rent", "1/9", "", shellBtns("check", ["✓"], -1))
-  );
-  if(id === "food") return (
-    shellRow(zh?"A 档":"Stall A", zh?"鸡饭 · 3 人说去":"Chicken rice · 3 going", "",
-      shellBtns("demo", [zh?"我去":"I'm in"], -1)) +
-    shellRow(zh?"夜宵":"Late", zh?"麻辣烫 · 还没人":"Mala · nobody yet", "",
-      shellBtns("demo", [zh?"开团":"Start"], -1)) +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"预览：不会真的通知别人":"Preview: nobody is notified")+"</button>"
-  );
-  if(id === "ride") return (
-    shellRow("Fri 17:30", zh?"校园 → KL · 2/4":"Campus → KL · 2/4", "",
-      shellBtns("demo", [zh?"想上车":"Join"], -1)) +
-    shellRow("Sun 20:00", zh?"KL → 校园 · 1/3":"KL → campus · 1/3", "",
-      shellBtns("demo", [zh?"想上车":"Join"], -1)) +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"＋ 发一趟（预览）":"+ Offer ride (preview)")+"</button>"
-  );
-  if(id === "wall") return (
-    shellRow(zh?"匿名":"Anon", zh?"有人捡到一张校园卡在图书馆":"Campus card at the library") +
-    shellRow(zh?"匿名":"Anon", zh?"周五谁去夜市":"Night market Friday?") +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"发一条（不会发出去）":"Post (won't send)")+"</button>"
-  );
+  if(id === "id") return idHtml();
+  if(id === "cash") return cashHtml();
+  if(id === "chat") return chatHtml();
+  if(id === "bus") return busHtml();
+  if(id === "map") return mapHtml();
+  if(id === "dorm") return dormHtml();
+  if(id === "food") return foodHtml();
+  if(id === "ride") return rideHtml();
+  if(id === "wall") return wallHtml();
   return '<p class="shellS">'+t("stubLead")+"</p>";
 }
 
@@ -3060,7 +4030,10 @@ function paintHome(){
   camp.textContent = t(sosCampus === "sl" ? "homeCampusSl" : "homeCampusKpr");
   camp.setAttribute("aria-label", camp.textContent);
   $("homeLang").textContent = (lang === "zh" ? "EN" : "中");
-  $("stubBack").textContent = t("stubBack");
+    // The back control is a 36px chevron, so the words that used to sit
+    // beside it become its accessible name instead of being clipped.
+    $("stubBack").textContent = "‹";
+    $("stubBack").setAttribute("aria-label", t("stubBack"));
   var g = $("homeGrid");
   g.innerHTML = "";
   MICROS.forEach(function(m){
@@ -3073,17 +4046,18 @@ function paintHome(){
       '<span class="name">' + t(m.t) + "</span>";
     g.appendChild(b);
   });
+  var foot = $("homeFoot");
+  if(foot) foot.textContent = t("homeFoot", MICROS.length);
   var stub = $("homeStub");
   var stubOn = stub.classList.contains("on");
   $("pocketHome").classList.toggle("in-app", stubOn);
   if(stubOn){
     var cur = MICROS.filter(function(x){ return x.id === S.micro; })[0];
     if(cur) $("stubTitle").textContent = t(cur.t);
-    $("stubHint").textContent = S.micro === "sos" ? t("sosHint")
-      : S.micro === "today" ? t("todayHint")
-      : S.micro === "att" ? t("attHint")
-      : S.micro === "due" ? t("dueHint")
-      : S.micro === "gpa" ? t("gpaHint") : t("shellPreview");
+    // Every app names its own honesty line as <id>Hint. Adding an app means
+    // adding that key, not another branch here.
+    var hint = L[lang][S.micro + "Hint"];
+    $("stubHint").textContent = typeof hint === "string" ? hint : t("shellPreview");
     $("stubStage").innerHTML = shellHtml(S.micro);
   }
   paintHomeNow();
@@ -7628,11 +8602,13 @@ $("homeGrid").onclick = function(e){
   var b = e.target.closest(".homeTile");
   if(!b) return;
   if(b.dataset.id === "tt"){ openTt(); return; }
+  UI.open = {};
   S.micro = b.dataset.id;
   $("homeStub").classList.add("on");
   paintHome();
 };
 $("stubBack").onclick = function(){
+  UI.open = {};
   S.micro = "home";
   $("homeStub").classList.remove("on");
   paintHome();
@@ -7731,6 +8707,121 @@ $("stubStage").onclick = function(e){
     if(!course){ toast(t("gpaNeed")); return; }
     GPA.push(course);
     gpaSave();
+    paintHome();
+    return;
+  }
+  // ---------- the rest of the campus apps ----------
+  // A segmented control. Which tab an app is on is view state, not saved
+  // data, so it lives in UI and dies when the app is closed.
+  if(act === "tab"){
+    UI.tab[btn.dataset.app] = btn.dataset.tab;
+    paintHome();
+    return;
+  }
+  if(act === "idSave"){
+    pkSet("me", {
+      name: String(($("idName") || {}).value || "").trim().slice(0, 40),
+      no:   String(($("idNo")   || {}).value || "").trim().slice(0, 16).toUpperCase(),
+      fac:  String(($("idFac")  || {}).value || "").trim().slice(0, 60)
+    });
+    paintHome();
+    toast(t("idSaved"));
+    return;
+  }
+  if(act === "cashAdd"){
+    var what = String(($("cashT") || {}).value || "").trim().slice(0, 40);
+    var amt = parseFloat(($("cashA") || {}).value);
+    if(!what || !isFinite(amt) || amt <= 0){ toast(t("cashNeed")); return; }
+    var spend = pk("cash", []);
+    spend.unshift({ id: "u" + Date.now().toString(36), d: 0, t: what, a: -Math.abs(amt) });
+    pkSet("cash", spend);
+    paintHome();
+    return;
+  }
+  if(act === "evGo"){
+    var going = pk("evGoing", {});
+    going[btn.dataset.id] = !going[btn.dataset.id];
+    pkSet("evGoing", going);
+    paintHome();
+    return;
+  }
+  if(act === "wallPost"){
+    var tx = String(($("wallTx") || {}).value || "").trim().slice(0, 280);
+    if(!tx){ toast(t("wallNeed")); return; }
+    var posts = pk("wallMine", []);
+    posts.unshift({ id: "u" + Date.now().toString(36), ago: t("wallNow"), n: 0, c: [], tx: tx });
+    pkSet("wallMine", posts);
+    paintHome();
+    return;
+  }
+  if(act === "wallLike"){
+    var liked = pk("wallLiked", {});
+    liked[btn.dataset.id] = !liked[btn.dataset.id];
+    pkSet("wallLiked", liked);
+    paintHome();
+    return;
+  }
+  // Tapping Reply opens the box on that post only, and tapping it again
+  // closes it -- one composer on screen at a time.
+  if(act === "wallCmt"){
+    UI.open.wall = UI.open.wall === btn.dataset.id ? null : btn.dataset.id;
+    paintHome();
+    return;
+  }
+  if(act === "wallCmtSend"){
+    var ctx = String(($("wallC") || {}).value || "").trim().slice(0, 140);
+    if(!ctx){ toast(t("wallNeed")); return; }
+    var cm = pk("wallCmt", {});
+    cm[btn.dataset.id] = (cm[btn.dataset.id] || []).concat([{ who: t("wallWho"), tx: ctx }]);
+    pkSet("wallCmt", cm);
+    UI.open.wall = null;
+    paintHome();
+    return;
+  }
+  if(act === "chatOpen"){ UI.open.chat = btn.dataset.id; paintHome(); return; }
+  if(act === "chatBack"){ UI.open.chat = null; paintHome(); return; }
+  if(act === "chatSend"){
+    var msg = String(($("chatIn") || {}).value || "").trim().slice(0, 200);
+    if(!msg){ toast(t("wallNeed")); return; }
+    var now = nowDev();
+    var mine = pk("chatMs", {});
+    mine[btn.dataset.id] = (mine[btn.dataset.id] || []).concat([{
+      me: true, who: "", tx: msg, w: pad(now.getHours()) + ":" + pad(now.getMinutes())
+    }]);
+    pkSet("chatMs", mine);
+    paintHome();
+    return;
+  }
+  if(act === "chatOpenFrom"){ S.micro = "chat"; UI.open = {}; paintHome(); return; }
+  if(act === "foodJoin"){
+    var fin = pk("foodIn", {});
+    fin[btn.dataset.id] = !fin[btn.dataset.id];
+    pkSet("foodIn", fin);
+    paintHome();
+    return;
+  }
+  if(act === "rideJoin"){
+    var rin = pk("rideIn", {});
+    rin[btn.dataset.id] = !rin[btn.dataset.id];
+    pkSet("rideIn", rin);
+    paintHome();
+    return;
+  }
+  if(act === "mapPick"){ UI.open.map = btn.dataset.id; paintHome(); return; }
+  if(act === "dormPaid"){
+    var paidRows = pk("dormDone", {});
+    paidRows[btn.dataset.id] = !paidRows[btn.dataset.id];
+    pkSet("dormDone", paidRows);
+    paintHome();
+    return;
+  }
+  if(act === "dormReq"){
+    var what2 = String(($("dormTx") || {}).value || "").trim().slice(0, 90);
+    if(!what2){ toast(t("wallNeed")); return; }
+    var now2 = nowDev();
+    var reqs = pk("dormReq", []);
+    reqs.unshift({ tx: what2, when: pad(now2.getHours()) + ":" + pad(now2.getMinutes()) });
+    pkSet("dormReq", reqs);
     paintHome();
     return;
   }
