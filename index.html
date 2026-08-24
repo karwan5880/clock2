@@ -889,6 +889,13 @@ body.at-home .actionbar{display:none !important}
   font-size:12px;font-weight:800;cursor:pointer;background:var(--bg);color:var(--tx)}
 .shellBtns button.on{background:var(--ac);color:var(--onac)}
 .shellFab{width:100%;margin:10px 0 0;padding:12px;background:var(--ac);color:var(--onac)}
+.shellFab.ghost{background:var(--card);color:var(--tx);box-shadow:0 1px 0 var(--line)}
+.dueDone{opacity:.45}
+.dueForm{display:grid;gap:8px;margin:12px 0 0}
+.dueForm input{
+  appearance:none;width:100%;box-sizing:border-box;padding:10px 12px;border:0;
+  border-radius:12px;background:var(--card);color:var(--tx);font:inherit}
+.dueFormRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 a.shellCall{
   flex:none;display:inline-block;padding:7px 14px;border-radius:99px;
   background:#dc2626;color:#fff;font-size:12px;font-weight:800;text-decoration:none}
@@ -1077,6 +1084,7 @@ if ("serviceWorker" in navigator)
   <div class="uprow">
     <button class="btn-s upbtn" id="imFile"></button>
     <button class="btn-s upbtn" id="imDemo"></button>
+    <button class="btn-s upbtn" id="imGen"></button>
     <input type="file" id="imFileInput" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden>
   </div>
   <div class="uphint" id="imUpHint"></div>
@@ -1687,6 +1695,18 @@ zh: {
   attLate    :"迟",
   attWeek    : function(n, tot){ return "本周 "+n+"/"+tot+" 到了"; },
   attWeekNone:"本周没有课",
+  genTt      :"生成一周课表",
+  genTtHas   :"已经有课了。要换就去课表里汇入并选「全部清掉」。",
+  dueHint    :"记在这台手机 · 不是作业系统",
+  dueEmpty   :"还没有截止",
+  dueAdd     :"＋ 新截止",
+  dueTitlePh :"作业 / 报告名称",
+  dueSubPh   :"科目（可空）",
+  dueNeed    :"先填名称和日期",
+  dueToday   :"今天",
+  dueTmr     :"明天",
+  dueOver    :"过了",
+  dueOpen    :"全部作业",
   sos999     :"全国急救",
   sosDss     :"安全处 DSS",
   sosDsa     :"学生事务 DSA",
@@ -1794,6 +1814,7 @@ zh: {
   imTitle :"丢时间表上去",
   imFile  :"&#128193; 选档案",
   imDemo  :"&#128196; 看范例",
+  imGen   :"生成一周",
   imUpHint:"支援 <b>.csv</b> / <b>.txt</b>（Excel、Google Sheets 都可以「另存为 CSV」）。<br>" +
            "或者直接从 Excel <b>复制整个表格</b>，贴到下面那格 &mdash; 两种格式都读得懂。",
   imLabel :"时间表内容",
@@ -2213,6 +2234,18 @@ en: {
   attLate    :"Late",
   attWeek    : function(n, tot){ return "This week "+n+"/"+tot+" in"; },
   attWeekNone:"No class this week",
+  genTt      :"Generate a sample week",
+  genTtHas   :"You already have classes. To replace them, import and pick “clear everything”.",
+  dueHint    :"Saved on this phone · not a coursework portal",
+  dueEmpty   :"No deadlines yet",
+  dueAdd     :"+ Add due",
+  dueTitlePh :"Assignment / report",
+  dueSubPh   :"Subject (optional)",
+  dueNeed    :"Need a title and a date",
+  dueToday   :"Today",
+  dueTmr     :"Tomorrow",
+  dueOver    :"Overdue",
+  dueOpen    :"All deadlines",
   sos999     :"National emergency",
   sosDss     :"Safety & Security (DSS)",
   sosDsa     :"Student Affairs (DSA)",
@@ -2321,6 +2354,7 @@ en: {
   imTitle :"Upload timetable",
   imFile  :"&#128193; Choose file",
   imDemo  :"&#128196; See example",
+  imGen   :"Generate a week",
   imUpHint:"Accepts <b>.csv</b> / <b>.txt</b> (Excel and Google Sheets can \"Save as CSV\").<br>" +
            "Or just <b>copy the whole table</b> from Excel and paste it below &mdash; both work.",
   imLabel :"Timetable",
@@ -2470,12 +2504,18 @@ try {
   if(at && typeof at === "object" && !Array.isArray(at)) ATT = at;
 } catch(e){}
 
+var DUE = [];
+try {
+  var du = JSON.parse(localStorage.getItem("clockDue") || "[]");
+  if(Array.isArray(du)) DUE = du;
+} catch(e){}
+
 var MICROS = [
   { id:"sos",   live:true,  t:"tileSos" },
   { id:"today", live:true,  t:"tileToday" },
   { id:"tt",    live:true,  t:"tileTt" },
   { id:"att",   live:true,  t:"tileAtt" },
-  { id:"due",   live:false, t:"tileDue" },
+  { id:"due",   live:true,  t:"tileDue" },
   { id:"ev",    live:false, t:"tileEv" },
   { id:"gpa",   live:false, t:"tileGpa" },
   { id:"id",    live:false, t:"tileId" },
@@ -2551,26 +2591,31 @@ function todayClasses(){
 function todayHtml(){
   var dayI = todayDayI();
   var open = '<button type="button" class="shellFab" data-act="tt">'+t("todayOpenTt")+"</button>";
-  if(!mine().length)
-    return shellRow("", t("todayEmpty"), "") + open;
-  var list = todayClasses();
-  if(!list.length)
-    return shellRow("", t("todayFree"), "") + open;
-  var nowM = nowDev().getHours() * 60 + nowDev().getMinutes();
-  var html = "", seenNext = false, i, a, s, e, kind, room, sub;
-  for(i = 0; i < list.length; i++){
-    a = list[i];
-    s = a.hour * 60 + a.minute;
-    e = classEndM(a);
-    if(nowM >= e) kind = "todayDone";
-    else if(nowM >= s) kind = "todayNow";
-    else if(!seenNext){ kind = "todayNext"; seenNext = true; }
-    else kind = "todayLater";
-    room = roomOf(a, dayI);
-    sub = classSpan(a) + (room ? " · " + room : "");
-    html += shellRow(t(kind), esc(a.label || ""), esc(sub));
+  var html = "";
+  if(!mine().length){
+    html = shellRow("", t("todayEmpty"), "") +
+      '<button type="button" class="shellFab ghost" data-act="genTt">'+t("genTt")+"</button>";
+  } else {
+    var list = todayClasses();
+    if(!list.length) html = shellRow("", t("todayFree"), "");
+    else {
+      var nowM = nowDev().getHours() * 60 + nowDev().getMinutes();
+      var seenNext = false, i, a, s, e, kind, room, sub;
+      for(i = 0; i < list.length; i++){
+        a = list[i];
+        s = a.hour * 60 + a.minute;
+        e = classEndM(a);
+        if(nowM >= e) kind = "todayDone";
+        else if(nowM >= s) kind = "todayNow";
+        else if(!seenNext){ kind = "todayNext"; seenNext = true; }
+        else kind = "todayLater";
+        room = roomOf(a, dayI);
+        sub = classSpan(a) + (room ? " · " + room : "");
+        html += shellRow(t(kind), esc(a.label || ""), esc(sub));
+      }
+    }
   }
-  return html + open;
+  return html + dueSoonHtml() + open;
 }
 function paintHomeNow(){
   var el = $("homeNow");
@@ -2649,7 +2694,8 @@ function attHtml(){
   var st = attWeekStats();
   var week = '<p class="shellS">'+(st.total ? t("attWeek", st.present, st.total) : t("attWeekNone"))+"</p>";
   if(!mine().length)
-    return shellRow("", t("todayEmpty"), "") + open;
+    return shellRow("", t("todayEmpty"), "") +
+      '<button type="button" class="shellFab ghost" data-act="genTt">'+t("genTt")+"</button>" + open;
   var list = todayClasses();
   if(!list.length)
     return shellRow("", t("todayFree"), "") + week + open;
@@ -2660,6 +2706,138 @@ function attHtml(){
     html += shellRow(classSpan(a), esc(a.label || ""), esc(room), attBtns(a, dayI));
   }
   return html + week + open;
+}
+
+function genTtRows(){
+  var zh = lang === "zh";
+  var slots = zh ? [
+    [1, 8, 0, 110, "微积分", "KB208"],
+    [1, 10, 0, 110, "英语", "PA201"],
+    [2, 8, 0, 110, "物理", "Lab 2"],
+    [2, 14, 0, 110, "化学", "KB105"],
+    [3, 8, 0, 110, "微积分", "KB208"],
+    [3, 10, 0, 110, "历史", "PA102"],
+    [4, 8, 0, 110, "英语", "PA201"],
+    [4, 14, 0, 110, "地理", "KB301"],
+    [5, 8, 0, 110, "体育", "Hall"],
+    [5, 10, 0, 110, "美术", "FA1"]
+  ] : [
+    [1, 8, 0, 110, "Calculus", "KB208"],
+    [1, 10, 0, 110, "English", "PA201"],
+    [2, 8, 0, 110, "Physics", "Lab 2"],
+    [2, 14, 0, 110, "Chemistry", "KB105"],
+    [3, 8, 0, 110, "Calculus", "KB208"],
+    [3, 10, 0, 110, "History", "PA102"],
+    [4, 8, 0, 110, "English", "PA201"],
+    [4, 14, 0, 110, "Geography", "KB301"],
+    [5, 8, 0, 110, "PE", "Hall"],
+    [5, 10, 0, 110, "Art", "FA1"]
+  ];
+  return slots.map(function(s){
+    return { days: 1 << s[0], hour: s[1], minute: s[2], dur: s[3],
+             label: s[4], note: s[5], enabled: true, leads: [10] };
+  });
+}
+function applyGenTt(){
+  if(mine().length){ toast(t("genTtHas")); return; }
+  api("/api/import", {
+    method: "POST",
+    body: JSON.stringify({ how: "add", owner: modeIdx(S.mode), list: genTtRows() })
+  }).then(function(res){
+    if(typeof closeSheets === "function") closeSheets();
+    toast(t("tImported", res.added, res.updated, res.skipped));
+    return pullAlarms();
+  }).then(function(){ paintHome(); }).catch(function(){ toast(t("tImportFail")); });
+}
+
+function dueSave(){
+  try { localStorage.setItem("clockDue", JSON.stringify(DUE)); } catch(e){}
+}
+function dueNorm(x){
+  if(!x || typeof x !== "object") return null;
+  var title = String(x.title || "").trim().slice(0, 80);
+  var date = String(x.date || "").slice(0, 10);
+  if(!title || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  var time = String(x.time || "").slice(0, 5);
+  if(time && !/^\d{2}:\d{2}$/.test(time)) time = "";
+  return {
+    id: String(x.id || ("d" + Date.now().toString(36))),
+    title: title,
+    sub: String(x.sub || "").trim().slice(0, 40),
+    date: date,
+    time: time,
+    done: !!x.done
+  };
+}
+function dueList(){
+  var out = [];
+  DUE.forEach(function(x){ var n = dueNorm(x); if(n) out.push(n); });
+  out.sort(function(a, b){
+    if(a.done !== b.done) return a.done ? 1 : -1;
+    var sa = a.date + "T" + (a.time || "23:59");
+    var sb = b.date + "T" + (b.time || "23:59");
+    return sa < sb ? -1 : (sa > sb ? 1 : 0);
+  });
+  return out;
+}
+function dueOverdue(d){
+  if(d.done) return false;
+  var iso = todayISO();
+  if(d.date < iso) return true;
+  if(d.date > iso || !d.time) return false;
+  var n = nowDev();
+  return d.time < (pad(n.getHours()) + ":" + pad(n.getMinutes()));
+}
+function dueWhenLabel(d){
+  var today = todayISO();
+  var tmr = isoOf(todayDayI() + 1);
+  var when;
+  if(d.date === today) when = t("dueToday");
+  else if(d.date === tmr) when = t("dueTmr");
+  else {
+    var p = d.date.split("-");
+    when = parseInt(p[2], 10) + "/" + parseInt(p[1], 10);
+  }
+  if(d.time) when += " " + d.time;
+  if(dueOverdue(d)) when = t("dueOver") + " · " + when;
+  return when;
+}
+function dueSoon(){
+  var today = todayISO();
+  var tmr = isoOf(todayDayI() + 1);
+  return dueList().filter(function(d){ return !d.done && (d.date === today || d.date === tmr); });
+}
+function dueSoonHtml(){
+  var soon = dueSoon(), html = "", i, d;
+  if(!soon.length) return "";
+  for(i = 0; i < soon.length; i++){
+    d = soon[i];
+    html += shellRow(t("tileDue"), esc(d.title), esc(dueWhenLabel(d)));
+  }
+  html += '<button type="button" class="shellFab ghost" data-act="openDue">'+t("dueOpen")+"</button>";
+  return html;
+}
+function dueHtml(){
+  var list = dueList();
+  var html = "", i, d, wrap, extra;
+  if(!list.length) html = shellRow("", t("dueEmpty"), "");
+  for(i = 0; i < list.length; i++){
+    d = list[i];
+    extra = '<div class="shellBtns">'+
+      '<button type="button" data-act="dueDone" data-id="'+esc(d.id)+'"'+(d.done ? ' class="on"' : "")+">✓</button>"+
+      '<button type="button" data-act="dueDel" data-id="'+esc(d.id)+'">×</button></div>';
+    wrap = shellRow(esc(dueWhenLabel(d)), esc(d.title), esc(d.sub), extra);
+    html += d.done ? '<div class="dueDone">'+wrap+"</div>" : wrap;
+  }
+  html += '<div class="dueForm">'+
+    '<input id="dueTitle" maxlength="80" placeholder="'+esc(t("dueTitlePh"))+'">'+
+    '<input id="dueSub" maxlength="40" placeholder="'+esc(t("dueSubPh"))+'">'+
+    '<div class="dueFormRow">'+
+      '<input id="dueDate" type="date" value="'+todayISO()+'">'+
+      '<input id="dueTime" type="time">'+
+    "</div></div>"+
+    '<button type="button" class="shellFab" data-act="dueAdd">'+t("dueAdd")+"</button>";
+  return html;
 }
 
 function shellHtml(id){
@@ -2695,12 +2873,7 @@ function shellHtml(id){
   }
   if(id === "today") return todayHtml();
   if(id === "att") return attHtml();
-  if(id === "due") return (
-    shellRow(zh?"明天":"Tomorrow", zh?"实验报告":"Lab report", "23:59", shellBtns("check", ["✓"], -1)) +
-    shellRow(zh?"周五":"Fri", zh?"小组演示":"Group demo", "16:00", shellBtns("check", ["✓"], -1)) +
-    shellRow("9/3", zh?"学费":"Fees", "RM 1,200", shellBtns("check", ["✓"], -1)) +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"＋ 新截止":"+ Add due")+"</button>"
-  );
+  if(id === "due") return dueHtml();
   if(id === "ev") return (
     shellRow("Wed 19:00", zh?"AI 讲座 · 大礼堂":"AI talk · Hall", "", shellBtns("demo", [zh?"加入":"Add"], -1)) +
     shellRow("Fri 16:00", zh?"篮球友谊赛":"Friendly basketball", "", shellBtns("demo", [zh?"加入":"Add"], -1)) +
@@ -2806,7 +2979,8 @@ function paintHome(){
     if(cur) $("stubTitle").textContent = t(cur.t);
     $("stubHint").textContent = S.micro === "sos" ? t("sosHint")
       : S.micro === "today" ? t("todayHint")
-      : S.micro === "att" ? t("attHint") : t("shellPreview");
+      : S.micro === "att" ? t("attHint")
+      : S.micro === "due" ? t("dueHint") : t("shellPreview");
     $("stubStage").innerHTML = shellHtml(S.micro);
   }
   paintHomeNow();
@@ -4049,8 +4223,12 @@ function paintBody(){
       '<button class="btn-p" id="emptyImport" style="padding:13px 24px;border:0;' +
       'border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;' +
       'cursor:pointer">' + t("emptyBtn") + '</button>' +
+      (cfg.wk ? '<button class="btn-s" id="emptyGen" style="margin-top:10px;padding:13px 24px;border:0;' +
+      'border-radius:12px;font-size:14px;font-weight:700;font-family:inherit;' +
+      'cursor:pointer">' + t("genTt") + '</button>' : "") +
       '</div></div>';
     $("emptyImport").onclick = openImport;
+    if($("emptyGen")) $("emptyGen").onclick = applyGenTt;
     return;
   }
 
@@ -7137,6 +7315,8 @@ $("imDemo").onclick = function(){
   toast(t("tDemo"));
 };
 
+$("imGen").onclick = applyGenTt;
+
 $("imDedupe").onclick = function(){
   api("/api/dedupe", {method:"POST"}).then(function(res){
     toast(res.removed ? t("tDeduped", res.removed) : t("tNoDupes"));
@@ -7295,6 +7475,7 @@ function applyStatic(){
   $("imTitle").textContent   = t("imTitle");
   $("imFile").innerHTML      = t("imFile");
   $("imDemo").innerHTML      = t("imDemo");
+  $("imGen").innerHTML       = t("imGen");
   $("imUpHint").innerHTML    = t("imUpHint");
   $("lbImText").textContent  = t("imLabel");
   $("imText").placeholder    = t("imPh");
@@ -7380,6 +7561,39 @@ $("stubStage").onclick = function(e){
     var mark = btn.dataset.mark;
     if(!id || !date) return;
     attSet(id, date, attGet(id, date) === mark ? "" : mark);
+    paintHome();
+    return;
+  }
+  if(act === "genTt"){ applyGenTt(); return; }
+  if(act === "openDue"){
+    S.micro = "due";
+    $("homeStub").classList.add("on");
+    paintHome();
+    return;
+  }
+  if(act === "dueDone"){
+    DUE.forEach(function(x){ if(String(x.id) === btn.dataset.id) x.done = !x.done; });
+    dueSave();
+    paintHome();
+    return;
+  }
+  if(act === "dueDel"){
+    DUE = DUE.filter(function(x){ return String(x.id) !== btn.dataset.id; });
+    dueSave();
+    paintHome();
+    return;
+  }
+  if(act === "dueAdd"){
+    var item = dueNorm({
+      id: "d" + Date.now().toString(36),
+      title: ($("dueTitle") || {}).value,
+      sub: ($("dueSub") || {}).value,
+      date: ($("dueDate") || {}).value,
+      time: ($("dueTime") || {}).value
+    });
+    if(!item){ toast(t("dueNeed")); return; }
+    DUE.push(item);
+    dueSave();
     paintHome();
     return;
   }
