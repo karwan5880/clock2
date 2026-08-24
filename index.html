@@ -1681,6 +1681,12 @@ zh: {
   todayFree  :"今天没有课",
   todayEmpty :"先导入课表",
   todayOpenTt:"打开课表",
+  attHint    :"记在这台手机 · 不是学校点名",
+  attIn      :"到",
+  attOut     :"缺",
+  attLate    :"迟",
+  attWeek    : function(n, tot){ return "本周 "+n+"/"+tot+" 到了"; },
+  attWeekNone:"本周没有课",
   sos999     :"全国急救",
   sosDss     :"安全处 DSS",
   sosDsa     :"学生事务 DSA",
@@ -2201,6 +2207,12 @@ en: {
   todayFree  :"No class today",
   todayEmpty :"Import a timetable first",
   todayOpenTt:"Open timetable",
+  attHint    :"Saved on this phone · not official roll call",
+  attIn      :"In",
+  attOut     :"Out",
+  attLate    :"Late",
+  attWeek    : function(n, tot){ return "This week "+n+"/"+tot+" in"; },
+  attWeekNone:"No class this week",
   sos999     :"National emergency",
   sosDss     :"Safety & Security (DSS)",
   sosDsa     :"Student Affairs (DSA)",
@@ -2452,11 +2464,17 @@ try {
   if(sc === "sl" || sc === "kpr") sosCampus = sc;
 } catch(e){}
 
+var ATT = {};
+try {
+  var at = JSON.parse(localStorage.getItem("clockAtt") || "{}");
+  if(at && typeof at === "object" && !Array.isArray(at)) ATT = at;
+} catch(e){}
+
 var MICROS = [
   { id:"sos",   live:true,  t:"tileSos" },
   { id:"today", live:true,  t:"tileToday" },
   { id:"tt",    live:true,  t:"tileTt" },
-  { id:"att",   live:false, t:"tileAtt" },
+  { id:"att",   live:true,  t:"tileAtt" },
   { id:"due",   live:false, t:"tileDue" },
   { id:"ev",    live:false, t:"tileEv" },
   { id:"gpa",   live:false, t:"tileGpa" },
@@ -2582,6 +2600,68 @@ function paintHomeNow(){
   if(el.innerHTML !== html) el.innerHTML = html;
 }
 
+function attKey(id, iso){ return String(id) + "|" + iso; }
+function attGet(id, iso){
+  var v = ATT[attKey(id, iso)];
+  return (v === "in" || v === "out" || v === "late") ? v : "";
+}
+function attSet(id, iso, mark){
+  var k = attKey(id, iso);
+  if(mark === "in" || mark === "out" || mark === "late") ATT[k] = mark;
+  else delete ATT[k];
+  try { localStorage.setItem("clockAtt", JSON.stringify(ATT)); } catch(e){}
+}
+function attWeekFirst(){
+  var dayI = todayDayI();
+  var w = weekOf(dayI);
+  if(S.sem.enabled && w >= 1 && w <= (S.sem.weeks || 99)) return weekFirstDay(w);
+  return anchorOf(dayI);
+}
+function attWeekStats(){
+  var first = attWeekFirst(), total = 0, present = 0, k, i, list, j, m;
+  for(k = 0; k < 7; k++){
+    i = first + k;
+    list = shownOnDay(i, weekOf(i)).filter(function(a){ return !isSkipped(a, i); });
+    for(j = 0; j < list.length; j++){
+      total++;
+      m = attGet(list[j].id, isoOf(i));
+      if(m === "in" || m === "late") present++;
+    }
+  }
+  return { total: total, present: present };
+}
+function attBtns(a, dayI){
+  var iso = isoOf(dayI);
+  var cur = attGet(a.id, iso);
+  var marks = ["in", "out", "late"];
+  var labels = [t("attIn"), t("attOut"), t("attLate")];
+  var html = '<div class="shellBtns">', i;
+  for(i = 0; i < 3; i++){
+    html += '<button type="button" data-act="att" data-id="'+esc(String(a.id))+
+      '" data-date="'+iso+'" data-mark="'+marks[i]+'"'+(cur === marks[i] ? ' class="on"' : "")+
+      ">"+labels[i]+"</button>";
+  }
+  return html + "</div>";
+}
+function attHtml(){
+  var dayI = todayDayI();
+  var open = '<button type="button" class="shellFab" data-act="tt">'+t("todayOpenTt")+"</button>";
+  var st = attWeekStats();
+  var week = '<p class="shellS">'+(st.total ? t("attWeek", st.present, st.total) : t("attWeekNone"))+"</p>";
+  if(!mine().length)
+    return shellRow("", t("todayEmpty"), "") + open;
+  var list = todayClasses();
+  if(!list.length)
+    return shellRow("", t("todayFree"), "") + week + open;
+  var html = "", i, a, room;
+  for(i = 0; i < list.length; i++){
+    a = list[i];
+    room = roomOf(a, dayI);
+    html += shellRow(classSpan(a), esc(a.label || ""), esc(room), attBtns(a, dayI));
+  }
+  return html + week + open;
+}
+
 function shellHtml(id){
   var zh = lang === "zh";
   if(id === "sos"){
@@ -2614,15 +2694,7 @@ function shellHtml(id){
     return html;
   }
   if(id === "today") return todayHtml();
-  if(id === "att") return (
-    shellRow("08:00", zh?"微积分":"Calculus", "KB208",
-      shellBtns("tog", [zh?"到":"In", zh?"缺":"Out", zh?"迟":"Late"], 0)) +
-    shellRow("10:00", zh?"英语":"English", "PA201",
-      shellBtns("tog", [zh?"到":"In", zh?"缺":"Out", zh?"迟":"Late"], -1)) +
-    shellRow("14:00", zh?"物理实验":"Physics lab", "Block D",
-      shellBtns("tog", [zh?"到":"In", zh?"缺":"Out", zh?"迟":"Late"], -1)) +
-    '<button type="button" class="shellFab" data-act="demo">'+(zh?"本周 4/6":"This week 4/6")+"</button>"
-  );
+  if(id === "att") return attHtml();
   if(id === "due") return (
     shellRow(zh?"明天":"Tomorrow", zh?"实验报告":"Lab report", "23:59", shellBtns("check", ["✓"], -1)) +
     shellRow(zh?"周五":"Fri", zh?"小组演示":"Group demo", "16:00", shellBtns("check", ["✓"], -1)) +
@@ -2733,7 +2805,8 @@ function paintHome(){
     var cur = MICROS.filter(function(x){ return x.id === S.micro; })[0];
     if(cur) $("stubTitle").textContent = t(cur.t);
     $("stubHint").textContent = S.micro === "sos" ? t("sosHint")
-      : S.micro === "today" ? t("todayHint") : t("shellPreview");
+      : S.micro === "today" ? t("todayHint")
+      : S.micro === "att" ? t("attHint") : t("shellPreview");
     $("stubStage").innerHTML = shellHtml(S.micro);
   }
   paintHomeNow();
@@ -7301,6 +7374,15 @@ $("stubStage").onclick = function(e){
     return;
   }
   if(act === "tt"){ openTt(); return; }
+  if(act === "att"){
+    var id = btn.dataset.id;
+    var date = btn.dataset.date;
+    var mark = btn.dataset.mark;
+    if(!id || !date) return;
+    attSet(id, date, attGet(id, date) === mark ? "" : mark);
+    paintHome();
+    return;
+  }
   toast(t("shellToast"));
 };
 
