@@ -1114,13 +1114,23 @@ body.editing .homePager{touch-action:none}
    which is inside the border box (box-sizing:border-box, line 448) and so
    leaves the snap area exactly one scrollport wide. max() keeps the
    padding at zero on anything narrower than 364px.
-   align-content:space-evenly spreads the rows down the page; a short page
-   keeps its rows at the top instead (.part, below). */
+   The rows pack from the top and keep the grid's own row gap. This used
+   to be align-content:space-evenly, which handed every leftover pixel of
+   a full-height page to the gaps between rows -- on a tall phone that is
+   ~45px of nothing between each row of icons, and the home screen read
+   as broken rather than airy. Leftover height belongs at the bottom of
+   the page, the way it does on a real home screen -- and there is much
+   less of it now that fitPage() sizes a page in whole rows.
+   The padding has a floor of --sp-4 rather than 0. At 350px of scrollport
+   the 364px cap contributed nothing, so the icons ran to both edges and a
+   swipe put page one's last column hard against page two's first with
+   8px between them: mid-gesture the two pages read as one broken grid
+   rather than as two pages passing. A gutter each side puts ~45px of
+   nothing on the seam, which is what makes the swipe legible. */
 .homePager > .homePage{flex:0 0 100%;max-width:none;
   scroll-snap-align:start;scroll-snap-stop:always;
-  padding-inline:max(0px, calc((100% - 364px) / 2));
-  align-content:space-evenly}
-.homePage.part{align-content:start;row-gap:var(--sp-5)}
+  padding-inline:max(var(--sp-4), calc((100% - 364px) / 2));
+  align-content:start}
 .homeDots{flex:none;display:flex;justify-content:center;gap:8px;
   margin:var(--sp-4) 0 var(--sp-3);min-height:8px}
 .homeDots button{
@@ -1131,7 +1141,7 @@ body.editing .homePager{touch-action:none}
 
 .homeGrid{
   display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));
-  gap:var(--sp-5) var(--sp-2);max-width:364px;margin:0 auto;justify-items:center;
+  gap:var(--sp-4) var(--sp-2);max-width:364px;margin:0 auto;justify-items:center;
   width:100%;
 }
 .homeTile{
@@ -1153,7 +1163,7 @@ body.editing .homePager{touch-action:none}
   filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
 .homeTile:active .icon{transform:scale(.9)}
 .homeTile .name{
-  margin:0;width:78px;font-size:var(--fs-xs);font-weight:600;line-height:1.25;
+  margin:0;width:100%;max-width:78px;font-size:var(--fs-xs);font-weight:600;line-height:1.25;
   letter-spacing:-.005em;text-align:center;color:var(--tx);
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
 }
@@ -5714,9 +5724,55 @@ function openTt(){
   if(!S.roleSet && !S.roleLocal) openRole();
 }
 
-// Sixteen to a page, the way a phone lays a home screen out. Adding a
-// seventeenth app adds a page and a dot; nothing else has to know.
-var PAGE_SIZE = 16;
+// How many icons go on a page is measured, not decided here. Sixteen was
+// a guess, and on a 390x844 phone it filled 377px of a 658px pager: a
+// quarter of the screen empty under the last row, and eight apps pushed
+// onto a second page that had no reason to exist. A home screen fills the
+// page it is on and only the last page is short, so the row count comes
+// from the pager's own height.
+//
+// Four columns is the phone grid and does not change. PAGE_TILE/PAGE_GAP
+// are the CSS values (a 60px icon, its label, and the grid's row gap);
+// they are seeds only -- fitPage() remeasures them from a real tile after
+// the first paint, so a longer label or a bigger text size is accounted
+// for rather than assumed away.
+var PAGE_COLS = 4;
+var PAGE_TILE = 82;
+var PAGE_GAP  = 16;
+var PAGE_SIZE = PAGE_COLS * 4;
+
+function fitPage(){
+  var pager = $("homePager");
+  if(!pager) return PAGE_SIZE;
+  var h = pager.clientHeight;
+  if(!h) return PAGE_SIZE;          // not laid out yet; keep the seed
+  var tile = pager.querySelector(".homeTile"), gap;
+  if(tile && tile.offsetHeight > 0){
+    PAGE_TILE = tile.offsetHeight;
+    gap = parseFloat(getComputedStyle(tile.parentNode).rowGap);
+    if(gap >= 0) PAGE_GAP = gap;
+  }
+  // The last row has no gap under it, so give one back before dividing.
+  var rows = Math.floor((h + PAGE_GAP) / (PAGE_TILE + PAGE_GAP));
+  if(rows < 2) rows = 2;            // a pager too short to measure sanely
+  return rows * PAGE_COLS;
+}
+
+// Did any page's last row fall past the bottom of the pager? fitPage()
+// budgets rows at the height of a one-line label, and a wrapped one --
+// "Lost and found" -- makes its whole grid row taller. The pager clips, so
+// an over-full page does not scroll, it just loses its bottom row.
+function pagerSpills(pager){
+  var h = pager.clientHeight, kids = pager.children, i, last, top;
+  if(!h) return false;
+  for(i = 0; i < kids.length; i++){
+    last = kids[i].lastElementChild;
+    if(!last) continue;
+    top = kids[i].getBoundingClientRect().top;
+    if(last.getBoundingClientRect().bottom - top > h + 1) return true;
+  }
+  return false;
+}
 
 // There was a dock -- Timetable, Today, Hotline, Account, held out of the
 // pages on their own pane of glass. It is gone (2026-08-24). It was a
@@ -5762,7 +5818,7 @@ var pagesSig = "";
 function pagesKey(){
   var list = pageApps(), ids = [];
   for(var i = 0; i < list.length; i++) ids.push(list[i].id);
-  return lang + "|" + (EDIT.on ? "e" : "") + "|" + ids.join(",");
+  return lang + "|" + PAGE_SIZE + "|" + (EDIT.on ? "e" : "") + "|" + ids.join(",");
 }
 
 function tileEl(m){
@@ -5777,23 +5833,38 @@ function tileEl(m){
 }
 
 function paintPages(force){
-  var pager = $("homePager"), dots = $("homeDots"), pages = pageCount(), p, g, i, b;
+  var pager = $("homePager"), dots = $("homeDots"), p, b;
   if(!pager) return;
-  var sig = pagesKey();
-  if(!force && sig === pagesSig && pager.children.length === pages) return;
-  pagesSig = sig;
+  PAGE_SIZE = fitPage();
+  if(!force && pagesKey() === pagesSig && pager.children.length === pageCount()) return;
   var list = pageApps();
-  pager.innerHTML = "";
-  for(p = 0; p < pages; p++){
-    g = document.createElement("div");
-    var end = Math.min(list.length, (p + 1) * PAGE_SIZE);
-    var full = end - p * PAGE_SIZE === PAGE_SIZE;
-    // A page that is not full keeps its rows at the top. Spreading two
-    // rows over a whole screen looks like a bug, not like breathing room.
-    g.className = "homePage homeGrid" + (full ? "" : " part");
-    for(i = p * PAGE_SIZE; i < end; i++) g.appendChild(tileEl(list[i]));
-    pager.appendChild(g);
+  function build(){
+    var q, i, g, end, n = pageCount();
+    pager.innerHTML = "";
+    for(q = 0; q < n; q++){
+      g = document.createElement("div");
+      end = Math.min(list.length, (q + 1) * PAGE_SIZE);
+      // Every page keeps its rows at the top, full or not -- see .homePage.
+      g.className = "homePage homeGrid";
+      for(i = q * PAGE_SIZE; i < end; i++) g.appendChild(tileEl(list[i]));
+      pager.appendChild(g);
+    }
+    return n;
   }
+  var pages = build();
+  // Reserving two label lines on all 26 icons to cover the one that wraps
+  // would cost a whole row on every page. Measure the page that was really
+  // built instead and step down if it spilled. Downward only and bounded,
+  // so a font that never fits cannot make this oscillate.
+  for(var guard = 0; guard < 4 && PAGE_SIZE > PAGE_COLS * 2 && pagerSpills(pager); guard++){
+    PAGE_SIZE -= PAGE_COLS;
+    pages = build();
+  }
+  pagesSig = pagesKey();
+  // A repaint that drops a page (a taller pager, an app hidden) would
+  // otherwise leave the scroll parked past the end, showing blank glass.
+  var last = (pages - 1) * pager.clientWidth;
+  if(pager.scrollLeft > last) pager.scrollLeft = last;
   if(!dots) return;
   dots.innerHTML = "";
   if(pages < 2) return;
@@ -11093,6 +11164,21 @@ $("homeHits").onclick = function(e){
 $("homeNow").onclick = function(){ openMicro("today"); };
 $("homeBtn").onclick = goHome;
 $("homePager").onscroll = markPage;
+// The page holds as many rows as the pager is tall, so a rotate, a split
+// screen or a browser resize changes how many icons fit. Debounced: a
+// drag-resize fires this continuously, and rebuilding the grid on every
+// frame of it is what makes a home screen flicker. Never mid-drag -- the
+// tile being carried is a child of the grid we would be throwing away.
+var pagerFit = null;
+addEventListener("resize", function(){
+  if(pagerFit) clearTimeout(pagerFit);
+  pagerFit = setTimeout(function(){
+    pagerFit = null;
+    if(EDIT.ghost) return;
+    paintPages();
+    markPage();
+  }, 150);
+});
 $("homeDots").onclick = function(e){
   var b = e.target.closest ? e.target.closest("button") : null;
   if(!b || b.dataset.page === undefined) return;
