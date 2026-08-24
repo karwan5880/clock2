@@ -990,7 +990,6 @@ body.at-home .actionbar{display:none !important}
 body.editing .homePage .homeTile{animation:jiggleA .34s ease-in-out infinite}
 body.editing .homePage .homeTile:nth-child(2n){animation-name:jiggleB;animation-delay:-.17s}
 body.editing .homePage .homeTile.held{visibility:hidden;animation:none}
-body.editing .homeDock{opacity:.4;pointer-events:none}
 body.editing .homePager{touch-action:none}
 .homeTile.ghost{
   position:fixed;left:0;top:0;z-index:120;margin:0;pointer-events:none;
@@ -1020,20 +1019,6 @@ body.editing .homePager{touch-action:none}
 .homeQPill:active{transform:scale(.95)}
 .homeQPill svg{width:15px;height:15px;display:block;flex:none}
 .homeQPill[hidden]{display:none}
-
-/* The dock. Four apps, no labels, on their own pane of glass -- and they
-   are taken out of the pages, so nothing appears twice. */
-.homeDock{
-  flex:none;display:grid;grid-template-columns:repeat(4, 1fr);
-  gap:var(--sp-2);align-items:center;justify-items:center;
-  max-width:364px;width:100%;margin:var(--sp-3) auto 0;
-  padding:var(--sp-3) var(--sp-2);
-  border-radius:26px;border:1px solid var(--edge);
-  background:color-mix(in srgb, var(--card) 46%, transparent);
-  backdrop-filter:blur(22px) saturate(1.6);-webkit-backdrop-filter:blur(22px) saturate(1.6);
-}
-.homeDock .homeTile{animation:none;max-width:64px}
-.homeDock .homeTile .name{display:none}
 
 /* Closed by default. A search field is a thing you go and get, not a
    permanent bar across the top of a home screen. */
@@ -1116,12 +1101,24 @@ body.editing .homePager{touch-action:none}
   scroll-snap-type:x mandatory;overscroll-behavior-x:contain;
   touch-action:pan-x;scroll-behavior:smooth;
 }
-/* Exactly the scrollport wide, snapped to its start: any padding here and
-   the snap point stops matching the page, which shows as a sliver of the
-   previous page's icons down the left edge. align-items:start keeps a
-   short page's rows at their own height instead of stretching them to
-   match the tallest page. */
-.homePage{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;
+/* Exactly the scrollport wide, snapped to its start.
+   Every page element carries BOTH classes, so `.homeGrid`'s max-width was
+   capping the page as well as the columns: a page was 364px inside a
+   390px scrollport, page two began 26px before the right edge, and its
+   first column of icons sat there in the gutter, in view, all the time.
+   That is the sliver people kept seeing on the home screen.
+   The selector is .homePager > .homePage on purpose: .homeGrid is defined
+   further down this stylesheet, so at equal specificity it would win on
+   source order alone -- which is exactly how the bug got in.
+   The page is full width now and the 364px cap moved into its padding,
+   which is inside the border box (box-sizing:border-box, line 448) and so
+   leaves the snap area exactly one scrollport wide. max() keeps the
+   padding at zero on anything narrower than 364px.
+   align-content:space-evenly spreads the rows down the page; a short page
+   keeps its rows at the top instead (.part, below). */
+.homePager > .homePage{flex:0 0 100%;max-width:none;
+  scroll-snap-align:start;scroll-snap-stop:always;
+  padding-inline:max(0px, calc((100% - 364px) / 2));
   align-content:space-evenly}
 .homePage.part{align-content:start;row-gap:var(--sp-5)}
 .homeDots{flex:none;display:flex;justify-content:center;gap:8px;
@@ -1493,16 +1490,14 @@ a.shellCall:active{transform:scale(.94)}
   .walletCard,.bub,#homeStub.pushing,#homeStub.popping{animation:none !important}
   *{transition-duration:1ms !important}
 }
-@media (min-width:768px) and (pointer:coarse){
-  .homeGrid{grid-template-columns:repeat(5, minmax(0, 1fr));gap:var(--sp-6) var(--sp-3);max-width:560px}
-  .homeTile .icon{width:72px;height:72px;border-radius:18px}
-  .homeTile .icon svg{width:35px;height:35px}
-  .homeTile .name{width:88px;font-size:var(--fs-sm)}
-  #homeStub{max-width:520px}
-}
-@media (min-width:1024px) and (pointer:coarse){
-  .homeGrid{grid-template-columns:repeat(6, minmax(0, 1fr));max-width:720px}
-}
+/* A tablet used to get five columns at 768px and six at 1024px, while
+   PAGE_SIZE stayed at 16. Sixteen icons do not divide into five or six,
+   so the last row of every page was a ragged stub that space-evenly then
+   spread down the screen -- and on an iPad, which is pointer:coarse, the
+   device frame below never came on, so the whole app stretched to 1180px
+   as well. That combination is what "the iPad view is glitchy" was.
+   Both rules are gone: an iPad now gets the frame, like every other
+   screen bigger than a phone. */
 @media (prefers-reduced-motion:reduce){
   .homeTile .icon,.homeTile:active .icon{transition:none;transform:none}
 }
@@ -1510,12 +1505,19 @@ a.shellCall:active{transform:scale(.94)}
 /* ============================================================
    The device frame
    ------------------------------------------------------------
-   On a laptop there is no such thing as "full screen" for this
-   product -- it is a phone app, and a phone app stretched across
-   1440px of browser reads as a web page no matter how the inside
-   is drawn. So on a pointer:fine screen the whole shell shrinks to
-   a 390x844 device sitting on a dim backdrop, with a bezel, a
-   notch and a home indicator.
+   On anything bigger than a phone there is no such thing as "full
+   screen" for this product -- it is a phone app, and a phone app
+   stretched across 1180px of iPad or 1440px of browser reads as a
+   web page no matter how the inside is drawn. So above a phone's
+   size the whole shell shrinks to a 390x844 device sitting on a dim
+   backdrop, with a bezel, a notch and a home indicator.
+
+   Keyed on size alone, not on the pointer. It used to require
+   pointer:fine, which meant a laptop got the frame and an iPad --
+   coarse, and easily the likeliest thing to demo from -- did not,
+   and got a stretched page with a broken grid instead. A phone in
+   landscape is under the height floor, so it keeps the full screen,
+   which is what it should have.
 
    The trick that makes it cheap: body already owns the viewport
    (position:fixed, every pane absolute inside it), so giving body
@@ -1524,7 +1526,7 @@ a.shellCall:active{transform:scale(.94)}
    inside the phone instead of escaping to the window. Nothing in
    the app needs to know the frame exists.
    ============================================================ */
-@media (min-width:900px) and (min-height:700px) and (pointer:fine){
+@media (min-width:700px) and (min-height:700px){
   html{
     background:radial-gradient(120% 90% at 50% 0%, #1b2430 0%, #0a0e14 68%);
   }
@@ -1617,7 +1619,6 @@ if ("serviceWorker" in navigator)
     <span id="homeQPillT"></span>
   </button>
   <button type="button" class="homeDone" id="homeDone" hidden></button>
-  <div class="homeDock" id="homeDock"></div>
 </div>
 
 <div id="homeStub">
@@ -5717,11 +5718,13 @@ function openTt(){
 // seventeenth app adds a page and a dot; nothing else has to know.
 var PAGE_SIZE = 16;
 
-// The dock holds the four you open without thinking. They are taken out
-// of the pages, the way a phone does it -- an app in the dock is not also
-// an icon on page one.
-var DOCK = ["tt", "today", "sos", "me"];
-function inDock(id){ return DOCK.indexOf(id) >= 0; }
+// There was a dock -- Timetable, Today, Hotline, Account, held out of the
+// pages on their own pane of glass. It is gone (2026-08-24). It was a
+// second layout with its own rules sitting under the first: it did not
+// rearrange, you could not drag into or out of it, it dimmed rather than
+// wobbled in edit mode, and it took four apps out of the paging maths so
+// every count in the code and the docs had two versions. One grid, one
+// set of rules, and the four are ordinary icons on page one again.
 
 // MICROS is the catalogue, not the layout. Whatever the user dragged
 // into place wins; anything they have never seen -- an app added in a
@@ -5741,15 +5744,12 @@ function orderedMicros(){
   }
   return out;
 }
-function pageApps(){
-  return orderedMicros().filter(function(m){ return !inDock(m.id); });
-}
+// Every app is on a page. Nothing is held back.
+function pageApps(){ return orderedMicros(); }
 function saveOrder(list){
   var ids = [], i;
   for(i = 0; i < list.length; i++) ids.push(list[i].id);
-  // The dock keeps its place at the front so the saved list is the whole
-  // catalogue, not just the part that happens to be on a page today.
-  pkSet("appOrder", DOCK.concat(ids));
+  pkSet("appOrder", ids);
 }
 function pageCount(){ return Math.ceil(pageApps().length / PAGE_SIZE) || 1; }
 
@@ -5793,14 +5793,6 @@ function paintPages(force){
     g.className = "homePage homeGrid" + (full ? "" : " part");
     for(i = p * PAGE_SIZE; i < end; i++) g.appendChild(tileEl(list[i]));
     pager.appendChild(g);
-  }
-  var dock = $("homeDock");
-  if(dock){
-    dock.innerHTML = "";
-    for(i = 0; i < DOCK.length; i++){
-      var dm = MICROS.filter(function(m){ return m.id === DOCK[i]; })[0];
-      if(dm) dock.appendChild(tileEl(dm));
-    }
   }
   if(!dots) return;
   dots.innerHTML = "";
@@ -11107,13 +11099,6 @@ $("homeDots").onclick = function(e){
   var pager = $("homePager");
   pager.scrollLeft = (+b.dataset.page) * pager.clientWidth;
   tap(6);
-};
-$("homeDock").onclick = function(e){
-  var b = e.target.closest(".homeTile");
-  if(!b) return;
-  if(EDIT.on){ editStop("all"); return; }
-  if(b.dataset.id === "tt"){ tap(8); openTt(); return; }
-  openMicro(b.dataset.id);
 };
 $("homePager").onclick = function(e){
   var b = e.target.closest(".homeTile");
