@@ -2,7 +2,11 @@
 <html lang="zh">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,interactive-widget=resizes-content">
+<!-- viewport-fit=cover first, and nothing after it that iOS does not know:
+     interactive-widget is a Chrome-only key, and the keyboard is handled by
+     visualViewport now, so it bought nothing and risked a strict parser
+     throwing the whole declaration -- cover included -- away. -->
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#00a0e9">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -425,9 +429,14 @@ html,body{
   margin:0;padding:0;width:100%;
   overflow:hidden;overscroll-behavior:none;
 }
-/* svh first for anything that does not know dvh; dvh wins where it does.
-   --app-h overrides both once JS has measured the real thing. */
-html{height:100%;height:100svh;height:100dvh;height:var(--app-h,100dvh)}
+/* The root is deliberately NOT --app-h. It has one job -- paint the whole
+   web view -- and 100% of the initial containing block is the only thing
+   that reliably means "as tall as the thing I am inside". Constraining it
+   to the visible height instead left a white strip under the app on an
+   installed iOS app: WebKit painted the root's background over the root's
+   box rather than the whole canvas, and the rest fell back to the web
+   view's own white. Layout is body's problem, and body is --app-h. */
+html{height:100%;min-height:100%}
 /* No `height` here on purpose. When a fixed element has top, bottom AND
    height, the spec says bottom loses -- so `height:100%` was quietly
    sizing the whole app to 100% of <html> instead of to the viewport, and
@@ -449,6 +458,8 @@ body{
      of JavaScript. */
   position:fixed;top:0;left:0;width:100%;
   height:100dvh;height:var(--app-h,100dvh);
+  /* If --app-h is ever short of the web view, the root behind it is still
+     painted, so the gap shows the wallpaper rather than white. */
   background:var(--bg); color:var(--tx);
   background-image:radial-gradient(125% 62% at 50% -4%,var(--sky) 0%,transparent 64%);
   font:var(--fs-md)/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI Variable Text",
@@ -1688,7 +1699,7 @@ a.shellCall:active{transform:scale(.94)}
 
 </style>
 <script>window.__FORCE_DEMO__ = true;</script>
-<script>window.BUILD = "v24592e97";</script>
+<script>window.BUILD = "v34490f8f";</script>
 <script>
 if ("serviceWorker" in navigator) addEventListener("load", function(){
   navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
