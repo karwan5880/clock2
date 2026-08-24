@@ -1,8 +1,11 @@
 // Auto-generated -- do not hand-edit. Change tools/build-demo.js instead.
 //
-// Strategy: serve from cache first (fast, works offline), fetch a fresh copy in
-// the background. The next open shows the new version.
-const CACHE = "baobaoxiang-v18168358";
+// Strategy: the page itself is network-first -- an installed PWA serving a
+// stale index.html has no way to tell anyone it is stale, and on iOS it can
+// stay that way for days. Everything else (icons, the manifest) stays
+// cache-first, since those change only when the build does. Offline still
+// works: a failed navigation falls back to the cached page.
+const CACHE = "baobaoxiang-v1ba5af3a";
 const FILES = ["./", "./index.html", "./manifest.json",
                "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png"];
 
@@ -11,11 +14,22 @@ self.addEventListener("install", function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(FILES); }));
 });
 
+// On an upgrade -- and only on an upgrade, never on a first install --
+// every open window is navigated to itself. Without this an installed
+// iOS PWA keeps showing the build it woke up with until it is launched
+// a second time, which is how a fix can look like it did not ship.
 self.addEventListener("activate", function(e){
   e.waitUntil(caches.keys().then(function(keys){
-    return Promise.all(keys.filter(function(k){ return k !== CACHE; })
-                           .map(function(k){ return caches.delete(k); }));
-  }).then(function(){ return self.clients.claim(); }));
+    const old = keys.filter(function(k){ return k !== CACHE; });
+    return Promise.all(old.map(function(k){ return caches.delete(k); }))
+      .then(function(){ return self.clients.claim(); })
+      .then(function(){
+        if(!old.length) return;
+        return self.clients.matchAll({ type: "window" }).then(function(cs){
+          cs.forEach(function(c){ if(c.navigate) c.navigate(c.url); });
+        });
+      });
+  }));
 });
 
 self.addEventListener("fetch", function(e){
@@ -26,15 +40,30 @@ self.addEventListener("fetch", function(e){
   const url = new URL(e.request.url);
   if(url.origin !== location.origin) return;
 
+  const save = function(res){
+    if(res && res.status === 200){
+      const copy = res.clone();
+      caches.open(CACHE).then(function(c){ c.put(e.request, copy); });
+    }
+    return res;
+  };
+
+  // The document: network first, cache only when the network is gone.
+  if(e.request.mode === "navigate" || url.pathname.endsWith(".html")){
+    e.respondWith(
+      fetch(e.request).then(save).catch(function(){
+        return caches.match(e.request).then(function(hit){
+          return hit || caches.match("./index.html");
+        });
+      })
+    );
+    return;
+  }
+
+  // Everything else: cache first, refreshed in the background.
   e.respondWith(
     caches.match(e.request).then(function(hit){
-      const net = fetch(e.request).then(function(res){
-        if(res && res.status === 200){
-          const copy = res.clone();
-          caches.open(CACHE).then(function(c){ c.put(e.request, copy); });
-        }
-        return res;
-      }).catch(function(){ return hit; });
+      const net = fetch(e.request).then(save).catch(function(){ return hit; });
       return hit || net;
     })
   );

@@ -897,8 +897,10 @@ body.at-home #pocketHome{display:flex}
    mid-frame, all put a few pixels of canvas on screen, and the eye reads
    a strip of a different colour as a broken app. Painting the canvas the
    same makes those pixels invisible instead of making them a bug report.
-   applyLook() mirrors data-wall onto <html> for exactly this reason. */
-html{
+   applyLook() mirrors data-wall onto <html> and <body> for exactly this
+   reason -- whichever of the three layers a browser leaves showing, it is
+   the same paint. */
+html,body{
   background:
     radial-gradient(120% 70% at 50% -10%, color-mix(in srgb, var(--ac) 28%, #fff), transparent 62%),
     linear-gradient(180deg, color-mix(in srgb, var(--ac) 14%, var(--bg)) 0%, var(--bg) 48%);
@@ -911,27 +913,33 @@ html{
    The dark ones set --tx on the home element alone, so the labels stay
    readable without touching any other screen. */
 html[data-wall="dawn"],
+body[data-wall="dawn"],
 #pocketHome[data-wall="dawn"]{background:
   linear-gradient(180deg,#ffd9a8 0%,#fca97f 34%,#c9738c 68%,#6d5090 100%)}
 html[data-wall="neon"],
+body[data-wall="neon"],
 #pocketHome[data-wall="neon"]{background:
   radial-gradient(85% 55% at 18% 0%,rgba(124,58,237,.65),transparent 62%),
   radial-gradient(70% 45% at 92% 22%,rgba(14,165,233,.45),transparent 60%),
   linear-gradient(180deg,#180f33 0%,#2b1152 52%,#080b24 100%)}
 html[data-wall="sakura"],
+body[data-wall="sakura"],
 #pocketHome[data-wall="sakura"]{background:
   radial-gradient(90% 55% at 50% -8%,#fff2f7,transparent 62%),
   linear-gradient(180deg,#ffe6f0 0%,#ffc9de 46%,#f7a9c6 100%)}
 html[data-wall="ocean"],
+body[data-wall="ocean"],
 #pocketHome[data-wall="ocean"]{background:
   radial-gradient(80% 50% at 50% 0%,rgba(56,189,248,.4),transparent 60%),
   linear-gradient(180deg,#0a3b5e 0%,#0d5c82 44%,#04202f 100%)}
 html[data-wall="grid"],
+body[data-wall="grid"],
 #pocketHome[data-wall="grid"]{background:
   repeating-linear-gradient(0deg,rgba(120,140,170,.16) 0 1px,transparent 1px 22px),
   repeating-linear-gradient(90deg,rgba(120,140,170,.16) 0 1px,transparent 1px 22px),
   linear-gradient(180deg,#f7f9fc 0%,#e8edf5 100%)}
 html[data-wall="dusk"],
+body[data-wall="dusk"],
 #pocketHome[data-wall="dusk"]{background:
   linear-gradient(180deg,#f8b195 0%,#c06c84 40%,#6c5b7b 72%,#355c7d 100%)}
 
@@ -1669,10 +1677,19 @@ a.shellCall:active{transform:scale(.94)}
 </style>
 <script>window.__FORCE_DEMO__ = true;</script>
 <script>
-if ("serviceWorker" in navigator)
-  addEventListener("load", function(){
-    navigator.serviceWorker.register("sw.js").catch(function(){});
-  });
+if ("serviceWorker" in navigator) addEventListener("load", function(){
+  navigator.serviceWorker.register("sw.js").then(function(reg){
+    var reloading = false;
+    if (navigator.serviceWorker.controller)
+      navigator.serviceWorker.addEventListener("controllerchange", function(){
+        if (reloading) return; reloading = true; location.reload();
+      });
+    var check = function(){ if (!document.hidden) reg.update().catch(function(){}); };
+    document.addEventListener("visibilitychange", check);
+    addEventListener("pageshow", check);
+    check();
+  }).catch(function(){});
+});
 </script>
 </head>
 <body class="at-home">
@@ -5484,8 +5501,11 @@ function applyLook(){
   el.setAttribute("data-skin", skinOn());
   // The root wears the wallpaper too, so the canvas under the app is the
   // same colour as the app. See the html rule next to the wallpapers.
+  var id = w ? w.id : "none";
   if(document.documentElement && document.documentElement.setAttribute)
-    document.documentElement.setAttribute("data-wall", w ? w.id : "none");
+    document.documentElement.setAttribute("data-wall", id);
+  if(document.body && document.body.setAttribute)
+    document.body.setAttribute("data-wall", id);
   // Guarded because this runs at boot, before anything is on screen, and
   // because the test harnesses hand us an element that is not a real one.
   if(!el.style || !el.style.setProperty) return;
