@@ -975,10 +975,39 @@ body.at-home .actionbar{display:none !important}
 @keyframes stageIn{from{opacity:0;transform:translateX(18px)}}
 @keyframes rowIn{from{opacity:0;transform:translateY(7px)}}
 
+/* The device status bar. Off everywhere except inside the frame. */
+#deviceBar{display:none}
+
 /* ---------- An app, opened ---------- */
-#homeStub{display:none;max-width:400px;margin:0 auto;text-align:left}
+/* Home and an app are two panes on a stack, not one pane with its middle
+   swapped out. Opening pushes the app in from the right and lets home
+   fall back and dim; Back -- or a drag from the left edge -- pops it.
+   Nothing here loads anything. It is the motion that stops a screen
+   change reading as a page load. */
+#homeStub{
+  display:none;position:absolute;inset:0;z-index:12;
+  overflow-x:hidden;overflow-y:auto;overscroll-behavior:none;
+  -webkit-overflow-scrolling:touch;touch-action:pan-y;
+  padding:calc(var(--sp-4) + env(safe-area-inset-top)) var(--sp-5)
+          calc(var(--sp-10) + env(safe-area-inset-bottom));
+  text-align:left;will-change:transform;
+  transition:transform var(--mo-2) var(--ease);
+  background:
+    radial-gradient(120% 62% at 50% -10%, color-mix(in srgb, var(--ac) 20%, #fff), transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ac) 9%, var(--bg)) 0%, var(--bg) 44%);
+  box-shadow:-20px 0 44px -22px rgba(0,0,0,.42);
+}
 #homeStub.on{display:block}
-#pocketHome.in-app .homeLid,#pocketHome.in-app .homeGrid,#pocketHome.in-app .homeNow{display:none}
+/* The timetable is its own pane; an app must not hang over it. */
+body:not(.at-home) #homeStub{display:none}
+.stubPane{max-width:400px;margin:0 auto}
+#homeStub.pushing{animation:pushIn var(--mo-3) var(--ease) both}
+#homeStub.popping{animation:pushOut var(--mo-2) var(--ease) both}
+#homeStub.dragging{transition:none}
+@keyframes pushIn{from{transform:translateX(100%)}}
+@keyframes pushOut{to{transform:translateX(100%)}}
+#pocketHome{transition:transform var(--mo-3) var(--ease),opacity var(--mo-3) linear}
+#pocketHome.in-app{transform:translateX(-16%) scale(.965);opacity:.5}
 .stubBar{display:flex;align-items:center;gap:var(--sp-3);margin:0 0 var(--sp-2)}
 #stubBack{flex:none;width:36px;height:36px;padding:0;border:1px solid var(--edge);
   border-radius:var(--r-full);background:var(--card);
@@ -1209,7 +1238,6 @@ a.shellCall:active{transform:scale(.94)}
 
 .homeFoot{margin:var(--sp-8) 0 0;text-align:center;font-size:var(--fs-2xs);
   color:var(--tx3);letter-spacing:.02em}
-#pocketHome.in-app .homeFoot{display:none}
 .sectionK{margin:var(--sp-6) 0 var(--sp-2);font-size:var(--fs-2xs);font-weight:700;
   letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);font-family:var(--mono)}
 .compose{margin:0 0 var(--sp-5);gap:var(--sp-2)}
@@ -1229,7 +1257,7 @@ a.shellCall:active{transform:scale(.94)}
 *::-webkit-scrollbar{width:0;height:0;display:none}
 @media (prefers-reduced-motion:reduce){
   .homeTile,.homeNow.on,#stubStage,.shellRow,.idCard,.gpaHead,.feedCard,.statBox,
-  .walletCard,.bub{animation:none !important}
+  .walletCard,.bub,#homeStub.pushing,#homeStub.popping{animation:none !important}
   *{transition-duration:1ms !important}
 }
 @media (min-width:768px) and (pointer:coarse){
@@ -1295,11 +1323,21 @@ a.shellCall:active{transform:scale(.94)}
     width:134px;height:5px;border-radius:var(--r-full);
     background:color-mix(in srgb, var(--tx) 48%, transparent);
   }
+  /* the status bar a phone always has, above the panes, under nothing */
+  #deviceBar{
+    display:flex;align-items:center;justify-content:space-between;
+    position:absolute;z-index:101;pointer-events:none;
+    top:0;left:0;right:0;height:30px;padding:0 24px 0 30px;
+    color:var(--tx);font-size:12.5px;font-weight:700;
+    font-variant-numeric:tabular-nums;letter-spacing:.01em;
+  }
+  #deviceBar .dbR{display:flex;align-items:center;gap:6px;line-height:0}
   /* nothing may sit under the notch or the indicator */
   #pocketHome{padding-top:calc(var(--sp-4) + 34px)}
   .wrap{padding-top:34px;padding-bottom:calc(104px + 18px)}
   .actionbar{padding-bottom:18px}
   .sheet{max-height:88%;padding-bottom:44px}
+  #homeStub{padding-top:calc(var(--sp-4) + 34px)}
   .toast{bottom:126px}
 }
 </style>
@@ -1329,7 +1367,10 @@ if ("serviceWorker" in navigator)
   <button type="button" class="homeNow" id="homeNow"></button>
   <div class="homeGrid" id="homeGrid"></div>
     <p class="homeFoot" id="homeFoot"></p>
-  <div id="homeStub">
+</div>
+
+<div id="homeStub">
+  <div class="stubPane">
     <div class="stubBar">
       <button type="button" id="stubBack"></button>
       <h2 id="stubTitle"></h2>
@@ -1337,6 +1378,31 @@ if ("serviceWorker" in navigator)
     <p class="previewBar" id="stubHint"></p>
     <div id="stubStage"></div>
   </div>
+</div>
+
+<div id="deviceBar" aria-hidden="true">
+  <span id="dbTime">--:--</span>
+  <span class="dbR">
+    <svg viewBox="0 0 18 12" width="17" height="11" fill="currentColor" aria-hidden="true">
+      <rect x="0"  y="8"   width="3" height="4"   rx="1"/>
+      <rect x="4.5"y="5.5" width="3" height="6.5" rx="1"/>
+      <rect x="9"  y="3"   width="3" height="9"   rx="1"/>
+      <rect x="13.5" y="0.5" width="3" height="11.5" rx="1" opacity=".35"/>
+    </svg>
+    <svg viewBox="0 0 16 12" width="15" height="11" fill="none" stroke="currentColor"
+         stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+      <path d="M1 4.2C3 2.5 5.4 1.6 8 1.6s5 .9 7 2.6"/>
+      <path d="M3.4 7.1C4.7 6 6.3 5.4 8 5.4s3.3.6 4.6 1.7"/>
+      <circle cx="8" cy="10" r="1.1" fill="currentColor" stroke="none"/>
+    </svg>
+    <svg viewBox="0 0 26 12" width="24" height="11" aria-hidden="true">
+      <rect x=".7" y=".7" width="21" height="10.6" rx="3" fill="none"
+            stroke="currentColor" stroke-width="1.1" opacity=".45"/>
+      <rect x="2.2" y="2.2" width="14" height="7.6" rx="1.8" fill="currentColor"/>
+      <path d="M23.4 4.2v3.6c1.1-.4 1.6-1 1.6-1.8s-.5-1.4-1.6-1.8z"
+            fill="currentColor" opacity=".45"/>
+    </svg>
+  </span>
 </div>
 
 <div class="wrap">
@@ -4136,10 +4202,145 @@ function shellHtml(id){
   return '<p class="shellS">'+t("stubLead")+"</p>";
 }
 
+// ============================================================
+//  Navigation as a stack
+//  openMicro pushes an app pane in over home; closeMicro pops it. The
+//  drag handler below lets a swipe from the left edge do the popping,
+//  which is the one gesture people miss most when a "phone app" turns
+//  out to be a web page. paintHome() still owns what the pane contains
+//  -- this owns only how it arrives and leaves.
+// ============================================================
+var NAV = { busy:false, depth:0 };
+
+// A tap you can feel. Android honours it, iOS Safari ignores it, and
+// neither one may throw.
+function tap(ms){
+  try{ if(navigator.vibrate) navigator.vibrate(ms || 8); }catch(e){}
+}
+
+function openMicro(id){
+  if(NAV.busy) return;
+  UI.open = {};
+  S.micro = id;
+  var st = $("homeStub");
+  st.classList.remove("popping");
+  st.style.transform = "";
+  st.classList.add("on");
+  st.scrollTop = 0;
+  $("pocketHome").classList.add("in-app");
+  paintHome();
+  st.classList.add("pushing");
+  NAV.busy = true;
+  setTimeout(function(){ st.classList.remove("pushing"); NAV.busy = false; }, 340);
+  // Android's Back button and the browser's back arrow have to pop the
+  // pane, not leave the app. One history entry per push, popped by
+  // navBack() so both routes end in the same place.
+  try{ history.pushState({ pocket:id }, ""); NAV.depth++; }catch(e){}
+  tap(8);
+}
+
+// Every way out of an app goes through here: the chevron, the edge
+// swipe, and the Back button. Only the last one arrives as a popstate,
+// so only the other two spend a history entry.
+function navBack(){
+  if(NAV.depth > 0){
+    try{ history.back(); return; }catch(e){}
+  }
+  closeMicro();
+}
+
+function closeMicro(instant){
+  var st = $("homeStub");
+  if(!st || !st.classList.contains("on")) return;
+  UI.open = {};
+  S.micro = "home";
+  $("pocketHome").classList.remove("in-app");
+  st.classList.remove("pushing", "popping", "dragging");
+  st.style.transform = "";
+  if(instant){ st.classList.remove("on"); paintHome(); return; }
+  NAV.busy = true;
+  st.classList.add("popping");
+  setTimeout(function(){
+    st.classList.remove("popping", "on");
+    NAV.busy = false;
+    paintHome();
+  }, 215);
+  tap(6);
+}
+
+// Drag from the left edge to go back. The pane follows the finger and
+// home comes forward underneath it in step, so the gesture is reversible
+// -- let go short of a third of the width and both slide back.
+try{
+  window.addEventListener("popstate", function(){
+    if(NAV.depth > 0) NAV.depth--;
+    var st = document.getElementById("homeStub");
+    if(st && st.classList.contains("on")) closeMicro();
+  });
+}catch(e){}
+
+(function edgeBack(){
+  var st = null, x0 = 0, y0 = 0, dx = 0, live = false, t0 = 0;
+  function home(){ return document.getElementById("pocketHome"); }
+  try{
+    document.addEventListener("touchstart", function(e){
+      var s = document.getElementById("homeStub");
+      if(!s || !s.classList.contains("on") || NAV.busy) return;
+      if(!e.touches || e.touches.length !== 1) return;
+      var t = e.touches[0];
+      // Measure the edge from the pane, not the window: inside the desktop
+      // device frame the pane's left edge is not x = 0.
+      var r = s.getBoundingClientRect ? s.getBoundingClientRect() : null;
+      if(t.clientX > (r ? r.left : 0) + 30) return;
+      st = s; x0 = t.clientX; y0 = t.clientY; dx = 0; live = false; t0 = Date.now();
+    }, {passive:true});
+
+    document.addEventListener("touchmove", function(e){
+      if(!st || !e.touches || !e.touches.length) return;
+      var t = e.touches[0];
+      var ax = t.clientX - x0, ay = t.clientY - y0;
+      if(!live){
+        // Decide once whether this is a back swipe or a scroll.
+        if(Math.abs(ay) > Math.abs(ax)){ if(Math.abs(ay) > 10) st = null; return; }
+        if(ax < 9) return;
+        live = true;
+        st.classList.add("dragging");
+        home().style.transition = "none";
+      }
+      e.preventDefault();
+      dx = Math.max(0, ax);
+      var w = st.clientWidth || 390;
+      var p = Math.min(1, dx / w);
+      st.style.transform = "translateX(" + dx.toFixed(1) + "px)";
+      home().style.transform =
+        "translateX(" + (-16 + 16 * p).toFixed(2) + "%) scale(" + (0.965 + 0.035 * p).toFixed(4) + ")";
+      home().style.opacity = (0.5 + 0.5 * p).toFixed(3);
+    }, {passive:false});
+
+    var end = function(){
+      if(!st) return;
+      var s = st; st = null;
+      var h = home();
+      h.style.transition = ""; h.style.transform = ""; h.style.opacity = "";
+      s.classList.remove("dragging");
+      if(!live){ return; }
+      live = false;
+      var w = s.clientWidth || 390;
+      var flick = (Date.now() - t0) < 340 && dx > 44;
+      s.style.transform = "";
+      if(dx > w * 0.32 || flick) navBack();
+    };
+    document.addEventListener("touchend", end, {passive:true});
+    document.addEventListener("touchcancel", end, {passive:true});
+  }catch(e){}
+})();
+
 function goHome(){
+  if(NAV.depth > 0){ NAV.depth = 0; try{ history.go(-1); }catch(e){} }
   S.micro = "home";
   document.body.classList.add("at-home");
-  $("homeStub").classList.remove("on");
+  $("homeStub").classList.remove("on", "pushing", "popping", "dragging");
+  $("homeStub").style.transform = "";
   $("pocketHome").classList.remove("in-app");
   closeSheets(true);
   paintHome();
@@ -4662,6 +4863,8 @@ function tick(){
   $("ss").textContent = pad(d.getSeconds());
   $("wd").textContent = WD(d.getDay());
   $("date").textContent = S.online ? t("date", d) : t("offline");
+  var db = $("dbTime");
+  if(db) db.textContent = pad(d.getHours()) + ":" + pad(d.getMinutes());
 
   // Which network the device is on (worth spelling out in hotspot mode, or people wonder why there is no internet)
   var nb = $("netInfo"), st = S.status;
@@ -5613,6 +5816,58 @@ function closeSheets(force){
   for(var i = 0; i < sh.length; i++) sh[i].classList.remove("on");
   document.body.style.overflow = "";
 }
+// Drag a bottom sheet down to dismiss it. Every phone does this, and a
+// sheet with a grip on it that will not move is worse than no grip.
+// A sheet that refuses to close -- the role picker, before a role is
+// picked -- simply springs back, because closeSheets() stays the one
+// place that decides.
+(function sheetDrag(){
+  var sh = null, y0 = 0, dy = 0, live = false, t0 = 0;
+  function mask(){ return document.getElementById("mask"); }
+  try{
+    document.addEventListener("touchstart", function(e){
+      sh = null;
+      if(!e.touches || e.touches.length !== 1) return;
+      var n = e.target && e.target.closest ? e.target.closest(".sheet") : null;
+      if(!n || !n.classList.contains("on") || n.scrollTop > 0) return;
+      var tag = (e.target.tagName || "").toLowerCase();
+      if(tag === "input" || tag === "textarea" || tag === "select") return;
+      sh = n; y0 = e.touches[0].clientY; dy = 0; live = false; t0 = Date.now();
+    }, {passive:true});
+
+    document.addEventListener("touchmove", function(e){
+      if(!sh || !e.touches || !e.touches.length) return;
+      var d = e.touches[0].clientY - y0;
+      if(!live){
+        if(d < -8){ sh = null; return; }   // pulling up is scrolling
+        if(d < 9) return;
+        live = true;
+        sh.style.transition = "none";
+      }
+      e.preventDefault();
+      dy = Math.max(0, d);
+      sh.style.transform = "translateY(" + dy.toFixed(1) + "px)";
+      var m = mask();
+      if(m) m.style.opacity = Math.max(0, 1 - dy / 340).toFixed(3);
+    }, {passive:false});
+
+    var done = function(){
+      if(!sh) return;
+      var n = sh; sh = null;
+      var m = mask();
+      if(m) m.style.opacity = "";
+      n.style.transition = "";
+      if(!live) return;
+      live = false;
+      var flick = (Date.now() - t0) < 320 && dy > 50;
+      if(dy > 112 || flick){ closeSheets(); tap(6); }
+      n.style.transform = "";
+    };
+    document.addEventListener("touchend", done, {passive:true});
+    document.addEventListener("touchcancel", done, {passive:true});
+  }catch(e){}
+})();
+
 $("mask").onclick     = closeSheets;
 $("edCancel").onclick = closeSheets;
 $("imCancel").onclick = closeSheets;
@@ -8723,29 +8978,15 @@ $("homeCampus").onclick = function(){
   try { localStorage.setItem("clockSosCampus", sosCampus); } catch(e){}
   paintHome();
 };
-$("homeNow").onclick = function(){
-  S.micro = "today";
-  $("homeStub").classList.add("on");
-  $("pocketHome").scrollTop = 0;
-  paintHome();
-};
+$("homeNow").onclick = function(){ openMicro("today"); };
 $("homeBtn").onclick = goHome;
 $("homeGrid").onclick = function(e){
   var b = e.target.closest(".homeTile");
   if(!b) return;
-  if(b.dataset.id === "tt"){ openTt(); return; }
-  UI.open = {};
-  S.micro = b.dataset.id;
-  $("homeStub").classList.add("on");
-  $("pocketHome").scrollTop = 0;
-  paintHome();
+  if(b.dataset.id === "tt"){ tap(8); openTt(); return; }
+  openMicro(b.dataset.id);
 };
-$("stubBack").onclick = function(){
-  UI.open = {};
-  S.micro = "home";
-  $("homeStub").classList.remove("on");
-  paintHome();
-};
+$("stubBack").onclick = function(){ navBack(); };
 $("stubStage").onclick = function(e){
   var btn = e.target.closest("[data-act]");
   if(!btn) return;
