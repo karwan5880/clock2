@@ -2310,6 +2310,26 @@ zh: {
 
   qHint      :"搜索应用、课堂、截止日期…",
   qPill      :"搜索",
+  sosOfficial:"校园",
+  sosMine    :"紧急联系人",
+  iceKin     :"联系人",
+  iceAdd     :"添加联系人",
+  iceName    :"姓名",
+  iceRel     :"关系（妈妈、室友…）",
+  icePhone   :"电话号码",
+  iceSave    :"保存",
+  iceDrop    :"删除",
+  iceNeed    :"请填姓名和电话。",
+  iceNoneT   :"还没有紧急联系人",
+  iceNoneS   :"出事的时候没人记得住号码。先添加一个。",
+  iceNote    :"只存在这台手机 · 不会发到任何地方",
+  startK     :"启动屏幕",
+  startT     :"打开 Pocket 时先看到",
+  startS     :"选了课表就直接进课表，少点一次。返回键回主屏。",
+  startHome  :"主屏幕",
+  startSave  :"保存",
+  startSaved :"下次打开就从这里开始。",
+
   qNoneT     :"没有找到",
   qNoneS     :"换个词试试，或者直接打开应用。",
   homeTitle  :"今天要用哪一个？",
@@ -2362,9 +2382,12 @@ zh: {
   me2fa      :"两步验证",
   me2faAsk   :"输入验证器应用里的 6 位数字",
   me2faOn    :"已开启",
+  me2faOff   :"未开启",
+  me2faAdd   :"开了之后，密码被看到也不够登录。",
+  meLater    :"以后再说",
   me2faWhy   :"密码被看到也不够登录。",
   meOnTag    :"开",
-  meEnrolT   :"先设置两步验证",
+  meEnrolT   :"设置两步验证",
   meEnrolS   :"用 Google Authenticator、Authy 或 1Password 扫描下方二维码，再输入它给的 6 位数字。",
   meVerify   :"验证",
   meBadCode  :"验证码是 6 位数字。",
@@ -3074,6 +3097,26 @@ en: {
 
   qHint      :"Search apps, classes, deadlines…",
   qPill      :"Search",
+  sosOfficial:"Campus",
+  sosMine    :"My contacts",
+  iceKin     :"contact",
+  iceAdd     :"Add a contact",
+  iceName    :"Name",
+  iceRel     :"Who they are (mum, roommate…)",
+  icePhone   :"Phone number",
+  iceSave    :"Save",
+  iceDrop    :"Remove",
+  iceNeed    :"A name and a number, please.",
+  iceNoneT   :"No emergency contacts yet",
+  iceNoneS   :"Nobody remembers a number when it matters. Add one now.",
+  iceNote    :"Kept on this phone · never sent anywhere",
+  startK     :"Opening screen",
+  startT     :"What Pocket opens on",
+  startS     :"Pick your timetable and it opens straight there, one tap fewer. Back always returns to the home.",
+  startHome  :"Home screen",
+  startSave  :"Save",
+  startSaved :"That is where it will open next time.",
+
   qNoneT     :"Nothing found",
   qNoneS     :"Try another word, or open the app itself.",
   homeTitle  :"What do you need?",
@@ -3126,9 +3169,12 @@ en: {
   me2fa      :"Two-factor",
   me2faAsk   :"Enter the 6-digit code from your authenticator app",
   me2faOn    :"Two-factor is on",
+  me2faOff   :"Two-factor is off",
+  me2faAdd   :"Turn it on and your password alone will not get anyone in.",
+  meLater    :"Later",
   me2faWhy   :"Your password alone will not get anyone in.",
   meOnTag    :"on",
-  meEnrolT   :"Set up two-factor first",
+  meEnrolT   :"Set up two-factor",
   meEnrolS   :"Scan this with Google Authenticator, Authy or 1Password, then type the 6 digits it shows.",
   meVerify   :"Verify",
   meBadCode  :"The code is 6 digits.",
@@ -4570,9 +4616,59 @@ function dormHtml(){
   return html + demoNote();
 }
 
+// A phone number as typed, kept only as far as tel: needs it. Nothing
+// here is validated into a shape -- Malaysian, international, an
+// extension, all of it has to survive being typed the way someone knows
+// it. Only the characters a dialler would choke on come out.
+function telHref(v){ return String(v || "").replace(/[^0-9+#*,;]/g, ""); }
+
+function myIce(){
+  var raw = pk("ice", []);
+  if(!raw || typeof raw.length !== "number") return [];
+  var out = [], i, x;
+  for(i = 0; i < raw.length && out.length < 12; i++){
+    x = raw[i];
+    if(!x || typeof x !== "object") continue;
+    var n = String(x.n || "").trim().slice(0, 40);
+    var p = String(x.p || "").trim().slice(0, 24);
+    if(!n || !telHref(p)) continue;
+    out.push({ id: String(x.id || ("i" + i)), n: n, p: p, r: String(x.r || "").trim().slice(0, 24) });
+  }
+  return out;
+}
+
+function iceHtml(){
+  var list = myIce(), i, x, html = "";
+  if(!list.length) html += emptyBox(t("iceNoneT"), t("iceNoneS"));
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    html += shellRow(
+      esc(x.r || t("iceKin")),
+      esc(x.n),
+      '<span class="num">' + esc(x.p) + "</span>",
+      '<div class="shellBtns">' + callBtn(x.p) +
+        '<button type="button" data-act="iceDrop" data-id="' + esc(x.id) + '">' +
+        t("iceDrop") + "</button></div>"
+    );
+  }
+  html += '<p class="sectionK">' + t("iceAdd") + "</p>" +
+    '<div class="dueForm">' +
+      '<input id="iceN" maxlength="40" placeholder="' + esc(t("iceName")) + '">' +
+      '<input id="iceR" maxlength="24" placeholder="' + esc(t("iceRel")) + '">' +
+      '<input id="iceP" type="tel" inputmode="tel" maxlength="24" placeholder="' +
+        esc(t("icePhone")) + '">' +
+    "</div>" +
+    '<button type="button" class="shellFab ghost" data-act="iceAdd">' + t("iceSave") + "</button>" +
+    '<p class="shellS">' + t("iceNote") + "</p>";
+  return html;
+}
+
 function shellHtml(id){
   var zh = lang === "zh";
   if(id === "sos"){
+    if(tab("sos", "campus") === "mine"){
+      return seg("sos", [["campus", t("sosOfficial")], ["mine", t("sosMine")]], "mine") + iceHtml();
+    }
     var kpr = sosCampus === "kpr";
     var rows = kpr ? [
       [t("sos999"), "999", t("sos24")],
@@ -4590,7 +4686,8 @@ function shellHtml(id){
       [t("sosFire"), "03-8736 4444", ""],
       [t("sosPolice"), "03-8911 4239", ""]
     ];
-    var html = '<div class="shellBtns">'+
+    var html = seg("sos", [["campus", t("sosOfficial")], ["mine", t("sosMine")]], "campus") +
+      '<div class="shellBtns">'+
       '<button type="button" data-act="campus" data-campus="kpr"'+(kpr?' class="on"':'')+">"+t("sosKpr")+"</button>"+
       '<button type="button" data-act="campus" data-campus="sl"'+(kpr?'':' class="on"')+">"+t("sosSl")+"</button>"+
       "</div>";
@@ -5058,6 +5155,7 @@ function meHtml(){
 
   // 1. Signed out -- one field for an ID or a UTAR email, and a password.
   if(!signedIn()){
+    var lidOut = "";
     html += '<div class="statBox">' +
       '<p class="shellK">' + t("meWho") + "</p>" +
       '<label class="f"><span>' + t("meId") + "</span>" +
@@ -5070,7 +5168,7 @@ function meHtml(){
         '<button type="button" data-act="meUp">' + t("meSignUp") + "</button>" +
       "</div>" +
       '<p class="shellS">' + t("meDomains") + "</p></div>";
-    return html + meFoot();
+    return html + startHtml() + meFoot();
   }
 
   // 2. Signed in with a password only, and a factor is waiting.
@@ -5099,7 +5197,7 @@ function meHtml(){
         'autocomplete="one-time-code" maxlength="6" placeholder="000000"></label>' +
       '<div class="shellBtns">' +
         '<button type="button" data-act="meCode" class="on">' + t("meVerify") + "</button>" +
-        '<button type="button" data-act="meOut">' + t("meSignOut") + "</button>" +
+        '<button type="button" data-act="meLater">' + t("meLater") + "</button>" +
       "</div></div>";
     return html + meFoot();
   }
@@ -5120,8 +5218,13 @@ function meHtml(){
       esc(toDisplayName(CLOUD.email)) + "</p>" +
     '<p class="shellS">' + esc(CLOUD.email) + "</p></div>";
 
-  html += authRow(t("me2fa"), t("me2faOn"), t("me2faWhy"),
-    '<span class="tag ok">' + t("meOnTag") + "</span>");
+  html += authRow(t("me2fa"),
+    twoFactorOn() ? t("me2faOn") : t("me2faOff"),
+    twoFactorOn() ? t("me2faWhy") : t("me2faAdd"),
+    twoFactorOn()
+      ? '<span class="tag ok">' + t("meOnTag") + "</span>"
+      : '<div class="shellBtns"><button type="button" data-act="me2faOn">' +
+        t("mePkAdd") + "</button></div>");
 
   if(pkSupported()){
     html += authRow(t("mePk"), pkOn() ? t("mePkOn") : t("mePkOff"), t("mePkWhat"),
@@ -5130,6 +5233,8 @@ function meHtml(){
         (pkOn() ? t("mePkForget") : t("mePkAdd")) + "</button></div>");
   }
 
+  html += startHtml();
+
   html += '<div class="shellBtns"><button type="button" data-act="meOut">' +
     t("meSignOut") + "</button></div>";
   return html + meFoot();
@@ -5137,6 +5242,40 @@ function meHtml(){
 
 // Every screen in Pocket says what it is. This one is the only place
 // where a line about a real server belongs, so it says that instead.
+// What Pocket opens on. "home" is the springboard; anything else is a
+// micro-app id, and "tt" is the timetable, which is its own pane rather
+// than one of the app screens. An id that no longer exists falls back to
+// the home rather than opening nothing.
+function startAt(){
+  var v = String(pk("startAt", "home") || "home");
+  if(v === "home" || v === "tt") return v;
+  for(var i = 0; i < MICROS.length; i++) if(MICROS[i].id === v) return v;
+  return "home";
+}
+function startOpts(){
+  var out = [["home", t("startHome")]];
+  for(var i = 0; i < MICROS.length; i++){
+    if(MICROS[i].id === "me") continue;   // opening on the account screen is nobody's morning
+    out.push([MICROS[i].id, t(MICROS[i].t)]);
+  }
+  return out;
+}
+function startHtml(){
+  var cur = startAt(), opts = startOpts(), i, html = "";
+  html += '<div class="statBox"><p class="shellK">' + t("startK") + "</p>" +
+    '<p class="shellT">' + t("startT") + "</p>" +
+    '<p class="shellS">' + t("startS") + "</p>" +
+    '<label class="f"><select id="startSel">';
+  for(i = 0; i < opts.length; i++){
+    html += '<option value="' + esc(opts[i][0]) + '"' +
+      (opts[i][0] === cur ? " selected" : "") + ">" + esc(opts[i][1]) + "</option>";
+  }
+  html += "</select></label>" +
+    '<div class="shellBtns"><button type="button" data-act="startSave">' +
+    t("startSave") + "</button></div></div>";
+  return html;
+}
+
 function meFoot(){
   return '<p class="shellS" style="margin-top:14px;text-align:center;color:var(--tx3)">' +
     t("meNote") + "</p>";
@@ -5149,36 +5288,47 @@ function authSettle(){
   if(!signedIn()){ AUTH.step = "in"; paintHome(); return Promise.resolve(); }
   return mfaFactors().then(function(list){
     var ok = mfaVerified(list);
-    if(jwtAal(CLOUD.token) === "aal2"){
+    AUTH.hasFactor = ok.length > 0;
+    if(!AUTH.hasFactor || jwtAal(CLOUD.token) === "aal2"){
+      // Either there is no second factor to answer, or it has been
+      // answered. Either way this is as far in as you go.
       AUTH.step = "done";
-      AUTH.locked = pkOn() ? AUTH.locked : false;
-    } else if(ok.length){
-      AUTH.step = "code";
-      AUTH.factor = ok[0].id;
-      return mfaChallenge(AUTH.factor).then(function(c){
-        AUTH.chal = (c && c.id) || "";
-        paintHome();
-      });
-    } else {
-      // Half-finished enrolments block a new one, so clear them.
-      var stale = (list || []).filter(function(f){ return f.status !== "verified"; });
-      var drop = stale.length ? mfaDrop(stale[0].id) : Promise.resolve();
-      return drop.then(mfaEnrol).then(function(j){
-        AUTH.step   = "enrol";
-        AUTH.factor = (j && j.id) || "";
-        AUTH.qr     = (j && j.totp && j.totp.qr_code) || "";
-        AUTH.secret = (j && j.totp && j.totp.secret) || "";
-        return mfaChallenge(AUTH.factor);
-      }).then(function(c){
-        AUTH.chal = (c && c.id) || "";
-        paintHome();
-      });
+      if(!pkOn()) AUTH.locked = false;
+      paintHome();
+      return;
     }
-    paintHome();
+    AUTH.step = "code";
+    AUTH.factor = ok[0].id;
+    return mfaChallenge(AUTH.factor).then(function(c){
+      AUTH.chal = (c && c.id) || "";
+      paintHome();
+    });
   }).catch(function(err){
     AUTH.msg = cloudErr(err && err.message);
     paintHome();
   });
+}
+
+// Only reached from the "Turn on two-factor" button. A half-finished
+// enrolment left behind by a cancelled attempt blocks a new one, so it
+// is cleared first.
+function authEnrolStart(){
+  if(AUTH.busy) return;
+  AUTH.busy = true; AUTH.msg = t("meWorking"); paintHome();
+  mfaFactors().then(function(list){
+    var stale = (list || []).filter(function(f){ return f.status !== "verified"; });
+    return stale.length ? mfaDrop(stale[0].id) : null;
+  }).then(mfaEnrol).then(function(j){
+    AUTH.step   = "enrol";
+    AUTH.factor = (j && j.id) || "";
+    AUTH.qr     = qrSrc(j && j.totp && j.totp.qr_code);
+    AUTH.secret = (j && j.totp && j.totp.secret) || "";
+    return mfaChallenge(AUTH.factor);
+  }).then(function(c){
+    AUTH.chal = (c && c.id) || "";
+    AUTH.busy = false; AUTH.msg = "";
+    paintHome();
+  }).catch(authFail);
 }
 
 function authFail(err){
@@ -7613,14 +7763,23 @@ var AUTH = {
   busy: false,
   factor: "",        // the TOTP factor being challenged or enrolled
   chal: "",          // the challenge id that goes with it
-  qr: "",            // enrolment QR, an SVG data URI from Supabase
+  qr: "",            // enrolment QR, wrapped into a data URI by qrSrc()
   secret: "",        // the same secret in text, for a keyboard
+  hasFactor: false,  // a verified TOTP factor exists on this account
   locked: false      // a passkey is enrolled and has not been answered yet
 };
 
 function authReady(){ return !!(CLOUD.url && CLOUD.key); }
 function signedIn(){ return !!(CLOUD.token && CLOUD.uid); }
-function fullyIn(){ return signedIn() && jwtAal(CLOUD.token) === "aal2" && !AUTH.locked; }
+// "In and usable". Two-factor is offered, not demanded -- a proof of
+// concept that will not let you past the door because you have not
+// installed an authenticator app is a proof of nothing. Once a factor
+// IS enrolled it is enforced: the token has to reach aal2.
+function twoFactorOn(){ return !!AUTH.hasFactor; }
+function fullyIn(){
+  if(!signedIn() || AUTH.locked) return false;
+  return twoFactorOn() ? jwtAal(CLOUD.token) === "aal2" : true;
+}
 
 // ---------- Second factor: TOTP ----------
 // Supabase's own MFA. No SMS provider, no codes table of ours, no email
@@ -7636,6 +7795,22 @@ function mfaVerified(list){
     return f.factor_type === "totp" && f.status === "verified";
   });
 }
+// Supabase hands the enrolment QR back as **raw SVG markup** -- an actual
+// "<?xml ...><svg>...</svg>" string, not a data URI. Putting that into
+// <img src> renders nothing at all, which is exactly what it did: the
+// enrolment succeeded, the code was live, and the box was blank. Wrap it
+// so <img> can take it, and pass a real data URI through untouched in
+// case a future version returns one.
+function qrSrc(v){
+  v = String(v || "");
+  if(!v) return "";
+  if(v.slice(0, 5) === "data:") return v;
+  if(v.charAt(0) !== "<") return v;
+  try{
+    return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(v)));
+  }catch(e){ return ""; }
+}
+
 function mfaEnrol(){
   return cloudFetch("/auth/v1/factors", {
     method:"POST",
@@ -10562,10 +10737,40 @@ $("stubStage").onclick = function(e){
       });
     return;
   }
+  if(act === "startSave"){
+    var sel = $("startSel");
+    pkSet("startAt", sel ? String(sel.value || "home") : "home");
+    toast(t("startSaved"));
+    return;
+  }
+  if(act === "iceAdd"){
+    var iN = String(($("iceN") || {}).value || "").trim().slice(0, 40);
+    var iP = String(($("iceP") || {}).value || "").trim().slice(0, 24);
+    var iR = String(($("iceR") || {}).value || "").trim().slice(0, 24);
+    if(!iN || !telHref(iP)){ toast(t("iceNeed")); return; }
+    var ice = myIce();
+    ice.unshift({ id: "i" + Date.now().toString(36), n: iN, p: iP, r: iR });
+    pkSet("ice", ice);
+    paintHome();
+    return;
+  }
+  if(act === "iceDrop"){
+    pkSet("ice", myIce().filter(function(x){ return x.id !== btn.dataset.id; }));
+    paintHome();
+    return;
+  }
+  if(act === "me2faOn"){ authEnrolStart(); return; }
+  if(act === "meLater"){
+    // Back out of an enrolment without signing out. The unverified factor
+    // it leaves behind is cleared by the next attempt.
+    AUTH.step = "done"; AUTH.qr = ""; AUTH.secret = ""; AUTH.msg = "";
+    paintHome();
+    return;
+  }
   if(act === "meOut"){
     cloudLogout();
     AUTH.step = "in"; AUTH.msg = ""; AUTH.qr = ""; AUTH.secret = "";
-    AUTH.factor = ""; AUTH.chal = ""; AUTH.locked = false;
+    AUTH.factor = ""; AUTH.chal = ""; AUTH.locked = false; AUTH.hasFactor = false;
     paintHome();
     return;
   }
@@ -10618,6 +10823,19 @@ try {
 
 // Logged in last time -> reconnect to the cloud (falling back to local / device if that fails)
 loadRoleLocal();
+// Open where they asked to be opened. Done before the first paint so it
+// is the first screen, not a flash of the springboard and then a jump.
+(function openingScreen(){
+  try{
+    var at = startAt();
+    if(at === "home") return;
+    if(at === "tt"){ openTt(); return; }
+    S.micro = at;
+    $("homeStub").classList.add("on");
+    $("pocketHome").classList.add("in-app");
+  }catch(e){}
+})();
+
 cloudLoadCfg();
 paintCloudBtn();
 // A session that survived a reload still has to be unlocked if a passkey
