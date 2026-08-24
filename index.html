@@ -884,25 +884,60 @@ body.at-home .actionbar{display:none !important}
 .homeLang:active{transform:scale(.94);opacity:.75}
 
 /* ---------- The lockup: crest, name, campus ---------- */
-.homeLid{text-align:center;margin:var(--sp-2) 0 var(--sp-6)}
-.homeMark{
-  display:inline-flex;align-items:center;gap:var(--sp-2);margin:0 0 var(--sp-3);
-  padding:5px 13px 5px 5px;
-  border-radius:var(--r-full);border:1px solid color-mix(in srgb, #d4a017 55%, transparent);
-  background:linear-gradient(180deg,#163a86,#0b255f);color:#f3d06a;
-  box-shadow:0 10px 22px -14px #0b255f, inset 0 1px 0 color-mix(in srgb,#f3d06a 30%,transparent);
-  vertical-align:top}
-.homeMark svg{width:22px;height:22px;display:block;flex:none}
-.homeMark b{font-size:var(--fs-xs);font-weight:800;letter-spacing:.18em}
-.homeEye{margin:0;font-size:var(--fs-2xl);font-weight:800;letter-spacing:-.035em;
-  line-height:1.05;color:var(--tx)}
-.homeCampus{
-  appearance:none;margin:var(--sp-2) 0 0;padding:5px 12px;border:1px solid var(--edge);
-  border-radius:var(--r-full);
-  background:color-mix(in srgb, var(--card) 55%, transparent);color:var(--tx2);
-  font:inherit;font-size:var(--fs-sm);font-weight:600;cursor:pointer;
+/* The lid -- crest, "Pocket", campus chip -- came off on 2026-08-24. A
+   home screen does not caption itself, and the three of them were the
+   only thing on this page that read as a web page's masthead. What the
+   space is worth instead is search: the one super-app affordance the
+   home was missing. */
+.homeSearch{
+  display:flex;align-items:center;gap:var(--sp-2);
+  margin:var(--sp-2) 0 var(--sp-6);padding:0 var(--sp-4);
+  height:44px;border-radius:var(--r-full);
+  border:1px solid var(--edge);
+  background:color-mix(in srgb, var(--card) 74%, transparent);
+  backdrop-filter:blur(16px) saturate(1.5);-webkit-backdrop-filter:blur(16px) saturate(1.5);
+  box-shadow:var(--e1);
+  transition:border-color var(--mo-2) linear,box-shadow var(--mo-2) linear;
+}
+.homeSearch:focus-within{border-color:var(--ac);box-shadow:var(--e2)}
+.homeSearch svg{width:18px;height:18px;flex:none;color:var(--tx3)}
+.homeSearch input{
+  flex:1;min-width:0;border:0;background:transparent;outline:none;
+  font:inherit;font-size:var(--fs-md);color:var(--tx);
+  -webkit-user-select:text;user-select:text;
+}
+.homeSearch input::placeholder{color:var(--tx3)}
+.homeSearch input::-webkit-search-cancel-button{display:none}
+#homeQx{
+  flex:none;width:22px;height:22px;padding:0;border:0;border-radius:50%;
+  background:var(--card2);color:var(--tx2);font-size:11px;line-height:1;
+  cursor:pointer;display:grid;place-items:center}
+/* display:grid outranks the user agent's [hidden]{display:none}, so the
+   clear button has to hide itself explicitly or it sits there on an
+   empty field. */
+#homeQx[hidden]{display:none}
+
+/* One row per hit. The colour square is the app's own tile face, shrunk --
+   it is how you tell at a glance that this line lives in Deadlines and
+   the one under it lives in Exams. */
+.hitGroup{margin:0 0 var(--sp-4)}
+.hitK{margin:0 0 var(--sp-2);font-size:var(--fs-2xs);font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);font-family:var(--mono)}
+.hitRow{
+  display:flex;align-items:center;gap:var(--sp-3);width:100%;text-align:left;
+  appearance:none;border:1px solid var(--edge);border-radius:var(--r-md);
+  background:var(--card);color:var(--tx);font:inherit;cursor:pointer;
+  padding:var(--sp-3) var(--sp-3);margin:0 0 var(--sp-2);box-shadow:var(--e1);
   transition:transform var(--mo-1) var(--ease)}
-.homeCampus:active{transform:scale(.95)}
+.hitRow:active{transform:scale(.985)}
+.hitDot{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.34)}
+.hitDot svg{width:17px;height:17px;display:block}
+.hitMain{min-width:0;flex:1}
+.hitT{display:block;margin:0;font-size:var(--fs-sm);font-weight:650;letter-spacing:-.01em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hitS{display:block;margin:1px 0 0;font-size:var(--fs-2xs);color:var(--tx2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* The strip that says what is on now or next. It is the one thing on the
    home screen that changes by itself, so it gets the accent edge. */
@@ -975,22 +1010,22 @@ body.at-home .actionbar{display:none !important}
 .homeTile[data-shell] .icon::after{
   content:"";position:absolute;margin:38px 0 0 38px;width:7px;height:7px;
   border-radius:50%;background:var(--bell);box-shadow:0 0 0 2px var(--bg)}
-.homeTile[data-id="today"] .icon{background:linear-gradient(180deg,#7aa0ff,#3d6dff)}
-.homeTile[data-id="tt"] .icon{background:linear-gradient(180deg,#5bb4ee,var(--ac))}
-.homeTile[data-id="att"] .icon{background:linear-gradient(180deg,#46d39a,#1fa971)}
-.homeTile[data-id="due"] .icon{background:linear-gradient(180deg,#ff8b6a,#e24b2c)}
-.homeTile[data-id="ev"] .icon{background:linear-gradient(180deg,#ffd56a,#e8a317)}
-.homeTile[data-id="gpa"] .icon{background:linear-gradient(180deg,#c084fc,#7c3aed)}
-.homeTile[data-id="id"] .icon{background:linear-gradient(180deg,#94a3b8,#475569)}
-.homeTile[data-id="cash"] .icon{background:linear-gradient(180deg,#4ade80,#16a34a)}
-.homeTile[data-id="bus"] .icon{background:linear-gradient(180deg,#67e8f9,#0891b2)}
-.homeTile[data-id="map"] .icon{background:linear-gradient(180deg,#86efac,#15803d)}
-.homeTile[data-id="dorm"] .icon{background:linear-gradient(180deg,#fdb4ff,#c026d3)}
-.homeTile[data-id="sos"] .icon{background:linear-gradient(180deg,#ff7b7b,#dc2626)}
-.homeTile[data-id="food"] .icon{background:linear-gradient(180deg,#ff9a62,#e25a28)}
-.homeTile[data-id="ride"] .icon{background:linear-gradient(180deg,#7fd4ea,#2a9fc4)}
-.homeTile[data-id="wall"] .icon{background:linear-gradient(180deg,#f08cc4,#d45a9a)}
-.homeTile[data-id="chat"] .icon{background:linear-gradient(180deg,#8ab4ff,#4f46e5)}
+.homeTile[data-id="today"] .icon,.hitDot[data-id="today"]{background:linear-gradient(180deg,#7aa0ff,#3d6dff)}
+.homeTile[data-id="tt"] .icon,.hitDot[data-id="tt"]{background:linear-gradient(180deg,#5bb4ee,var(--ac))}
+.homeTile[data-id="att"] .icon,.hitDot[data-id="att"]{background:linear-gradient(180deg,#46d39a,#1fa971)}
+.homeTile[data-id="due"] .icon,.hitDot[data-id="due"]{background:linear-gradient(180deg,#ff8b6a,#e24b2c)}
+.homeTile[data-id="ev"] .icon,.hitDot[data-id="ev"]{background:linear-gradient(180deg,#ffd56a,#e8a317)}
+.homeTile[data-id="gpa"] .icon,.hitDot[data-id="gpa"]{background:linear-gradient(180deg,#c084fc,#7c3aed)}
+.homeTile[data-id="id"] .icon,.hitDot[data-id="id"]{background:linear-gradient(180deg,#94a3b8,#475569)}
+.homeTile[data-id="cash"] .icon,.hitDot[data-id="cash"]{background:linear-gradient(180deg,#4ade80,#16a34a)}
+.homeTile[data-id="bus"] .icon,.hitDot[data-id="bus"]{background:linear-gradient(180deg,#67e8f9,#0891b2)}
+.homeTile[data-id="map"] .icon,.hitDot[data-id="map"]{background:linear-gradient(180deg,#86efac,#15803d)}
+.homeTile[data-id="dorm"] .icon,.hitDot[data-id="dorm"]{background:linear-gradient(180deg,#fdb4ff,#c026d3)}
+.homeTile[data-id="sos"] .icon,.hitDot[data-id="sos"]{background:linear-gradient(180deg,#ff7b7b,#dc2626)}
+.homeTile[data-id="food"] .icon,.hitDot[data-id="food"]{background:linear-gradient(180deg,#ff9a62,#e25a28)}
+.homeTile[data-id="ride"] .icon,.hitDot[data-id="ride"]{background:linear-gradient(180deg,#7fd4ea,#2a9fc4)}
+.homeTile[data-id="wall"] .icon,.hitDot[data-id="wall"]{background:linear-gradient(180deg,#f08cc4,#d45a9a)}
+.homeTile[data-id="chat"] .icon,.hitDot[data-id="chat"]{background:linear-gradient(180deg,#8ab4ff,#4f46e5)}
 
 @keyframes tileIn{from{opacity:0;transform:translateY(10px) scale(.94)}}
 @keyframes riseIn{from{opacity:0;transform:translateY(8px)}}
@@ -1002,14 +1037,14 @@ body.at-home .actionbar{display:none !important}
 
 /* Page two of the home. The palette keeps walking round the wheel so no
    two neighbours share a hue and nothing lands on another app's colour. */
-.homeTile[data-id="lib"] .icon{background:linear-gradient(180deg,#f0a868,#c2410c)}
-.homeTile[data-id="exam"] .icon{background:linear-gradient(180deg,#a5b4fc,#4338ca)}
-.homeTile[data-id="print"] .icon{background:linear-gradient(180deg,#9ca3af,#374151)}
-.homeTile[data-id="wash"] .icon{background:linear-gradient(180deg,#7dd3fc,#0369a1)}
-.homeTile[data-id="club"] .icon{background:linear-gradient(180deg,#fca5a5,#b91c1c)}
-.homeTile[data-id="job"] .icon{background:linear-gradient(180deg,#5eead4,#0f766e)}
-.homeTile[data-id="med"] .icon{background:linear-gradient(180deg,#fda4af,#be123c)}
-.homeTile[data-id="lost"] .icon{background:linear-gradient(180deg,#fcd34d,#b45309)}
+.homeTile[data-id="lib"] .icon,.hitDot[data-id="lib"]{background:linear-gradient(180deg,#f0a868,#c2410c)}
+.homeTile[data-id="exam"] .icon,.hitDot[data-id="exam"]{background:linear-gradient(180deg,#a5b4fc,#4338ca)}
+.homeTile[data-id="print"] .icon,.hitDot[data-id="print"]{background:linear-gradient(180deg,#9ca3af,#374151)}
+.homeTile[data-id="wash"] .icon,.hitDot[data-id="wash"]{background:linear-gradient(180deg,#7dd3fc,#0369a1)}
+.homeTile[data-id="club"] .icon,.hitDot[data-id="club"]{background:linear-gradient(180deg,#fca5a5,#b91c1c)}
+.homeTile[data-id="job"] .icon,.hitDot[data-id="job"]{background:linear-gradient(180deg,#5eead4,#0f766e)}
+.homeTile[data-id="med"] .icon,.hitDot[data-id="med"]{background:linear-gradient(180deg,#fda4af,#be123c)}
+.homeTile[data-id="lost"] .icon,.hitDot[data-id="lost"]{background:linear-gradient(180deg,#fcd34d,#b45309)}
 
 /* ---------- An app, opened ---------- */
 /* Home and an app are two panes on a stack, not one pane with its middle
@@ -1387,17 +1422,16 @@ if ("serviceWorker" in navigator)
 
 <div id="pocketHome">
   <div class="homeTop"><button type="button" class="homeLang" id="homeLang">EN</button></div>
-  <header class="homeLid">
-    <div class="homeMark" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2.4l7.2 2.4v6.1c0 4.7-3.1 8.1-7.2 10.1C7.9 19 4.8 15.6 4.8 10.9V4.8z"/>
-        <path d="M9.2 10.2c0-1.7 1.2-2.8 2.8-2.8s2.8 1.1 2.8 2.8v4.4"/>
-      </svg>
-      <b>UTAR</b>
-    </div>
-    <p class="homeEye" id="homeEye"></p>
-    <button type="button" class="homeCampus" id="homeCampus"></button>
-  </header>
+  <div class="homeSearch">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
+         stroke-linecap="round" aria-hidden="true">
+      <circle cx="10.6" cy="10.6" r="6.4"/><path d="m15.4 15.4 4.6 4.6"/>
+    </svg>
+    <input id="homeQ" type="search" autocomplete="off" autocapitalize="off"
+           spellcheck="false" enterkeyhint="search" aria-label="Search">
+    <button type="button" id="homeQx" hidden aria-label="Clear">&#10005;</button>
+  </div>
+  <div id="homeHits" hidden></div>
   <button type="button" class="homeNow" id="homeNow"></button>
   <div class="homePager" id="homePager"></div>
   <div class="homeDots" id="homeDots" role="tablist"></div>
@@ -2186,9 +2220,9 @@ zh: {
   roleCancel   :"取消",
   tRoleSaved   :"身份改好了",
 
-  homeEye    :"我的百宝箱",
-  homeCampusKpr:"拉曼大学 · 金宝",
-  homeCampusSl :"拉曼大学 · 双溪龙",
+  qHint      :"搜索应用、课堂、截止日期…",
+  qNoneT     :"没有找到",
+  qNoneS     :"换个词试试，或者直接打开应用。",
   homeTitle  :"今天要用哪一个？",
   homeSub    :"课表已经能用。其它格子先占位子——空着比假装做好了更诚实。",
   homeBack   :"百宝箱",
@@ -2910,9 +2944,9 @@ en: {
   roleCancel   :"Cancel",
   tRoleSaved   :"Role updated",
 
-  homeEye    :"Pocket",
-  homeCampusKpr:"UTAR · Kampar",
-  homeCampusSl :"UTAR · Sungai Long",
+  qHint      :"Search apps, classes, deadlines…",
+  qNoneT     :"Nothing found",
+  qNoneS     :"Try another word, or open the app itself.",
   homeTitle  :"What do you need?",
   homeSub    :"Timetable works. The other slots are saved for later — empty is better than fake.",
   homeBack   :"Pocket",
@@ -4904,13 +4938,164 @@ function markPage(){
   }
 }
 
+// ============================================================
+//  Search
+//  A super-app that cannot find a thing inside itself is a folder of
+//  icons. searchAll() is deliberately a pure function over the same
+//  seeds and stores the screens render from -- no index, no cache, no
+//  second copy of the data to fall out of step. Twenty-four apps of
+//  demo content is small enough that scanning it on every keystroke is
+//  cheaper than keeping an index honest.
+// ============================================================
+function hay(v){ return String(v == null ? "" : v).toLowerCase(); }
+
+function searchAll(q){
+  q = String(q || "").trim().toLowerCase();
+  var out = [];
+  if(!q) return out;
+  function hit(app, title, sub){
+    if(out.length < 40) out.push({ app:app, title:String(title || ""), sub:String(sub || "") });
+  }
+  function match(){
+    for(var i = 0; i < arguments.length; i++)
+      if(hay(arguments[i]).indexOf(q) >= 0) return true;
+    return false;
+  }
+  var i, x, list;
+
+  // The apps themselves, by name and by the one-line description on the tile.
+  for(i = 0; i < MICROS.length; i++){
+    var nm = t(MICROS[i].t), sb = L[lang][MICROS[i].t + "Sub"];
+    if(typeof sb !== "string") sb = "";
+    if(match(nm, sb)) hit(MICROS[i].id, nm, sb);
+  }
+
+  // Your own data first: classes, deadlines, courses.
+  list = mine();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.label, roomOf(x))) hit("tt", subjectOf(x) || x.label, hhmm(x) + " \u00b7 " + (roomOf(x) || ""));
+  }
+  list = dueList();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.title, x.sub)) hit("due", x.title, x.date + (x.time ? " " + x.time : ""));
+  }
+  list = gpaList();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.name)) hit("gpa", x.name, x.g + " \u00b7 " + x.cr);
+  }
+
+  // Then the demo content, app by app.
+  list = examSeed();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.c, x.code, x.v, x.s)) hit("exam", x.c, x.code + " \u00b7 " + x.v + " \u00b7 " + x.s);
+  }
+  list = libSeed();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.t, x.a)) hit("lib", x.t, x.a);
+  }
+  list = clubSeed();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.n, x.nx)) hit("club", x.n, x.nx);
+  }
+  list = jobSeed();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.co, x.r)) hit("job", x.r, x.co + " \u00b7 " + x.pay);
+  }
+  list = evSeed();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.title, x.who, x.when)) hit("ev", x.title, x.who + " \u00b7 " + x.when);
+  }
+  list = foodSeed();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.n, x.p)) hit("food", x.n, x.p);
+  }
+  list = rideSeed();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.from, x.to, x.when)) hit("ride", x.from + " \u2192 " + x.to, x.when + " \u00b7 " + x.fee);
+  }
+  list = lostSeed();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.w, x.p)) hit("lost", x.w, x.p + " \u00b7 " + x.t);
+  }
+  list = printSeed();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.n)) hit("print", x.n, t("printQueue", x.q));
+  }
+  list = washSeed();
+  for(i = 0; i < list.length; i++){
+    x = list[i];
+    if(match(x.n)) hit("wash", x.n, x.left ? t("washBusy", x.left) : t("washFree"));
+  }
+  return out;
+}
+
+// Group the flat list by app, in the order the apps sit on the home, so
+// the same query always lays out the same way.
+function hitsHtml(hits){
+  if(!hits.length) return emptyBox(t("qNoneT"), t("qNoneS"));
+  var by = {}, order = [], i, h;
+  for(i = 0; i < hits.length; i++){
+    h = hits[i];
+    if(!by[h.app]){ by[h.app] = []; order.push(h.app); }
+    by[h.app].push(h);
+  }
+  order.sort(function(a, b){
+    function at(id){
+      for(var k = 0; k < MICROS.length; k++) if(MICROS[k].id === id) return k;
+      return 99;
+    }
+    return at(a) - at(b);
+  });
+  var html = "";
+  for(i = 0; i < order.length; i++){
+    var app = order[i], rows = by[app], j;
+    var meta = MICROS.filter(function(m){ return m.id === app; })[0];
+    html += '<div class="hitGroup"><p class="hitK">' + esc(meta ? t(meta.t) : app) + "</p>";
+    for(j = 0; j < rows.length; j++){
+      html += '<button type="button" class="hitRow" data-app="' + esc(app) + '">' +
+        '<span class="hitDot" data-id="' + esc(app) + '">' + tileGlyph(app) + "</span>" +
+        '<span class="hitMain"><span class="hitT">' + esc(rows[j].title) + "</span>" +
+        (rows[j].sub ? '<span class="hitS">' + esc(rows[j].sub) + "</span>" : "") +
+        "</span></button>";
+    }
+    html += "</div>";
+  }
+  return html;
+}
+
+// The search field owns the home: while there is a query, the springboard
+// and everything under it stands down rather than scrolling below results.
+var homeQ = "";
+function paintSearch(){
+  var box = $("homeHits"), inp = $("homeQ"), x = $("homeQx");
+  if(!box || !inp) return;
+  var on = !!homeQ;
+  if(x) x.hidden = !on;
+  box.hidden = !on;
+  var pager = $("homePager"), dots = $("homeDots"), now = $("homeNow"), foot = $("homeFoot");
+  if(pager) pager.style.display = on ? "none" : "";
+  if(dots) dots.style.display = on ? "none" : "";
+  if(foot) foot.style.display = on ? "none" : "";
+  if(now) now.style.display = on ? "none" : "";
+  if(on) box.innerHTML = hitsHtml(searchAll(homeQ));
+}
+
 function paintHome(){
-  var eye = $("homeEye");
-  if(!eye) return;
-  eye.textContent = t("homeEye");
-  var camp = $("homeCampus");
-  camp.textContent = t(sosCampus === "sl" ? "homeCampusSl" : "homeCampusKpr");
-  camp.setAttribute("aria-label", camp.textContent);
+  var q = $("homeQ");
+  if(!q) return;
+  q.placeholder = t("qHint");
   $("homeLang").textContent = (lang === "zh" ? "EN" : "中");
     // The back control is a 36px chevron, so the words that used to sit
     // beside it become its accessible name instead of being clipped.
@@ -4919,6 +5104,7 @@ function paintHome(){
   paintPages();
   var foot = $("homeFoot");
   if(foot) foot.textContent = t("homeFoot", MICROS.length);
+  paintSearch();
   var stub = $("homeStub");
   var stubOn = stub.classList.contains("on");
   $("pocketHome").classList.toggle("in-app", stubOn);
@@ -9512,10 +9698,31 @@ $("langBtn").onclick = function(){
 };
 
 $("homeLang").onclick = function(){ $("langBtn").click(); };
-$("homeCampus").onclick = function(){
-  sosCampus = sosCampus === "sl" ? "kpr" : "sl";
-  try { localStorage.setItem("clockSosCampus", sosCampus); } catch(e){}
-  paintHome();
+$("homeQ").oninput = function(){
+  homeQ = String(this.value || "").slice(0, 60);
+  paintSearch();
+};
+$("homeQ").onkeydown = function(e){
+  if(e.key !== "Escape") return;
+  this.value = ""; homeQ = ""; this.blur(); paintSearch();
+};
+$("homeQx").onclick = function(){
+  var q = $("homeQ");
+  q.value = ""; homeQ = ""; q.focus(); paintSearch();
+};
+// A hit opens the app it belongs to and clears the query behind it, so
+// coming back with Back lands on the springboard rather than on a stale
+// result list.
+$("homeHits").onclick = function(e){
+  var b = e.target.closest ? e.target.closest(".hitRow") : null;
+  if(!b) return;
+  var app = b.dataset.app;
+  var q = $("homeQ");
+  if(q) q.value = "";
+  homeQ = "";
+  paintSearch();
+  if(app === "tt"){ tap(8); openTt(); return; }
+  openMicro(app);
 };
 $("homeNow").onclick = function(){ openMicro("today"); };
 $("homeBtn").onclick = goHome;
