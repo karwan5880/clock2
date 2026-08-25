@@ -904,9 +904,14 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ac)}
   -webkit-overflow-scrolling:touch;touch-action:pan-y;
   /* --sp-10 under the pill was 40px of nothing at the bottom of every
      phone -- most of the row of icons that now fits there instead. The
-     safe-area insets still get their space on a device that has them. */
+     safe-area insets still get their space on a device that has them.
+     The bottom is max(), not a sum: on a phone the 34px home-indicator
+     inset is already all the clearance the pill needs, and adding another
+     12px on top of it just moved the pill further from the edge it is
+     supposed to sit near. On a device with no inset the --sp-2 floor
+     still keeps it off the glass. */
   padding:calc(var(--sp-3) + env(safe-area-inset-top)) 0
-          calc(var(--sp-3) + env(safe-area-inset-bottom));
+          max(var(--sp-2), env(safe-area-inset-bottom));
   box-sizing:border-box;
   background:
     radial-gradient(120% 70% at 50% -10%, color-mix(in srgb, var(--ac) 28%, #fff), transparent 62%),
@@ -1228,9 +1233,21 @@ body.editing .homePager{touch-action:none}
   scroll-snap-align:start;scroll-snap-stop:always;
   padding-inline:max(var(--sp-4), calc((100% - var(--shell-w)) / 2));
   align-content:start}
-/* Nothing to line up against, so it sits in the middle of the screen
-   rather than hugging the top of a 1180px iPad. */
-.homePager.single > .homePage{align-content:center}
+/* One page has nothing to line up against, so it spreads instead of
+   hugging the top -- the springboard fills the glass, which is the rule in
+   CLAUDE.md and was not being kept. Centring obeyed the letter of it and
+   left the hole in the middle of the complaint: on an 820x1180 iPad the
+   icon block was 578px inside a 1040px pager, so 231px sat dead above it
+   and 231px below. Measured, 2026-08-25.
+   space-evenly, NOT space-between: between pins the first row to the very
+   top and the last to the very bottom, which reads as two clumps on a
+   short page. Evenly keeps the outer margins half the inner gaps, which
+   is what iPadOS does.
+   Single page only, and that is the whole reason this is safe. It was
+   tried on every page once and the row gaps then differed between page
+   one and page two, so the two did not line up mid-swipe. With one page
+   there is no second page to disagree with. */
+.homePager.single > .homePage{align-content:space-evenly}
 /* paintPages() empties this when there is only one page, and an empty
    row of dots still spent 36px of a phone's screen on nothing. */
 .homeDots{flex:none;display:flex;justify-content:center;gap:8px;
@@ -1680,11 +1697,17 @@ a.shellCall:active{transform:scale(.94)}
   :root{--home-cols:6; --icon:72px; --cell:86px;
         --col-gap:22px; --row-gap:26px; --pane-w:560px}
 }
-/* Laptop and desktop. A 14" MacBook is 1512 logical points wide. */
+/* Laptop and desktop. A 14" MacBook is 1512 logical points wide.
+   SIX ACROSS, NOT EIGHT (owner, 2026-08-25). Eight fitted, and that was
+   the whole argument for it -- 26 apps landed in four rows on an iPad and
+   nothing wrapped. It also read as a wall of colour: at eight the icons
+   are smaller than the phone's relative to their row, the labels shrink a
+   size to fit, and the grid stops looking like a springboard and starts
+   looking like a table of contents. A springboard is allowed to use more
+   rows. The extra height goes into bigger icons and more air instead. */
 @media (min-width:1100px){
-  :root{--home-cols:8; --icon:76px; --cell:94px;
-        --col-gap:22px; --row-gap:28px; --pane-w:680px}
-  .homeTile .name{font-size:var(--fs-sm)}
+  :root{--icon:80px; --cell:100px;
+        --col-gap:26px; --row-gap:30px; --pane-w:680px}
 }
 /* The home is one column of blocks; on a wide screen every one of them
    centres on the same axis instead of the avatar and the language
@@ -1728,7 +1751,7 @@ a.shellCall:active{transform:scale(.94)}
 
 </style>
 <script>window.__FORCE_DEMO__ = true;</script>
-<script>window.BUILD = "v263868ee";</script>
+<script>window.BUILD = "vbf149a2d";</script>
 <script>
 if ("serviceWorker" in navigator) addEventListener("load", function(){
   navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
@@ -5096,12 +5119,29 @@ function tap(ms){
 // wallpaper, every pane that slides over it ends in --bg. No selector can
 // reach a parent, so the answer is written onto <html> from here.
 // Section 87.
-function paintCanvas(){
+// `want` overrides what the DOM currently says, and the transitions are
+// why it exists. The canvas is BELOW the app, so during a slide it is
+// never covered -- it has to already be the colour of whatever is about
+// to sit above it, or you watch a band of the old screen's colour hang
+// under the new one for the length of the animation. That is the pale
+// strip under the springboard on the way back from a micro-app: the pane
+// was still technically "on" for another 215ms, so the canvas was still
+// painting --bg while the wallpaper was already sliding into view behind
+// it.
+//
+// Which way to lie depends on which way the covering is going:
+//   opening a pane   -- home is still visible, so hold home's colour and
+//                       switch at the END, when the pane has covered it
+//   closing a pane   -- home is being revealed, so switch at the START
+// Both are the same rule: the canvas matches whatever occupies the bottom
+// of the screen right now, not what the class list will say later.
+function paintCanvas(want){
   var d = document.documentElement;
   if(!d || !d.classList) return;
   var st = $("homeStub");
-  var atHome = document.body.classList.contains("at-home") &&
-               !(st && st.classList.contains("on"));
+  var atHome = typeof want === "boolean" ? want
+             : (document.body.classList.contains("at-home") &&
+                !(st && st.classList.contains("on")));
   // The class still moves, so the stylesheet alone is right for the very
   // first frame, before any of this has run.
   d.classList.toggle("at-home", atHome);
@@ -5145,11 +5185,16 @@ function openMicro(id){
   st.classList.add("on");
   st.scrollTop = 0;
   $("pocketHome").classList.add("in-app");
-  paintCanvas();
   paintHome();
   st.classList.add("pushing");
   NAV.busy = true;
-  setTimeout(function(){ st.classList.remove("pushing"); NAV.busy = false; }, 340);
+  setTimeout(function(){
+    st.classList.remove("pushing");
+    NAV.busy = false;
+    // After the push, not before it: until the pane has covered the home
+    // screen, home is what the bottom of the screen still shows.
+    paintCanvas(false);
+  }, 340);
   // Android's Back button and the browser's back arrow have to pop the
   // pane, not leave the app. One history entry per push, popped by
   // navBack() so both routes end in the same place.
@@ -5161,6 +5206,10 @@ function openMicro(id){
 // swipe, and the Back button. Only the last one arrives as a popstate,
 // so only the other two spend a history entry.
 function navBack(){
+  // The pane is on its way out whichever route this took, so the canvas
+  // goes to the home colour now rather than when the history round trip
+  // gets back to us.
+  paintCanvas(true);
   if(NAV.depth > 0){
     try{ history.back(); return; }catch(e){}
   }
@@ -5175,13 +5224,16 @@ function closeMicro(instant){
   $("pocketHome").classList.remove("in-app");
   st.classList.remove("pushing", "popping", "dragging");
   st.style.transform = "";
-  if(instant){ st.classList.remove("on"); paintCanvas(); paintHome(); return; }
+  if(instant){ st.classList.remove("on"); paintCanvas(true); paintHome(); return; }
   NAV.busy = true;
+  // Before the animation, not after it. The home screen starts being
+  // revealed on the first frame of the pop, so the canvas has to be its
+  // colour on the first frame too.
+  paintCanvas(true);
   st.classList.add("popping");
   setTimeout(function(){
     st.classList.remove("popping", "on");
     NAV.busy = false;
-    paintCanvas();
     paintHome();
   }, 215);
   tap(6);
@@ -6573,7 +6625,11 @@ function paintHome(){
   // paintCanvas() directly, but paintHome() runs after all of them and
   // after every state change besides -- so a future route that forgets the
   // direct call still cannot leave the canvas on the wrong colour.
-  paintCanvas();
+  //
+  // Skipped mid-animation: openMicro() and closeMicro() have deliberately
+  // told the canvas which colour to hold, and re-deriving it from a class
+  // list that is still catching up would undo exactly that.
+  if(!NAV.busy) paintCanvas();
 }
 
 // ============================================================
@@ -11528,10 +11584,37 @@ $("homeBtn").onclick = goHome;
 //  number actually moved. paintPages() re-fits the grid off the back of
 //  the resize listener below, debounced, not from here.
 // ============================================================
+// Anything smaller than this is chrome, an inset or a rounding
+// disagreement. Anything bigger is a keyboard. The shortest software
+// keyboards on a phone are around 250px.
+var KEYBOARD_MIN = 140;
 var appH = 0;
 function fitViewport(){
   var vv = window.visualViewport;
-  var h = Math.round((vv && vv.height) || window.innerHeight || 0);
+  var seen = Math.round((vv && vv.height) || window.innerHeight || 0);
+  // How tall the web view actually is, as opposed to how much of it the
+  // user can see this instant. On every browser on the desk these are the
+  // same number and none of what follows does anything.
+  var box = Math.round(window.innerHeight ||
+                       (document.documentElement && document.documentElement.clientHeight) || 0);
+  // On an installed iOS app they are NOT the same: visualViewport.height
+  // came back about 45px short of the web view on a real iPhone, so the
+  // app stopped 45px above the bottom of the screen and that band was
+  // canvas. It is where the white strip lived (section 87), and once the
+  // canvas was painted the right colour it stopped being a strip and
+  // became "the bottom space is too much" -- same 45px, now the same
+  // colour as the wallpaper, still 45px of nothing under the search pill.
+  //
+  // So the app fills the web view, and env(safe-area-inset-bottom) keeps
+  // the content off the home indicator, which is the job that inset has
+  // and the job --app-h was doing badly on its behalf.
+  //
+  // The exception is the software keyboard, which is the entire reason
+  // visualViewport is consulted at all (section 84): it takes hundreds of
+  // pixels, and there the SHORT number is the right one. A keyboard is a
+  // big bite, so that is what distinguishes it -- a small shortfall is
+  // iOS being iOS about the home indicator, a large one is a keyboard.
+  var h = (box && seen && box - seen > 0 && box - seen < KEYBOARD_MIN) ? box : seen;
   if(!h || h === appH) return;
   appH = h;
   document.documentElement.style.setProperty("--app-h", h + "px");
