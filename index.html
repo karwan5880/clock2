@@ -1728,7 +1728,7 @@ a.shellCall:active{transform:scale(.94)}
 
 </style>
 <script>window.__FORCE_DEMO__ = true;</script>
-<script>window.BUILD = "vf106dd67";</script>
+<script>window.BUILD = "v85eb4e82";</script>
 <script>
 if ("serviceWorker" in navigator) addEventListener("load", function(){
   navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
@@ -3930,9 +3930,8 @@ if(lang !== "zh" && lang !== "en")
 // three -- but t() forwarded only the first two, so the skipped-rows
 // count in the import toast and the "(3 reminders)" suffix on the alarm
 // hint were `undefined` in both languages, in every build, since they
-// were written. Found by pointing TypeScript at this file for the first
-// time on the vite branch: "Expected 0-3 arguments, but got 4", three
-// times. Three is the most any dictionary entry declares.
+// were written. TypeScript found it the first time it was pointed at
+// this file: "Expected 0-3 arguments, but got 4", three times.
 function t(k, a, b, c){
   var v = L[lang][k];
   return typeof v === "function" ? v(a, b, c) : v;
