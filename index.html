@@ -1751,7 +1751,7 @@ a.shellCall:active{transform:scale(.94)}
 
 </style>
 <script>window.__FORCE_DEMO__ = true;</script>
-<script>window.BUILD = "vbf149a2d";</script>
+<script>window.BUILD = "v030a7069";</script>
 <script>
 if ("serviceWorker" in navigator) addEventListener("load", function(){
   navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
@@ -2226,7 +2226,45 @@ if ("serviceWorker" in navigator) addEventListener("load", function(){
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script>"use strict";
+(function() {
+  "use strict";
+  function dayIdx(y, m, d) {
+    return Math.floor(Date.UTC(y, m - 1, d) / 864e5);
+  }
+  function idxOf(dt) {
+    return dayIdx(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
+  }
+  function idxParts(i) {
+    const u = new Date(i * 864e5);
+    return { y: u.getUTCFullYear(), m: u.getUTCMonth() + 1, d: u.getUTCDate(), wd: u.getUTCDay() };
+  }
+  function $(id) {
+    return document.getElementById(id);
+  }
+  function toast(msg) {
+    const t = $("toast");
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add("on");
+    clearTimeout(t._h);
+    t._h = setTimeout(function() {
+      t.classList.remove("on");
+    }, 2200);
+  }
+  const bridge = {
+    dayIdx,
+    idxOf,
+    idxParts,
+    $,
+    toast
+  };
+  for (const name of Object.keys(bridge)) {
+    globalThis[name] = bridge[name];
+  }
+})();
+
+
 "use strict";
 
 // The document itself must not scroll. iOS Safari still rubber-bands a
@@ -6637,13 +6675,10 @@ function paintHome(){
 //  Always count "days since 1970-01-01" in UTC, otherwise time zones and
 //  daylight saving push the date out by a day.
 // ============================================================
-function dayIdx(y, m, d){ return Math.floor(Date.UTC(y, m - 1, d) / 86400000); }
-function idxOf(dt){ return dayIdx(dt.getFullYear(), dt.getMonth() + 1, dt.getDate()); }
-
-function idxParts(i){
-  var u = new Date(i * 86400000);
-  return { y:u.getUTCFullYear(), m:u.getUTCMonth() + 1, d:u.getUTCDate(), wd:u.getUTCDay() };
-}
+// dayIdx, idxOf and idxParts now live in ../core/dates.ts, and $ and toast
+// in ../core/dom.ts. They are real modules -- typed, exported, importing
+// nothing -- and bridge.ts puts them on globalThis so the calls below still
+// resolve. Each one that gets a proper import here can come off that bridge.
 
 function semStartIdx(){
   var p = (S.sem.start || "2026-01-01").split("-");
@@ -6677,14 +6712,6 @@ function runsInWeek(a, w){
   return a.weekRule === 1 ? (w % 2 === 1) : (w % 2 === 0);
 }
 
-var $ = function(id){ return document.getElementById(id); };
-
-function toast(msg){
-  var t = $("toast");
-  t.textContent = msg; t.classList.add("on");
-  clearTimeout(t._h);
-  t._h = setTimeout(function(){ t.classList.remove("on"); }, 2200);
-}
 
 // ============================================================
 //  DEMO MODE
