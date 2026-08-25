@@ -1728,7 +1728,7 @@ a.shellCall:active{transform:scale(.94)}
 
 </style>
 <script>window.__FORCE_DEMO__ = true;</script>
-<script>window.BUILD = "v85eb4e82";</script>
+<script>window.BUILD = "v263868ee";</script>
 <script>
 if ("serviceWorker" in navigator) addEventListener("load", function(){
   navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
@@ -5102,7 +5102,36 @@ function paintCanvas(){
   var st = $("homeStub");
   var atHome = document.body.classList.contains("at-home") &&
                !(st && st.classList.contains("on"));
+  // The class still moves, so the stylesheet alone is right for the very
+  // first frame, before any of this has run.
   d.classList.toggle("at-home", atHome);
+  // ...but the colour is then written as an INLINE STYLE, and that is not
+  // belt and braces, it is the fix.
+  //
+  // The class version worked in every browser on the desk and shipped a
+  // purple strip to an iPhone: the canvas kept the colour it was given at
+  // launch -- home screen, Kampar Dawn -- and never took the new one when
+  // a micro-app opened over it. WebKit composites the canvas background
+  // separately from the page, and a rule that starts or stops matching on
+  // the root does not reliably make it repaint that area. Assigning to
+  // style.backgroundColor mutates the element WebKit reads the canvas
+  // colour from, and it ends the specificity question as well -- an inline
+  // style beats every rule, in every source order.
+  //
+  // The value is read back out of the stylesheet rather than restated
+  // here: --wallEnd is the last stop each wallpaper declares for itself,
+  // so there is no second copy of #6d5090 to fall out of step. No
+  // wallpaper means no --wallEnd, which falls through to --bg.
+  var cs = getComputedStyle(d);
+  var want = (atHome ? String(cs.getPropertyValue("--wallEnd") || "").trim() : "") ||
+             String(cs.getPropertyValue("--bg") || "").trim();
+  if(want && d.style.backgroundColor !== want){
+    d.style.backgroundColor = want;
+    // Same reason, and the body is the other layer an installed app can
+    // leave showing. Keep the two the same rather than leaving one of them
+    // on the last screen's colour.
+    if(document.body && document.body.style) document.body.style.backgroundColor = want;
+  }
 }
 
 function openMicro(id){
@@ -5601,6 +5630,12 @@ function applyLook(){
     el.style.removeProperty("--tx");
     el.style.removeProperty("--tx3");
   }
+  // Changing the wallpaper changes what the bottom of the home screen ends
+  // in, so it changes the canvas. Since paintCanvas() writes an inline
+  // style, nothing else will pick that up -- applying a new wallpaper would
+  // otherwise leave the strip on the old one's colour. The boot suite
+  // caught this the first time the inline style shipped.
+  if(typeof paintCanvas === "function") paintCanvas();
 }
 
 function shopCard(kind, it){
@@ -5902,6 +5937,24 @@ function diagHtml(){
     ["screen",   screen.width + "x" + screen.height + " dpr " + (window.devicePixelRatio || 1)],
     ["--app-h",  getComputedStyle(document.documentElement).getPropertyValue("--app-h").trim() || "unset"],
     ["safe-top", pad.top], ["safe-bot", pad.bottom],
+    // The canvas is the band an installed app paints below the page when
+    // the root's box comes up short, and it has now been the wrong colour
+    // twice -- white, then the wallpaper's purple on a screen that is not
+    // the wallpaper's. These four lines are what tell the difference
+    // between "we computed the wrong colour" and "we computed the right
+    // one and WebKit did not repaint it": `want` is what paintCanvas()
+    // decided, `root inline` is what it wrote, and `root used` is what the
+    // engine actually resolved. DEVLOG 87 and 89.
+    ["canvas at-home", document.documentElement.classList.contains("at-home") ? "yes" : "no"],
+    ["canvas want",    (function(){
+        var c = getComputedStyle(document.documentElement);
+        var at = document.documentElement.classList.contains("at-home");
+        return (at ? String(c.getPropertyValue("--wallEnd") || "").trim() : "") ||
+               String(c.getPropertyValue("--bg") || "").trim() || "-";
+      })()],
+    ["root inline",    document.documentElement.style.backgroundColor || "none"],
+    ["root used",      getComputedStyle(document.documentElement).backgroundColor],
+    ["body used",      getComputedStyle(document.body).backgroundColor],
     ["html",     box(document.documentElement)],
     ["body",     box(document.body)],
     ["home",     box($("pocketHome"))],
@@ -6516,6 +6569,11 @@ function paintHome(){
     $("stubStage").innerHTML = shellHtml(S.micro);
   }
   paintHomeNow();
+  // Last, and on purpose. Every door in and out of a pane calls
+  // paintCanvas() directly, but paintHome() runs after all of them and
+  // after every state change besides -- so a future route that forgets the
+  // direct call still cannot leave the canvas on the wrong colour.
+  paintCanvas();
 }
 
 // ============================================================
